@@ -1,0 +1,417 @@
+{
+  "title": "Irrigazione semplice",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Irrigazione semplice",
+        "description": "Crea l’installazione, poi apri Irrigazione semplice nella barra laterale per configurare le zone e la pianificazione.",
+        "data": {
+          "name": "Nome installazione",
+          "pre_start_switches": "Uscite di pre-avvio (on/off)",
+          "pre_start_delay_sec": "Ritardo pre-avvio (secondi)",
+          "default_mode": "Modalità predefinita",
+          "max_parallel_zones": "Numero massimo di zone in parallelo"
+        }
+      }
+    },
+    "error": {
+      "invalid_max_parallel": "Il numero massimo di zone in parallelo deve essere almeno 1."
+    }
+  },
+  "selector": {
+    "default_mode": {
+      "options": {
+        "eco": "Eco",
+        "normal": "Normale",
+        "extra": "Extra"
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "mode": {
+        "name": "Modalità",
+        "state": {
+          "eco": "Eco",
+          "normal": "Normale",
+          "extra": "Extra"
+        }
+      }
+    },
+    "sensor": {
+      "active_zones": {
+        "name": "Zone attive"
+      },
+      "next_run": {
+        "name": "Prossima esecuzione"
+      },
+      "pause_until": {
+        "name": "Pausa fino a"
+      },
+      "zone_next_run": {
+        "name": "Prossima esecuzione di {zone_name}"
+      },
+      "zone_last_run": {
+        "name": "Ultima esecuzione di {zone_name}"
+      }
+    },
+    "binary_sensor": {
+      "running": {
+        "name": "In esecuzione"
+      },
+      "paused": {
+        "name": "In pausa"
+      },
+      "error_state": {
+        "name": "Errore"
+      },
+      "zone_active": {
+        "name": "{zone_name} attiva"
+      }
+    },
+    "button": {
+      "run_due": {
+        "name": "Esegui zone dovute"
+      },
+      "stop_all": {
+        "name": "Arresta tutto"
+      },
+      "zone_run_now": {
+        "name": "Esegui subito {zone_name}"
+      }
+    }
+  },
+  "services": {
+    "run_zone": {
+      "name": "Esegui zona",
+      "description": "Avvia un’esecuzione manuale completa per una zona: uscite di pre-avvio (se configurate), poi la zona per la durata Eco/Normale/Extra corrispondente alla modalità corrente, quindi spegne tutte le uscite.",
+      "fields": {
+        "zone_id": {
+          "name": "ID zona",
+          "description": "Identificatore interno della zona dell’installazione (mostrato in diagnostica / pannello)."
+        },
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esiste più di una voce di Simple Irrigation."
+        }
+      }
+    },
+    "run_zone_with_duration": {
+      "name": "Esegui zona con durata",
+      "description": "Esegue una zona per una durata fissa in minuti, ignorando la colonna Eco/Normale/Extra per questa esecuzione.",
+      "fields": {
+        "zone_id": {
+          "name": "ID zona",
+          "description": "Identificatore interno della zona."
+        },
+        "duration_min": {
+          "name": "Durata (minuti)",
+          "description": "Per quanto tempo eseguire la zona (1–1440)."
+        },
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    },
+    "run_due_zones": {
+      "name": "Esegui zone dovute",
+      "description": "Esegue ciò che è dovuto adesso in base alla pianificazione (stessa logica del pulsante Esegui zone dovute).",
+      "fields": {
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    },
+    "run_schedule_slot": {
+      "name": "Esegui fascia oraria",
+      "description": "Avvia subito la sequenza completa per una fascia oraria: pre-avvio, fasi, poi spegnimento — come “Esegui questa fascia ora” nel pannello.",
+      "fields": {
+        "slot_id": {
+          "name": "ID fascia",
+          "description": "Identificatore interno della fascia dell’installazione (mostrato in diagnostica / pannello)."
+        },
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    },
+    "stop_all": {
+      "name": "Arresta tutto",
+      "description": "Ferma il ciclo di irrigazione corrente e spegne le uscite delle zone.",
+      "fields": {
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    },
+    "set_mode": {
+      "name": "Imposta modalità",
+      "description": "Imposta la modalità globale di irrigazione (Eco, Normale o Extra).",
+      "fields": {
+        "mode": {
+          "name": "Modalità",
+          "description": "eco, normal o extra."
+        },
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    },
+    "set_zone_enabled": {
+      "name": "Imposta zona abilitata",
+      "description": "Abilita o disabilita una zona. Le zone disabilitate vengono saltate in ogni fascia oraria che le include.",
+      "fields": {
+        "zone_id": {
+          "name": "ID zona",
+          "description": "UUID interno della zona (chiavi sotto zones nei download diagnostici per questa integrazione)."
+        },
+        "enabled": {
+          "name": "Abilitata",
+          "description": "Quando è disattivata, la zona viene saltata nelle esecuzioni pianificate e nelle fasce fino a nuova abilitazione."
+        },
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    },
+    "pause_until": {
+      "name": "Pausa fino a",
+      "description": "Metta in pausa le esecuzioni automatiche pianificate fino a data e ora indicate.",
+      "fields": {
+        "until": {
+          "name": "Fino a",
+          "description": "Data e ora in cui le esecuzioni pianificate possono riprendere."
+        },
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    },
+    "clear_pause": {
+      "name": "Rimuovi pausa",
+      "description": "Cancella una pausa pianificata così le esecuzioni automatiche possono riprendere.",
+      "fields": {
+        "config_entry_id": {
+          "name": "ID voce di configurazione",
+          "description": "Facoltativo. Usa questa installazione quando esistono più voci."
+        }
+      }
+    }
+  },
+  "config_panel": {
+    "sidebar_title": "Irrigazione semplice",
+    "loading": "Caricamento…",
+    "main_title": "Irrigazione semplice",
+    "tab_general": "Generale",
+    "tab_zones": "Zone",
+    "tab_schedule": "Pianificazione",
+    "tab_timetable": "Orario",
+    "tab_status": "Stato",
+    "timetable_card_title": "Orario settimanale",
+    "timetable_intro": "Programma di irrigazione settimanale per zona. Gli orari usano il fuso orario di Home Assistant; le barre usano la modalità corrente (Eco / Normale / Extra), il ritardo di pre-avvio e le stesse regole di fase di un’esecuzione reale.",
+    "timetable_empty_no_zones": "Aggiungi zone nella scheda Zone per vedere l’orario.",
+    "timetable_empty_no_slots": "Aggiungi fasce nella scheda Pianificazione per vedere quando vengono eseguite le zone.",
+    "timetable_col_zone": "Zona",
+    "timetable_bucket_aria_morning": "Mattina",
+    "timetable_bucket_aria_day": "Giorno",
+    "timetable_bucket_aria_evening": "Sera",
+    "timetable_duration_min": "{n} min",
+    "timetable_legend_label": "Legenda orario",
+    "timetable_legend_bucket_morning": "Mattina (0:00–8:00)",
+    "timetable_legend_bucket_day": "Giorno (8:00–16:00)",
+    "timetable_legend_bucket_evening": "Sera (16:00–24:00)",
+    "timetable_legend_active": "Fascia attiva",
+    "timetable_legend_disabled": "Fascia disabilitata",
+    "timetable_legend_biweekly": "Ogni 2 settimane (tratteggiato)",
+    "timetable_mode_eco": "Eco",
+    "timetable_mode_normal": "Normale",
+    "timetable_mode_extra": "Extra",
+    "timetable_bar_tooltip": "{start} – {end} · {mode}",
+    "timetable_week_toggle_label": "Settimana del calendario mostrata nell’orario",
+    "timetable_week_current_hint": "questa settimana · CW {n}",
+    "timetable_parity_badge_odd": "settimane dispari",
+    "timetable_parity_badge_even": "settimane pari",
+    "entry_picker_title": "Irrigazione semplice",
+    "entry_picker_lead": "Scegli un’installazione per modificare zone, pianificazione settimanale e opzioni di esecuzione. Ogni voce è un piano di irrigazione indipendente.",
+    "entry_picker_loading": "Caricamento installazioni…",
+    "entry_badge_ha": "Integrazione disabilitata",
+    "entry_badge_plan_off": "Piano disattivato",
+    "entry_badge_active": "Attiva",
+    "entry_badge_default": "Predefinita",
+    "entry_card_desc": "Configura zone, fasce orarie, ordine di esecuzione e uscite di pre-avvio per questo controller.",
+    "entry_picker_empty": "Nessuna installazione ancora. Aggiungi l’integrazione in Impostazioni → Dispositivi e servizi → Aggiungi integrazione, poi cerca Irrigazione semplice.",
+    "entry_picker_howto": "Aggiungi un altro piano (es. primavera / estate / un altro giardino): usa Impostazioni → Dispositivi e servizi → Aggiungi integrazione → Irrigazione semplice. Ogni piano appare nell’elenco sopra.",
+    "errors_request_failed": "Richiesta non riuscita",
+    "errors_not_running_skip": "Nessun processo è in esecuzione al momento.",
+    "entity_placeholder_example": "es. valve.lawn o switch.pump",
+    "general_card_current_run": "Esecuzione corrente",
+    "general_label_irrigation_state": "Stato irrigazione",
+    "general_state_preparing": "Preparazione",
+    "general_state_stopping": "Arresto…",
+    "general_state_running": "In esecuzione",
+    "general_state_error_idle": "Errore (inattivo)",
+    "general_state_idle": "Inattivo",
+    "general_preparing_hint": "Uscite di pre-avvio e ritardo prima che inizino le zone.",
+    "general_active_zones": "Zone attive",
+    "general_next_zones": "Prossime zone",
+    "general_last_error": "Ultimo errore",
+    "general_scheduled_pause_hint": "Le pause programmate usano il controllo Piano qui sotto. Non interrompono un’esecuzione già in corso — usa Arresta qui.",
+    "general_stop_irrigation": "Ferma irrigazione",
+    "general_skip_phase": "Salta alla fase successiva",
+    "general_clear_error": "Cancella messaggio di errore",
+    "general_card_schedule_overview": "Panoramica pianificazione",
+    "general_plan_off_hint": "Questo piano è disattivato. Nessuna esecuzione automatica partirà finché non lo riabiliti.",
+    "general_next_scheduled_run": "Prossima esecuzione pianificata",
+    "general_no_slots": "Nessuna fascia pianificata abilitata o nessuna zona assegnata.",
+    "general_none_scheduled": "Nessuna pianificata",
+    "general_card_plan_control": "Controllo piano",
+    "general_enable_plan": "Abilita irrigazione automatica per questo piano",
+    "general_pause_active_hint": "Le esecuzioni pianificate sono in pausa fino a {when} (ora locale). Puoi cancellarla qui sotto o usare il servizio simple_irrigation.clear_pause con config_entry_id nelle automazioni.",
+    "general_skip_today": "Salta l’irrigazione di oggi",
+    "general_clear_pause": "Rimuovi pausa",
+    "general_card_settings": "Impostazioni generali",
+    "general_installation_name": "Nome installazione",
+    "general_installation_name_desc": "Mostrato negli elenchi e utile per distinguere più controller.",
+    "general_field_name": "Nome",
+    "general_pre_start_title": "Uscite di pre-avvio",
+    "general_pre_start_desc": "Uscite accese prima dell’avvio di qualsiasi zona (ad es. pompa o valvola principale). Supporta switch, valve, input_boolean e gruppi. Usa gli stessi ID entità usati altrove in Home Assistant; lascia vuoto se non necessario.",
+    "general_pre_start_output_n": "Uscita di pre-avvio (on/off)",
+    "general_pre_start_output_i": "Pre-avvio {n}",
+    "general_remove": "Rimuovi",
+    "general_add_pre_start": "Aggiungi uscita di pre-avvio",
+    "general_pre_start_delay_title": "Ritardo di pre-avvio",
+    "general_pre_start_delay_desc": "Quanto tempo attendere dopo l’accensione delle uscite di pre-avvio prima che inizi l’irrigazione della zona. Dà il tempo alla pompa di creare pressione, riempie le tubazioni principali e può ridurre il rumore dovuto all’aria nei tubi.",
+    "general_pre_start_delay_field": "Ritardo (secondi)",
+    "general_watering_mode": "Modalità irrigazione",
+    "general_watering_mode_desc": "Imposta quale colonna di durata per zona viene usata: Eco (più breve), Normale o Extra (più lunga). Puoi anche controllarla con automazioni—for example quando il livello del serbatoio o la temperatura esterna devono scegliere Eco vs Extra—chiamando il servizio simple_irrigation.set_mode con mode impostato su eco, normal o extra (e config_entry_id se hai più piani).",
+    "general_mode_eco": "Eco",
+    "general_mode_normal": "Normale",
+    "general_mode_extra": "Extra",
+    "general_max_parallel": "Zone massime in parallelo",
+    "general_max_parallel_desc": "Quante zone possono irrigare contemporaneamente. Le zone esclusive funzionano sempre da sole.",
+    "general_max_parallel_field": "Zone massime in parallelo",
+    "general_default_section": "Irrigazione predefinita",
+    "general_default_toggle_label": "Apri questa installazione per impostazione predefinita",
+    "general_default_toggle_desc": "Quando abilitato, fare clic su Irrigazione semplice nella barra laterale apre direttamente questa installazione invece della schermata di selezione.",
+    "general_default_confirm_title": "Cambia irrigazione predefinita",
+    "general_default_confirm_body": "Impostare \"{name}\" come predefinita rimuoverà l’impostazione predefinita da \"{other}\". Continuare?",
+    "general_default_confirm_ok": "Imposta come predefinita",
+    "general_default_confirm_cancel": "Annulla",
+    "general_saving": "Salvataggio…",
+    "general_save": "Salva",
+    "zones_card_title": "Zone",
+    "zones_intro": "Ogni zona ha una o più uscite e tempi di esecuzione per le modalità Eco / Normale / Extra. Associa le zone alle fasce nella scheda Pianificazione. Usa Modifica per cambiare una zona alla volta. Se disabiliti una zona, viene saltata in ogni fascia che la include: utile per saltare temporaneamente una zona quando il terreno è ancora umido.",
+    "zones_intro_automation": "Da automazioni o script, chiama il servizio simple_irrigation.set_zone_enabled con zone_id (UUID interno di ogni zona—le chiavi sotto zones nei download diagnostici di questa integrazione) e enabled true o false. Passa config_entry_id quando hai più di un’installazione di Irrigazione semplice.",
+    "zones_add_zone": "Aggiungi zona",
+    "zones_detail_disabled": "Disabilitata",
+    "zones_detail_exclusive": "Esclusiva",
+    "zones_detail_durations": "Eco {eco}m / Normale {normal}m / Extra {extra}m",
+    "zones_detail_added_slots_one": "Aggiunta a 1 fascia",
+    "zones_detail_added_slots_many": "Aggiunta a {n} fasce",
+    "zones_detail_outputs_one": "1 uscita",
+    "zones_detail_outputs_many": "{n} uscite",
+    "zones_edit": "Modifica",
+    "zones_run_zone_now": "Esegui zona ora",
+    "zones_err_busy": "L’irrigazione è già in esecuzione.",
+    "zones_err_zone_already_queued": "Questa zona è già inclusa nell’esecuzione corrente.",
+    "zones_err_unknown_zone": "Zona sconosciuta.",
+    "zones_err_zone_disabled": "Questa zona è disabilitata.",
+    "zones_err_zone_no_outputs": "Aggiungi almeno un’uscita prima di eseguire questa zona.",
+    "zones_field_name_title": "Nome",
+    "zones_field_name_desc": "Etichetta di questa zona nell’interfaccia e nelle pianificazioni.",
+    "zones_field_zone_name": "Nome zona",
+    "zones_outputs_title": "Uscite di irrigazione",
+    "zones_outputs_desc": "Uno o più switch, valve, helper o gruppi (gli stessi ID entità usati negli Strumenti per sviluppatori). Digita o scegli dai suggerimenti; aggiungi righe per più uscite oppure usa un’entità gruppo.",
+    "zones_output_first": "Uscita zona (on/off)",
+    "zones_output_n": "Uscita {n}",
+    "zones_add_output": "Aggiungi uscita",
+    "zones_runtime_title": "Durata per modalità (minuti)",
+    "zones_runtime_desc": "Per quanto tempo questa zona viene eseguita quando l’installazione è in modalità Eco, Normale o Extra.",
+    "zones_duration_eco": "Eco",
+    "zones_duration_normal": "Normale",
+    "zones_duration_extra": "Extra",
+    "zones_behavior_title": "Comportamento",
+    "zones_behavior_desc": "Disabilita temporaneamente una zona o limita la sua esecuzione in parallelo.",
+    "zones_enabled": "Abilitata",
+    "zones_exclusive": "Esclusiva (non viene mai eseguita in parallelo con altre zone)",
+    "zones_dialog_new_title": "Nuova zona di irrigazione",
+    "zones_dialog_edit_title": "Modifica zona: {name}",
+    "zones_cancel": "Annulla",
+    "zones_adding": "Aggiunta…",
+    "zones_add_zone_btn": "Aggiungi zona",
+    "zones_confirm_delete": "Eliminare questa zona?",
+    "zones_delete_zone": "Elimina zona",
+    "zones_saving_changes": "Salvataggio…",
+    "zones_save_changes": "Salva modifiche",
+    "schedule_card_title": "Pianificazione",
+    "schedule_intro": "Le fasce sono orari di avvio settimanali con un elenco ordinato di zone. Usa Modifica su una riga per cambiare zone, ordine e opzioni. Collega prima le zone nella scheda Zone.",
+    "schedule_add_slot": "Aggiungi fascia",
+    "schedule_zones_in_order_one": "1 zona nell’ordine di esecuzione",
+    "schedule_zones_in_order_many": "{n} zone nell’ordine di esecuzione",
+    "schedule_run_slot_now": "Esegui questa fascia ora",
+    "schedule_edit": "Modifica",
+    "schedule_dialog_new_title": "Nuova fascia oraria",
+    "schedule_dialog_new_hint": "Crea un orario ricorrente, poi usa Modifica sulla riga per impostare le zone e salvare.",
+    "schedule_name_optional_title": "Nome (facoltativo)",
+    "schedule_name_optional_desc": "Una breve etichetta per riconoscere questa fascia nella panoramica e quando ne scegli una altrove.",
+    "schedule_slot_name": "Nome fascia",
+    "schedule_weekday_title": "Giorno della settimana",
+    "schedule_weekday_desc": "Giorno in cui inizia questa esecuzione.",
+    "schedule_week_parity_title": "Ritmo settimanale",
+    "schedule_week_parity_desc": "Esegui ogni settimana, oppure solo nelle settimane ISO dispari/pari. Due fasce su settimane alternate danno un ritmo ogni due settimane.",
+    "week_parity_every": "Ogni settimana",
+    "week_parity_odd": "Settimane di calendario dispari",
+    "week_parity_even": "Settimane di calendario pari",
+    "schedule_local_time_title": "Ora locale",
+    "schedule_local_time_desc": "Ora di avvio nel fuso orario di Home Assistant. Salvata in formato 24 ore (HH:MM); la panoramica usa il formato orario del tuo profilo (12 o 24 ore).",
+    "schedule_time_hhmm": "Ora (HH:MM)",
+    "schedule_slot_enabled": "Fascia abilitata",
+    "schedule_adding": "Aggiunta…",
+    "schedule_add_slot_btn": "Aggiungi fascia",
+    "schedule_err_busy": "L’irrigazione è già in esecuzione.",
+    "schedule_err_empty_slot": "Aggiungi almeno una zona a questa fascia.",
+    "schedule_err_no_runnable": "Nessuna zona abilitata da eseguire in questa fascia.",
+    "schedule_err_unknown_slot": "Fascia sconosciuta.",
+    "schedule_edit_dialog_title": "Modifica fascia · {summary}",
+    "schedule_start_time_title": "Ora di inizio",
+    "schedule_run_order_title": "Ordine di esecuzione",
+    "schedule_run_order_desc": "Le zone vengono eseguite nell’ordine dell’elenco. Le etichette di fase mostrano come si raggruppano le esecuzioni: le zone nella stessa fase iniziano insieme quando le regole di parallelismo lo consentono; le zone esclusive vengono sempre eseguite da sole. Le zone disabilitate vengono saltate durante l’esecuzione e non sono mostrate in una fase.",
+    "schedule_phase_n": "Fase {n}",
+    "schedule_up": "Su",
+    "schedule_down": "Giù",
+    "schedule_remove": "Rimuovi",
+    "schedule_add_zone_title": "Aggiungi zona",
+    "schedule_choose_zone": "Scegli una zona…",
+    "schedule_add_to_list": "Aggiungi alla lista",
+    "schedule_all_zones_in_slot": "Tutte le zone sono già in questa fascia.",
+    "schedule_create_zones_first": "Crea prima le zone nella scheda Zone.",
+    "schedule_confirm_delete_slot": "Eliminare questa fascia?",
+    "schedule_delete_slot": "Elimina fascia",
+    "schedule_saving": "Salvataggio…",
+    "schedule_save_slot": "Salva fascia",
+    "status_card_title": "Stato di esecuzione",
+    "status_intro": "Riepilogo di ciò che sta facendo il controller. Ricarica il pannello o cambia scheda per aggiornare.",
+    "status_state_label": "Stato:",
+    "status_state_run_in_progress": "Esecuzione in corso",
+    "status_state_error": "Errore",
+    "status_state_idle": "Inattivo / in attesa",
+    "status_manual_label": "Esecuzione manuale:",
+    "status_manual_text": "Questo ciclo è stato avviato dal pannello (“Esegui questa fascia ora”) o da un servizio zona, non dal timer settimanale.",
+    "status_scheduled_label": "Esecuzione pianificata:",
+    "status_scheduled_text": "Questo ciclo è stato avviato dalla pianificazione.",
+    "status_idle_hint": "Quando un’esecuzione è attiva, questa pagina mostra se è manuale o pianificata. manual_run nello stato grezzo è vero solo durante un ciclo manuale.",
+    "status_active_zones": "Zone attive:",
+    "status_queued_zones": "Zone in coda:",
+    "status_last_error": "Ultimo errore:",
+    "status_error_clear_hint": "Il messaggio si cancella quando un’esecuzione termina correttamente, quando interrompi l’irrigazione dalla scheda Generale o quando usi lì Cancella messaggio di errore. Rimane visibile dopo un’esecuzione fallita finché non accade una di queste cose. Un riavvio di Home Assistant dopo un’esecuzione interrotta può impostare un messaggio di ripristino.",
+    "status_show_raw": "Mostra stato grezzo (debug)",
+    "status_hide_raw": "Nascondi stato grezzo"
+  }
+}
