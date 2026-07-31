@@ -71,12 +71,34 @@ class Zone:
         )
 
 
+def normalize_weekdays(raw: Any) -> list[int]:
+    """Sorted, de-duplicated weekday indices in 0..6 (Mon..Sun)."""
+    out: list[int] = []
+    seen: set[int] = set()
+    if isinstance(raw, (list, tuple, set)):
+        for x in raw:
+            try:
+                v = int(x)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= v <= 6 and v not in seen:
+                seen.add(v)
+                out.append(v)
+    out.sort()
+    return out
+
+
 @dataclass
 class ScheduleSlot:
-    """Weekly time slot with ordered zone IDs."""
+    """Weekly time slot with ordered zone IDs.
+
+    A slot may fire on several weekdays (``weekdays``); a single-day slot is just
+    ``weekdays=[n]``. The legacy scalar ``weekday`` key is still read (fallback) and
+    written (as the first weekday) for backward/rollback compatibility.
+    """
 
     slot_id: str
-    weekday: int  # 0 = Monday .. 6 = Sunday (datetime.weekday())
+    weekdays: list[int]  # 0 = Monday .. 6 = Sunday (datetime.weekday())
     time_local: str  # "HH:MM"
     enabled: bool = True
     zone_ids_ordered: list[str] = field(default_factory=list)
@@ -87,7 +109,9 @@ class ScheduleSlot:
         """Serialize to JSON-compatible dict."""
         return {
             "slot_id": self.slot_id,
-            "weekday": self.weekday,
+            "weekdays": list(self.weekdays),
+            # Legacy key so a downgraded integration keeps a valid single day.
+            "weekday": self.weekdays[0] if self.weekdays else 0,
             "time_local": self.time_local,
             "enabled": self.enabled,
             "zone_ids_ordered": list(self.zone_ids_ordered),
@@ -101,9 +125,14 @@ class ScheduleSlot:
         parity = str(data.get("week_parity") or WEEK_PARITY_EVERY)
         if parity not in WEEK_PARITIES:
             parity = WEEK_PARITY_EVERY
+        weekdays = normalize_weekdays(data.get("weekdays"))
+        if not weekdays and data.get("weekday") is not None:
+            weekdays = normalize_weekdays([data.get("weekday")])
+        if not weekdays:
+            weekdays = [0]
         return ScheduleSlot(
             slot_id=data["slot_id"],
-            weekday=int(data["weekday"]),
+            weekdays=weekdays,
             time_local=str(data["time_local"]),
             enabled=bool(data.get("enabled", True)),
             zone_ids_ordered=list(data.get("zone_ids_ordered", [])),

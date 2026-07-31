@@ -35,7 +35,7 @@ async def async_get_config_entry_diagnostics(
             {
                 "slot_id": slot.slot_id,
                 "name": slot.name,
-                "weekday": slot.weekday,
+                "weekdays": list(slot.weekdays),
                 "time_local": slot.time_local,
                 "week_parity": slot.week_parity,
                 "enabled": slot.enabled,

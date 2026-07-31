@@ -66,3 +66,21 @@ def next_slot_fire_local(
             return cand
 
     return None
+
+
+def next_slot_fire_local_any(
+    after: datetime,
+    weekdays: list[int],
+    time_local: str,
+    tz: Any,
+    week_parity: str = WEEK_PARITY_EVERY,
+) -> datetime | None:
+    """Earliest fire across all ``weekdays`` strictly after ``after`` (or None)."""
+    best: datetime | None = None
+    for weekday in weekdays:
+        nxt = next_slot_fire_local(after, weekday, time_local, tz, week_parity)
+        if nxt is None:
+            continue
+        if best is None or nxt < best:
+            best = nxt
+    return best

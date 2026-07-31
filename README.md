@@ -25,7 +25,7 @@
 |------|----------------|
 | **General** | Live run state (preparing / running / stopping), next scheduled run, plan on/off, skip today / clear pause, pre-start entities, mode, max parallel zones, stop / skip phase / clear error |
 | **Zones** | Named zones, one or more output entities per zone, Eco/Normal/Extra runtimes (minutes), enabled flag, **exclusive** (never parallel with others) |
-| **Schedule** | Weekly slots (weekday + local time), optional slot name, ordered zone list, **phase** preview from parallel rules, “run this slot now” |
+| **Schedule** | Weekly slots (one or more **weekdays** + local time, with quick presets “Every day / Mon–Fri / Weekend”), optional slot name, ordered zone list, **phase** preview from parallel rules, “run this slot now”, and “split into single days” |
 | **Timetable** | Weekly overview: each zone’s planned runs by weekday, split into **morning / daytime / evening** rows; uses the same phase and mode timing as a real run; **click a block** to jump to **Schedule** and open that slot’s editor |
 | **Status** | Human-readable runtime summary and optional **raw JSON** for debugging |
 

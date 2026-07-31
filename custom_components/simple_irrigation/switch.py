@@ -16,11 +16,17 @@ WEEKDAY_ABBR = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
 
 
 def _slot_label(slot: ScheduleSlot) -> str:
-    """Human label for a slot, falling back to weekday + time."""
+    """Human label for a slot, falling back to weekday(s) + time."""
     if slot.name:
         return slot.name
-    day = WEEKDAY_ABBR[slot.weekday] if 0 <= slot.weekday < 7 else "?"
-    return f"{day} {slot.time_local}"
+    wds = [d for d in slot.weekdays if 0 <= d < 7]
+    if len(wds) == 7:
+        days = "Daily"
+    elif wds:
+        days = ", ".join(WEEKDAY_ABBR[d] for d in wds)
+    else:
+        days = "?"
+    return f"{days} {slot.time_local}"
 
 
 async def async_setup_entry(

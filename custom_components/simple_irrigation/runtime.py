@@ -504,7 +504,7 @@ class IrrigationRuntime:
 
     async def async_run_due_now(self) -> None:
         """Run phases for schedule slots that are due now (service)."""
-        from .time_util import next_slot_fire_local
+        from .time_util import next_slot_fire_local_any
 
         inst = self.coordinator.installation
         tz = dt_util.get_time_zone(self.hass.config.time_zone)
@@ -515,9 +515,9 @@ class IrrigationRuntime:
         for slot in inst.schedule_slots:
             if not slot.enabled:
                 continue
-            nxt = next_slot_fire_local(
+            nxt = next_slot_fire_local_any(
                 now - timedelta(minutes=2),
-                slot.weekday,
+                slot.weekdays,
                 slot.time_local,
                 tz,
                 slot.week_parity,

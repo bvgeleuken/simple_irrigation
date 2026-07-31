@@ -131,7 +131,15 @@ export function buildTimetableEntries(installation: Record<string, unknown>): Ti
   for (const slot of slots) {
     const slotId = String(slot.slot_id ?? "");
     const slotEnabled = Boolean(slot.enabled ?? true);
-    const weekday = Math.max(0, Math.min(6, Number(slot.weekday ?? 0)));
+    const rawWeekdays = Array.isArray(slot.weekdays)
+      ? (slot.weekdays as unknown[])
+          .map((n) => Math.max(0, Math.min(6, Number(n))))
+          .filter((n) => Number.isInteger(n))
+      : [];
+    // Fall back to the legacy scalar weekday for pre-migration data.
+    const weekdays = rawWeekdays.length
+      ? Array.from(new Set(rawWeekdays))
+      : [Math.max(0, Math.min(6, Number(slot.weekday ?? 0)))];
     const timeLocal = String(slot.time_local ?? "00:00");
     const weekParity = normalizeWeekParity(slot.week_parity);
     const ordered = Array.isArray(slot.zone_ids_ordered)
@@ -139,43 +147,45 @@ export function buildTimetableEntries(installation: Record<string, unknown>): Ti
       : [];
 
     const slotStartMin = parseTimeLocalToMinutes(timeLocal);
-    let cursor = slotStartMin + preStartSec / 60;
-
     const phases = computePhases(ordered, zonesById, maxParallel, false);
 
-    for (const phase of phases) {
-      const phaseStart = cursor;
-      let phaseLenMin = 0;
-      for (const zid of phase) {
-        const z = zones[zid];
-        if (!z) continue;
-        if (Boolean(z.enabled ?? true)) {
-          const d = durationForMode(z, mode);
-          phaseLenMin = Math.max(phaseLenMin, d);
+    for (const weekday of weekdays) {
+      let cursor = slotStartMin + preStartSec / 60;
+
+      for (const phase of phases) {
+        const phaseStart = cursor;
+        let phaseLenMin = 0;
+        for (const zid of phase) {
+          const z = zones[zid];
+          if (!z) continue;
+          if (Boolean(z.enabled ?? true)) {
+            const d = durationForMode(z, mode);
+            phaseLenMin = Math.max(phaseLenMin, d);
+          }
         }
-      }
 
-      for (const zid of phase) {
-        const z = zones[zid];
-        if (!z) continue;
-        const zoneEnabled = Boolean(z.enabled ?? true);
-        const dur = durationForMode(z, mode);
-        const startMin = phaseStart;
-        const endMin = phaseStart + dur;
-        entries.push({
-          zoneId: zid,
-          weekday,
-          startMin,
-          endMin,
-          bucket: bucketFromStartMin(startMin),
-          enabled: planEnabled && slotEnabled && zoneEnabled,
-          mode,
-          slotId,
-          weekParity,
-        });
-      }
+        for (const zid of phase) {
+          const z = zones[zid];
+          if (!z) continue;
+          const zoneEnabled = Boolean(z.enabled ?? true);
+          const dur = durationForMode(z, mode);
+          const startMin = phaseStart;
+          const endMin = phaseStart + dur;
+          entries.push({
+            zoneId: zid,
+            weekday,
+            startMin,
+            endMin,
+            bucket: bucketFromStartMin(startMin),
+            enabled: planEnabled && slotEnabled && zoneEnabled,
+            mode,
+            slotId,
+            weekParity,
+          });
+        }
 
-      cursor = phaseStart + phaseLenMin;
+        cursor = phaseStart + phaseLenMin;
+      }
     }
   }
 

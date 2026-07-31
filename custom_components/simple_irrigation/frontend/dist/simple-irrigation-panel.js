@@ -758,6 +758,45 @@ function weekdayLong(hass, mondayBasedIndex) {
     const d = new Date(2024, 0, 1 + i);
     return new Intl.DateTimeFormat(locale(hass), { weekday: "long" }).format(d);
 }
+/** Short localized weekday name (e.g. "Mon" / "Mo"), Monday-based index. */
+function weekdayShort(hass, mondayBasedIndex) {
+    const i = Math.max(0, Math.min(6, mondayBasedIndex));
+    const d = new Date(2024, 0, 1 + i);
+    return new Intl.DateTimeFormat(locale(hass), { weekday: "short" }).format(d);
+}
+/** Normalize to sorted, de-duplicated Monday-based indices in 0..6. */
+function normalizeWeekdays(raw) {
+    const out = [];
+    const seen = new Set();
+    const push = (v) => {
+        const n = Number(v);
+        if (Number.isInteger(n) && n >= 0 && n <= 6 && !seen.has(n)) {
+            seen.add(n);
+            out.push(n);
+        }
+    };
+    if (Array.isArray(raw))
+        raw.forEach(push);
+    out.sort((a, b) => a - b);
+    return out;
+}
+/**
+ * Compact human summary of the weekdays a slot runs on:
+ * "Daily" (all 7), "Mon–Fri" (workdays), "Weekend" (Sat/Sun), else a short list.
+ */
+function weekdaysSummary(hass, weekdays) {
+    const wds = normalizeWeekdays(weekdays);
+    if (wds.length === 0)
+        return "";
+    if (wds.length === 7)
+        return t(hass, "config_panel.weekdays_summary_daily");
+    const key = wds.join(",");
+    if (key === "0,1,2,3,4")
+        return t(hass, "config_panel.weekdays_summary_workdays");
+    if (key === "5,6")
+        return t(hass, "config_panel.weekdays_summary_weekend");
+    return wds.map((i) => weekdayShort(hass, i)).join(", ");
+}
 /**
  * Absolute instant: weekday + date + time using the user’s profile (12h/24h, DMY/MDY/YMD, server vs local TZ).
  */
@@ -1698,11 +1737,13 @@ function phaseIndexByZoneId(orderedZoneIds, zonesById, maxParallelZones) {
 }
 
 const WEEK_PARITIES = ["every", "odd", "even"];
+/** Monday-based weekday indices in display order. */
+const WEEKDAY_ORDER = [0, 1, 2, 3, 4, 5, 6];
 class ViewSchedule extends i {
     constructor() {
         super(...arguments);
         this._busy = false;
-        this._newWeekday = 0;
+        this._newWeekdays = [0];
         this._newTime = "06:00";
         this._newEnabled = true;
         this._newSlotName = "";
@@ -1872,10 +1913,47 @@ class ViewSchedule extends i {
       .toolbar .btn-outline {
         margin-top: 0;
       }
+      .weekday-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 4px 0 10px;
+      }
+      .weekday-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--divider-color);
+        background: var(--card-background-color);
+        color: var(--primary-text-color);
+        cursor: pointer;
+        font-size: 0.9rem;
+        line-height: 1;
+      }
+      .chip.day {
+        min-width: 44px;
+        text-align: center;
+      }
+      .chip.active {
+        background: var(--primary-color);
+        color: var(--text-primary-color);
+        border-color: var(--primary-color);
+      }
+      .chip:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
     `,
     ]; }
     _wd(i) {
         return weekdayLong(this.hass, i);
+    }
+    _weekdaysLabel(weekdays) {
+        return weekdaysSummary(this.hass, weekdays);
     }
     _parityLabel(parity) {
         if (parity === "odd")
@@ -1893,9 +1971,10 @@ class ViewSchedule extends i {
             return [];
         return s.map((raw) => {
             const o = raw;
+            const wds = normalizeWeekdays(o.weekdays);
             return {
                 slot_id: String(o.slot_id ?? ""),
-                weekday: Number(o.weekday ?? 0),
+                weekdays: wds.length ? wds : normalizeWeekdays([o.weekday ?? 0]),
                 time_local: String(o.time_local ?? "06:00"),
                 enabled: Boolean(o.enabled ?? true),
                 zone_ids_ordered: Array.isArray(o.zone_ids_ordered)
@@ -1909,8 +1988,14 @@ class ViewSchedule extends i {
     _cloneSlot(s) {
         return {
             ...s,
+            weekdays: [...s.weekdays],
             zone_ids_ordered: [...s.zone_ids_ordered],
         };
+    }
+    _toggleWeekday(current, day) {
+        return current.includes(day)
+            ? current.filter((d) => d !== day)
+            : normalizeWeekdays([...current, day]);
     }
     _zoneName(zid) {
         const zones = this.installation?.zones;
@@ -2005,7 +2090,7 @@ class ViewSchedule extends i {
         }
     }
     _resetNewSlotForm() {
-        this._newWeekday = 0;
+        this._newWeekdays = [0];
         this._newTime = "06:00";
         this._newEnabled = true;
         this._newSlotName = "";
@@ -2045,10 +2130,14 @@ class ViewSchedule extends i {
         const d = this._slotEditDraft;
         if (!d)
             return;
+        if (d.weekdays.length === 0) {
+            this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
+            return;
+        }
         const ok = await this._call({
             action: "update",
             slot_id: d.slot_id,
-            weekday: d.weekday,
+            weekdays: d.weekdays,
             time_local: d.time_local,
             enabled: d.enabled,
             zone_ids_ordered: d.zone_ids_ordered,
@@ -2070,13 +2159,24 @@ class ViewSchedule extends i {
             this._closeEditDialog();
         }
     }
+    async _splitSlotDraft() {
+        const d = this._slotEditDraft;
+        if (!d || d.weekdays.length <= 1)
+            return;
+        if (!confirm(t(this.hass, "config_panel.schedule_confirm_split")))
+            return;
+        const ok = await this._call({ action: "split", slot_id: d.slot_id });
+        if (ok) {
+            this._closeEditDialog();
+        }
+    }
     async _toggleSlotEnabled(slot, enabled) {
         if (this._busy)
             return;
         const ok = await this._call({
             action: "update",
             slot_id: slot.slot_id,
-            weekday: slot.weekday,
+            weekdays: slot.weekdays,
             time_local: slot.time_local,
             enabled,
             zone_ids_ordered: slot.zone_ids_ordered,
@@ -2086,6 +2186,45 @@ class ViewSchedule extends i {
         if (!ok) {
             this.requestUpdate();
         }
+    }
+    /** Weekday multi-select chips + quick presets (Daily / Mon–Fri / Weekend). */
+    _renderWeekdayPicker(selected, onChange) {
+        const presets = [
+            { label: t(this.hass, "config_panel.schedule_preset_daily"), days: [0, 1, 2, 3, 4, 5, 6] },
+            { label: t(this.hass, "config_panel.schedule_preset_workdays"), days: [0, 1, 2, 3, 4] },
+            { label: t(this.hass, "config_panel.schedule_preset_weekend"), days: [5, 6] },
+        ];
+        const sameSet = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+        return b `
+      <div class="weekday-presets">
+        ${presets.map((p) => b `
+            <button
+              type="button"
+              class="chip preset ${sameSet(normalizeWeekdays(selected), normalizeWeekdays(p.days))
+            ? "active"
+            : ""}"
+              ?disabled=${this._busy}
+              @click=${() => onChange(normalizeWeekdays(p.days))}
+            >
+              ${p.label}
+            </button>
+          `)}
+      </div>
+      <div class="weekday-chips" role="group">
+        ${WEEKDAY_ORDER.map((i) => b `
+            <button
+              type="button"
+              class="chip day ${selected.includes(i) ? "active" : ""}"
+              aria-pressed=${selected.includes(i) ? "true" : "false"}
+              title=${this._wd(i)}
+              ?disabled=${this._busy}
+              @click=${() => onChange(this._toggleWeekday(selected, i))}
+            >
+              ${weekdayShort(this.hass, i)}
+            </button>
+          `)}
+      </div>
+    `;
     }
     updated(changed) {
         super.updated(changed);
@@ -2099,8 +2238,8 @@ class ViewSchedule extends i {
         const editSlotTitle = draft != null
             ? t(this.hass, "config_panel.schedule_edit_dialog_title", {
                 summary: draft.name.trim()
-                    ? `${draft.name.trim()} · ${this._wd(draft.weekday)} ${this._fmtSlotTime(draft.time_local)}`
-                    : `${this._wd(draft.weekday)} ${this._fmtSlotTime(draft.time_local)}`,
+                    ? `${draft.name.trim()} · ${this._weekdaysLabel(draft.weekdays)} ${this._fmtSlotTime(draft.time_local)}`
+                    : `${this._weekdaysLabel(draft.weekdays)} ${this._fmtSlotTime(draft.time_local)}`,
             })
             : "";
         return b `
@@ -2142,9 +2281,9 @@ class ViewSchedule extends i {
                   <div class="slot-row-summary">
                     <p class="slot-row-title">
                       ${slot.name
-                ? b `<span class="slot-name">${slot.name}</span> · ${this._wd(slot.weekday)}
+                ? b `<span class="slot-name">${slot.name}</span> · ${this._weekdaysLabel(slot.weekdays)}
                           ${this._fmtSlotTime(slot.time_local)}`
-                : b `${this._wd(slot.weekday)} ${this._fmtSlotTime(slot.time_local)}`}
+                : b `${this._weekdaysLabel(slot.weekdays)} ${this._fmtSlotTime(slot.time_local)}`}
                     </p>
                     <p class="slot-row-meta">
                       ${(() => {
@@ -2213,18 +2352,12 @@ class ViewSchedule extends i {
           </div>
         </div>
         <div class="field-block">
-          <span class="field-title">${t(this.hass, "config_panel.schedule_weekday_title")}</span>
-          <p class="field-desc">${t(this.hass, "config_panel.schedule_weekday_desc")}</p>
-          <select
-            class="field-select"
-            @change=${(e) => {
-            this._newWeekday = parseInt(e.target.value, 10);
-        }}
-          >
-            ${[0, 1, 2, 3, 4, 5, 6].map((i) => b `<option value=${i} ?selected=${this._newWeekday === i}>
-                  ${this._wd(i)}
-                </option>`)}
-          </select>
+          <span class="field-title">${t(this.hass, "config_panel.schedule_weekdays_title")}</span>
+          <p class="field-desc">${t(this.hass, "config_panel.schedule_weekdays_desc")}</p>
+          ${this._renderWeekdayPicker(this._newWeekdays, (next) => {
+            this._newWeekdays = next;
+            this.requestUpdate();
+        })}
         </div>
         <div class="field-block">
           <span class="field-title">${t(this.hass, "config_panel.schedule_week_parity_title")}</span>
@@ -2287,9 +2420,13 @@ class ViewSchedule extends i {
                 class="primary"
                 ?disabled=${this._busy}
                 @click=${async () => {
+            if (this._newWeekdays.length === 0) {
+                this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
+                return;
+            }
             const ok = await this._call({
                 action: "add",
-                weekday: this._newWeekday,
+                weekdays: this._newWeekdays,
                 time_local: this._newTime,
                 enabled: this._newEnabled,
                 name: this._newSlotName.trim(),
@@ -2329,19 +2466,12 @@ class ViewSchedule extends i {
                 </div>
               </div>
               <div class="field-block">
-                <span class="field-title">${t(this.hass, "config_panel.schedule_weekday_title")}</span>
-                <select
-                  class="field-select"
-                  .value=${String(draft.weekday)}
-                  @change=${(e) => {
-                draft.weekday = parseInt(e.target.value, 10);
+                <span class="field-title">${t(this.hass, "config_panel.schedule_weekdays_title")}</span>
+                <p class="field-desc">${t(this.hass, "config_panel.schedule_weekdays_desc")}</p>
+                ${this._renderWeekdayPicker(draft.weekdays, (next) => {
+                draft.weekdays = next;
                 this.requestUpdate();
-            }}
-                >
-                  ${[0, 1, 2, 3, 4, 5, 6].map((i) => b `<option value=${i} ?selected=${draft.weekday === i}>
-                        ${this._wd(i)}
-                      </option>`)}
-                </select>
+            })}
               </div>
               <div class="field-block">
                 <span class="field-title">${t(this.hass, "config_panel.schedule_week_parity_title")}</span>
@@ -2504,6 +2634,18 @@ class ViewSchedule extends i {
                     >
                       ${t(this.hass, "config_panel.schedule_delete_slot")}
                     </button>
+                    ${draft.weekdays.length > 1
+                ? b `
+                          <button
+                            type="button"
+                            class="btn-outline"
+                            ?disabled=${this._busy}
+                            @click=${() => this._splitSlotDraft()}
+                          >
+                            ${t(this.hass, "config_panel.schedule_split_slot")}
+                          </button>
+                        `
+                : A}
                   `
             : A}
             </div>
@@ -2788,48 +2930,58 @@ function buildTimetableEntries(installation) {
     for (const slot of slots) {
         const slotId = String(slot.slot_id ?? "");
         const slotEnabled = Boolean(slot.enabled ?? true);
-        const weekday = Math.max(0, Math.min(6, Number(slot.weekday ?? 0)));
+        const rawWeekdays = Array.isArray(slot.weekdays)
+            ? slot.weekdays
+                .map((n) => Math.max(0, Math.min(6, Number(n))))
+                .filter((n) => Number.isInteger(n))
+            : [];
+        // Fall back to the legacy scalar weekday for pre-migration data.
+        const weekdays = rawWeekdays.length
+            ? Array.from(new Set(rawWeekdays))
+            : [Math.max(0, Math.min(6, Number(slot.weekday ?? 0)))];
         const timeLocal = String(slot.time_local ?? "00:00");
         const weekParity = normalizeWeekParity(slot.week_parity);
         const ordered = Array.isArray(slot.zone_ids_ordered)
             ? slot.zone_ids_ordered
             : [];
         const slotStartMin = parseTimeLocalToMinutes(timeLocal);
-        let cursor = slotStartMin + preStartSec / 60;
         const phases = computePhases(ordered, zonesById, maxParallel, false);
-        for (const phase of phases) {
-            const phaseStart = cursor;
-            let phaseLenMin = 0;
-            for (const zid of phase) {
-                const z = zones[zid];
-                if (!z)
-                    continue;
-                if (Boolean(z.enabled ?? true)) {
-                    const d = durationForMode(z, mode);
-                    phaseLenMin = Math.max(phaseLenMin, d);
+        for (const weekday of weekdays) {
+            let cursor = slotStartMin + preStartSec / 60;
+            for (const phase of phases) {
+                const phaseStart = cursor;
+                let phaseLenMin = 0;
+                for (const zid of phase) {
+                    const z = zones[zid];
+                    if (!z)
+                        continue;
+                    if (Boolean(z.enabled ?? true)) {
+                        const d = durationForMode(z, mode);
+                        phaseLenMin = Math.max(phaseLenMin, d);
+                    }
                 }
+                for (const zid of phase) {
+                    const z = zones[zid];
+                    if (!z)
+                        continue;
+                    const zoneEnabled = Boolean(z.enabled ?? true);
+                    const dur = durationForMode(z, mode);
+                    const startMin = phaseStart;
+                    const endMin = phaseStart + dur;
+                    entries.push({
+                        zoneId: zid,
+                        weekday,
+                        startMin,
+                        endMin,
+                        bucket: bucketFromStartMin(startMin),
+                        enabled: planEnabled && slotEnabled && zoneEnabled,
+                        mode,
+                        slotId,
+                        weekParity,
+                    });
+                }
+                cursor = phaseStart + phaseLenMin;
             }
-            for (const zid of phase) {
-                const z = zones[zid];
-                if (!z)
-                    continue;
-                const zoneEnabled = Boolean(z.enabled ?? true);
-                const dur = durationForMode(z, mode);
-                const startMin = phaseStart;
-                const endMin = phaseStart + dur;
-                entries.push({
-                    zoneId: zid,
-                    weekday,
-                    startMin,
-                    endMin,
-                    bucket: bucketFromStartMin(startMin),
-                    enabled: planEnabled && slotEnabled && zoneEnabled,
-                    mode,
-                    slotId,
-                    weekParity,
-                });
-            }
-            cursor = phaseStart + phaseLenMin;
         }
     }
     return entries;

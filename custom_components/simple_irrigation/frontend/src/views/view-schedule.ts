@@ -5,7 +5,13 @@ import { defineCustomElementOnce, formatApiError } from "../helpers";
 import { stripEditSlotQueryFromUrl } from "../navigation";
 import { t } from "../i18n";
 import { formLayoutStyles } from "../form-layout-styles";
-import { formatTimeLocalForDisplay, weekdayLong } from "../date-format";
+import {
+  formatTimeLocalForDisplay,
+  normalizeWeekdays,
+  weekdayLong,
+  weekdayShort,
+  weekdaysSummary,
+} from "../date-format";
 import { phaseIndexByZoneId, type ZonePhaseInput } from "../schedule-phases";
 import type { HomeAssistant } from "../types";
 
@@ -15,13 +21,16 @@ const WEEK_PARITIES: WeekParity[] = ["every", "odd", "even"];
 
 interface SlotRow {
   slot_id: string;
-  weekday: number;
+  weekdays: number[];
   time_local: string;
   enabled: boolean;
   zone_ids_ordered: string[];
   name: string;
   week_parity: WeekParity;
 }
+
+/** Monday-based weekday indices in display order. */
+const WEEKDAY_ORDER = [0, 1, 2, 3, 4, 5, 6];
 
 export class ViewSchedule extends LitElement {
   static properties = {
@@ -190,12 +199,46 @@ export class ViewSchedule extends LitElement {
       .toolbar .btn-outline {
         margin-top: 0;
       }
+      .weekday-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 4px 0 10px;
+      }
+      .weekday-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .chip {
+        padding: 8px 12px;
+        border-radius: 999px;
+        border: 1px solid var(--divider-color);
+        background: var(--card-background-color);
+        color: var(--primary-text-color);
+        cursor: pointer;
+        font-size: 0.9rem;
+        line-height: 1;
+      }
+      .chip.day {
+        min-width: 44px;
+        text-align: center;
+      }
+      .chip.active {
+        background: var(--primary-color);
+        color: var(--text-primary-color);
+        border-color: var(--primary-color);
+      }
+      .chip:disabled {
+        opacity: 0.6;
+        cursor: default;
+      }
     `,
   ];
 
   @state() private _busy = false;
   @state() private _msg?: string;
-  private _newWeekday = 0;
+  private _newWeekdays: number[] = [0];
   private _newTime = "06:00";
   private _newEnabled = true;
   private _newSlotName = "";
@@ -209,6 +252,10 @@ export class ViewSchedule extends LitElement {
 
   private _wd(i: number): string {
     return weekdayLong(this.hass, i);
+  }
+
+  private _weekdaysLabel(weekdays: number[]): string {
+    return weekdaysSummary(this.hass, weekdays);
   }
 
   private _parityLabel(parity: WeekParity): string {
@@ -226,9 +273,10 @@ export class ViewSchedule extends LitElement {
     if (!Array.isArray(s)) return [];
     return s.map((raw) => {
       const o = raw as Record<string, unknown>;
+      const wds = normalizeWeekdays(o.weekdays);
       return {
         slot_id: String(o.slot_id ?? ""),
-        weekday: Number(o.weekday ?? 0),
+        weekdays: wds.length ? wds : normalizeWeekdays([o.weekday ?? 0]),
         time_local: String(o.time_local ?? "06:00"),
         enabled: Boolean(o.enabled ?? true),
         zone_ids_ordered: Array.isArray(o.zone_ids_ordered)
@@ -244,8 +292,15 @@ export class ViewSchedule extends LitElement {
   private _cloneSlot(s: SlotRow): SlotRow {
     return {
       ...s,
+      weekdays: [...s.weekdays],
       zone_ids_ordered: [...s.zone_ids_ordered],
     };
+  }
+
+  private _toggleWeekday(current: number[], day: number): number[] {
+    return current.includes(day)
+      ? current.filter((d) => d !== day)
+      : normalizeWeekdays([...current, day]);
   }
 
   private _zoneName(zid: string): string {
@@ -345,7 +400,7 @@ export class ViewSchedule extends LitElement {
   }
 
   private _resetNewSlotForm(): void {
-    this._newWeekday = 0;
+    this._newWeekdays = [0];
     this._newTime = "06:00";
     this._newEnabled = true;
     this._newSlotName = "";
@@ -390,10 +445,14 @@ export class ViewSchedule extends LitElement {
   private async _saveSlotDraft(): Promise<void> {
     const d = this._slotEditDraft;
     if (!d) return;
+    if (d.weekdays.length === 0) {
+      this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
+      return;
+    }
     const ok = await this._call({
       action: "update",
       slot_id: d.slot_id,
-      weekday: d.weekday,
+      weekdays: d.weekdays,
       time_local: d.time_local,
       enabled: d.enabled,
       zone_ids_ordered: d.zone_ids_ordered,
@@ -415,12 +474,22 @@ export class ViewSchedule extends LitElement {
     }
   }
 
+  private async _splitSlotDraft(): Promise<void> {
+    const d = this._slotEditDraft;
+    if (!d || d.weekdays.length <= 1) return;
+    if (!confirm(t(this.hass, "config_panel.schedule_confirm_split"))) return;
+    const ok = await this._call({ action: "split", slot_id: d.slot_id });
+    if (ok) {
+      this._closeEditDialog();
+    }
+  }
+
   private async _toggleSlotEnabled(slot: SlotRow, enabled: boolean): Promise<void> {
     if (this._busy) return;
     const ok = await this._call({
       action: "update",
       slot_id: slot.slot_id,
-      weekday: slot.weekday,
+      weekdays: slot.weekdays,
       time_local: slot.time_local,
       enabled,
       zone_ids_ordered: slot.zone_ids_ordered,
@@ -430,6 +499,54 @@ export class ViewSchedule extends LitElement {
     if (!ok) {
       this.requestUpdate();
     }
+  }
+
+  /** Weekday multi-select chips + quick presets (Daily / Mon–Fri / Weekend). */
+  private _renderWeekdayPicker(
+    selected: number[],
+    onChange: (next: number[]) => void
+  ): unknown {
+    const presets: Array<{ label: string; days: number[] }> = [
+      { label: t(this.hass, "config_panel.schedule_preset_daily"), days: [0, 1, 2, 3, 4, 5, 6] },
+      { label: t(this.hass, "config_panel.schedule_preset_workdays"), days: [0, 1, 2, 3, 4] },
+      { label: t(this.hass, "config_panel.schedule_preset_weekend"), days: [5, 6] },
+    ];
+    const sameSet = (a: number[], b: number[]): boolean =>
+      a.length === b.length && a.every((v, i) => v === b[i]);
+    return html`
+      <div class="weekday-presets">
+        ${presets.map(
+          (p) => html`
+            <button
+              type="button"
+              class="chip preset ${sameSet(normalizeWeekdays(selected), normalizeWeekdays(p.days))
+                ? "active"
+                : ""}"
+              ?disabled=${this._busy}
+              @click=${() => onChange(normalizeWeekdays(p.days))}
+            >
+              ${p.label}
+            </button>
+          `
+        )}
+      </div>
+      <div class="weekday-chips" role="group">
+        ${WEEKDAY_ORDER.map(
+          (i) => html`
+            <button
+              type="button"
+              class="chip day ${selected.includes(i) ? "active" : ""}"
+              aria-pressed=${selected.includes(i) ? "true" : "false"}
+              title=${this._wd(i)}
+              ?disabled=${this._busy}
+              @click=${() => onChange(this._toggleWeekday(selected, i))}
+            >
+              ${weekdayShort(this.hass, i)}
+            </button>
+          `
+        )}
+      </div>
+    `;
   }
 
   override updated(changed: PropertyValues): void {
@@ -446,10 +563,10 @@ export class ViewSchedule extends LitElement {
       draft != null
         ? t(this.hass, "config_panel.schedule_edit_dialog_title", {
             summary: draft.name.trim()
-              ? `${draft.name.trim()} · ${this._wd(draft.weekday)} ${this._fmtSlotTime(
+              ? `${draft.name.trim()} · ${this._weekdaysLabel(draft.weekdays)} ${this._fmtSlotTime(
                   draft.time_local
                 )}`
-              : `${this._wd(draft.weekday)} ${this._fmtSlotTime(draft.time_local)}`,
+              : `${this._weekdaysLabel(draft.weekdays)} ${this._fmtSlotTime(draft.time_local)}`,
           })
         : "";
 
@@ -492,11 +609,13 @@ export class ViewSchedule extends LitElement {
                   <div class="slot-row-summary">
                     <p class="slot-row-title">
                       ${slot.name
-                        ? html`<span class="slot-name">${slot.name}</span> · ${this._wd(
-                            slot.weekday
+                        ? html`<span class="slot-name">${slot.name}</span> · ${this._weekdaysLabel(
+                            slot.weekdays
                           )}
                           ${this._fmtSlotTime(slot.time_local)}`
-                        : html`${this._wd(slot.weekday)} ${this._fmtSlotTime(slot.time_local)}`}
+                        : html`${this._weekdaysLabel(slot.weekdays)} ${this._fmtSlotTime(
+                            slot.time_local
+                          )}`}
                     </p>
                     <p class="slot-row-meta">
                       ${(() => {
@@ -567,21 +686,12 @@ export class ViewSchedule extends LitElement {
           </div>
         </div>
         <div class="field-block">
-          <span class="field-title">${t(this.hass, "config_panel.schedule_weekday_title")}</span>
-          <p class="field-desc">${t(this.hass, "config_panel.schedule_weekday_desc")}</p>
-          <select
-            class="field-select"
-            @change=${(e: Event) => {
-              this._newWeekday = parseInt((e.target as HTMLSelectElement).value, 10);
-            }}
-          >
-            ${[0, 1, 2, 3, 4, 5, 6].map(
-              (i) =>
-                html`<option value=${i} ?selected=${this._newWeekday === i}>
-                  ${this._wd(i)}
-                </option>`
-            )}
-          </select>
+          <span class="field-title">${t(this.hass, "config_panel.schedule_weekdays_title")}</span>
+          <p class="field-desc">${t(this.hass, "config_panel.schedule_weekdays_desc")}</p>
+          ${this._renderWeekdayPicker(this._newWeekdays, (next) => {
+            this._newWeekdays = next;
+            this.requestUpdate();
+          })}
         </div>
         <div class="field-block">
           <span class="field-title">${t(this.hass, "config_panel.schedule_week_parity_title")}</span>
@@ -647,9 +757,13 @@ export class ViewSchedule extends LitElement {
                 class="primary"
                 ?disabled=${this._busy}
                 @click=${async () => {
+                  if (this._newWeekdays.length === 0) {
+                    this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
+                    return;
+                  }
                   const ok = await this._call({
                     action: "add",
-                    weekday: this._newWeekday,
+                    weekdays: this._newWeekdays,
                     time_local: this._newTime,
                     enabled: this._newEnabled,
                     name: this._newSlotName.trim(),
@@ -689,22 +803,12 @@ export class ViewSchedule extends LitElement {
                 </div>
               </div>
               <div class="field-block">
-                <span class="field-title">${t(this.hass, "config_panel.schedule_weekday_title")}</span>
-                <select
-                  class="field-select"
-                  .value=${String(draft.weekday)}
-                  @change=${(e: Event) => {
-                    draft.weekday = parseInt((e.target as HTMLSelectElement).value, 10);
-                    this.requestUpdate();
-                  }}
-                >
-                  ${[0, 1, 2, 3, 4, 5, 6].map(
-                    (i) =>
-                      html`<option value=${i} ?selected=${draft.weekday === i}>
-                        ${this._wd(i)}
-                      </option>`
-                  )}
-                </select>
+                <span class="field-title">${t(this.hass, "config_panel.schedule_weekdays_title")}</span>
+                <p class="field-desc">${t(this.hass, "config_panel.schedule_weekdays_desc")}</p>
+                ${this._renderWeekdayPicker(draft.weekdays, (next) => {
+                  draft.weekdays = next;
+                  this.requestUpdate();
+                })}
               </div>
               <div class="field-block">
                 <span class="field-title">${t(this.hass, "config_panel.schedule_week_parity_title")}</span>
@@ -890,6 +994,18 @@ export class ViewSchedule extends LitElement {
                     >
                       ${t(this.hass, "config_panel.schedule_delete_slot")}
                     </button>
+                    ${draft.weekdays.length > 1
+                      ? html`
+                          <button
+                            type="button"
+                            class="btn-outline"
+                            ?disabled=${this._busy}
+                            @click=${() => this._splitSlotDraft()}
+                          >
+                            ${t(this.hass, "config_panel.schedule_split_slot")}
+                          </button>
+                        `
+                      : nothing}
                   `
                 : nothing}
             </div>
