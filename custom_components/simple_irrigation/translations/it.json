@@ -182,7 +182,7 @@
     },
     "pause_until": {
       "name": "Pausa fino a",
-      "description": "Metta in pausa le esecuzioni automatiche pianificate fino a data e ora indicate.",
+      "description": "Mette in pausa le esecuzioni automatiche pianificate fino a data e ora indicate.",
       "fields": {
         "until": {
           "name": "Fino a",
@@ -290,7 +290,7 @@
     "general_pre_start_delay_desc": "Quanto tempo attendere dopo l’accensione delle uscite di pre-avvio prima che inizi l’irrigazione della zona. Dà il tempo alla pompa di creare pressione, riempie le tubazioni principali e può ridurre il rumore dovuto all’aria nei tubi.",
     "general_pre_start_delay_field": "Ritardo (secondi)",
     "general_watering_mode": "Modalità irrigazione",
-    "general_watering_mode_desc": "Imposta quale colonna di durata per zona viene usata: Eco (più breve), Normale o Extra (più lunga). Puoi anche controllarla con automazioni—for example quando il livello del serbatoio o la temperatura esterna devono scegliere Eco vs Extra—chiamando il servizio simple_irrigation.set_mode con mode impostato su eco, normal o extra (e config_entry_id se hai più piani).",
+    "general_watering_mode_desc": "Imposta quale colonna di durata per zona viene usata: Eco (più breve), Normale o Extra (più lunga). Puoi anche controllarla con automazioni—ad esempio quando il livello del serbatoio o la temperatura esterna devono scegliere Eco vs Extra—chiamando il servizio simple_irrigation.set_mode con mode impostato su eco, normal o extra (e config_entry_id se hai più piani).",
     "general_mode_eco": "Eco",
     "general_mode_normal": "Normale",
     "general_mode_extra": "Extra",
