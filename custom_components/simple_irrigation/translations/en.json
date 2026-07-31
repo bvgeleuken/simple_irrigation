@@ -79,6 +79,14 @@
       "zone_run_now": {
         "name": "{zone_name} run now"
       }
+    },
+    "switch": {
+      "schedule_enabled": {
+        "name": "Schedule enabled"
+      },
+      "slot_enabled": {
+        "name": "{slot_name} enabled"
+      }
     }
   },
   "services": {
