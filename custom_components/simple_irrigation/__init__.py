@@ -50,6 +50,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         Platform.SENSOR,
         Platform.BINARY_SENSOR,
         Platform.BUTTON,
+        Platform.SWITCH,
     ]
 
     store = SimpleIrrigationStore(hass, entry.entry_id)
@@ -129,6 +130,7 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         Platform.SENSOR,
         Platform.BINARY_SENSOR,
         Platform.BUTTON,
+        Platform.SWITCH,
     ]
 
     domain_data = hass.data.get(DOMAIN, {}).get(entry.entry_id)

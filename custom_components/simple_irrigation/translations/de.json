@@ -79,6 +79,14 @@
       "zone_run_now": {
         "name": "{zone_name} jetzt starten"
       }
+    },
+    "switch": {
+      "schedule_enabled": {
+        "name": "Zeitplan aktiv"
+      },
+      "slot_enabled": {
+        "name": "{slot_name} aktiv"
+      }
     }
   },
   "services": {

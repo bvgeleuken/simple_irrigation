@@ -79,6 +79,14 @@
       "zone_run_now": {
         "name": "Esegui subito {zone_name}"
       }
+    },
+    "switch": {
+      "schedule_enabled": {
+        "name": "Pianificazione attiva"
+      },
+      "slot_enabled": {
+        "name": "{slot_name} attivo"
+      }
     }
   },
   "services": {
