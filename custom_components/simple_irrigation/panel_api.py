@@ -31,6 +31,7 @@ from .const import (
 )
 from .grouping import compute_phases
 from .models import Installation, ScheduleSlot, Zone, normalize_weekdays
+from .cycle import CYCLE_KINDS, anchor_week_parity, generate_cycle_slots
 from .runtime import ScheduleSlotRunError, ZoneManualRunError
 from .scheduler import compute_next_runs, phases_for_slot
 from .time_util import next_slot_fire_local_any, parse_hh_mm
@@ -432,6 +433,8 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                         "split",
                         "add_zone",
                         "reorder_zone",
+                        "cycle_upsert",
+                        "cycle_delete",
                     )
                 ),
                 vol.Optional("slot_id"): cv.string,
@@ -444,6 +447,17 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 vol.Optional("zone_ids_ordered"): [cv.string],
                 vol.Optional("name"): cv.string,
                 vol.Optional("week_parity"): vol.In(WEEK_PARITIES),
+                vol.Optional("cycle_id"): vol.Any(cv.string, None),
+                vol.Optional("cycle_kind"): vol.In(CYCLE_KINDS),
+                vol.Optional("cycle_meta"): vol.Schema(
+                    {
+                        vol.Optional("label"): cv.string,
+                        vol.Optional("n"): vol.All(int, vol.Range(min=1, max=14)),
+                        vol.Optional("anchor_weekday"): vol.All(int, vol.Range(min=0, max=6)),
+                        vol.Optional("times"): [cv.string],
+                        vol.Optional("week_days"): [vol.All(int, vol.Range(min=0, max=6))],
+                    }
+                ),
             }
         )
     )
@@ -487,6 +501,91 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             inst.schedule_slots.append(slot)
             await coord.async_update_installation(inst)
             return self.json({"success": True, "slot_id": slot.slot_id})
+
+        if action == "cycle_upsert":
+            kind = str(data.get("cycle_kind") or "custom")
+            meta = dict(data.get("cycle_meta") or {})
+            zone_ids = list(data.get("zone_ids_ordered", []))
+            seen_z: set[str] = set()
+            for zid in zone_ids:
+                if zid not in inst.zones:
+                    return self.json({"success": False, "error": "unknown_zone"}, status=400)
+                if zid in seen_z:
+                    return self.json({"success": False, "error": "duplicate_zone"}, status=400)
+                seen_z.add(zid)
+            for tstr in meta.get("times") or []:
+                if parse_hh_mm(str(tstr).strip()) is None:
+                    return self.json({"success": False, "error": "invalid_time"}, status=400)
+            enabled = bool(data.get("enabled", True))
+            incoming_id = str(data.get("cycle_id") or "")  # set when editing an existing cycle
+            anchor = int(meta.get("anchor_weekday", 0))
+            p0 = anchor_week_parity(anchor, dt_util.now().date())
+            specs = generate_cycle_slots(kind, meta, anchor_parity=p0)
+            if not specs:
+                return self.json({"success": False, "error": "invalid_cycle"}, status=400)
+            label = str(meta.get("label") or "").strip()
+
+            # A "cycle" only exists when the cadence genuinely needs >=2 slots
+            # (e.g. every 2/3 days via odd/even parity). Cadences expressible as a
+            # single slot (daily, weekly, biweekly, n-per-week, custom) are stored
+            # as a plain slot with no cycle_id — so the UI treats them uniformly.
+            is_cycle = len(specs) >= 2
+            new_cid = (incoming_id or uuid.uuid4().hex) if is_cycle else None
+
+            existing = (
+                [s for s in inst.schedule_slots if incoming_id and s.cycle_id == incoming_id]
+                if incoming_id
+                else []
+            )
+            reused_ids = [s.slot_id for s in existing]
+            new_members = [
+                ScheduleSlot(
+                    slot_id=(reused_ids[i] if i < len(reused_ids) else uuid.uuid4().hex),
+                    weekdays=list(spec["weekdays"]),
+                    time_local=spec["time_local"],
+                    enabled=enabled,
+                    zone_ids_ordered=list(zone_ids),
+                    name=label,
+                    week_parity=spec["week_parity"],
+                    cycle_id=new_cid,
+                    cycle_kind=kind if is_cycle else "custom",
+                    cycle_meta=dict(meta) if is_cycle else None,
+                )
+                for i, spec in enumerate(specs)
+            ]
+            # Rebuild the slot list, replacing the previous group's members (matched
+            # by the incoming id) in place; append at the end when brand new.
+            result: list[ScheduleSlot] = []
+            inserted = False
+            for s in inst.schedule_slots:
+                if incoming_id and s.cycle_id == incoming_id:
+                    if not inserted:
+                        result.extend(new_members)
+                        inserted = True
+                    continue
+                result.append(s)
+            if not inserted:
+                result.extend(new_members)
+            inst.schedule_slots = result
+            await coord.async_update_installation(inst)
+            return self.json(
+                {
+                    "success": True,
+                    "cycle_id": new_cid,
+                    "slots": [s.slot_id for s in new_members],
+                }
+            )
+
+        if action == "cycle_delete":
+            rid = data.get("cycle_id")
+            if not rid:
+                return self.json({"success": False, "error": "missing_cycle_id"}, status=400)
+            remaining = [s for s in inst.schedule_slots if s.cycle_id != rid]
+            if len(remaining) == len(inst.schedule_slots):
+                return self.json({"success": False, "error": "unknown_cycle"}, status=400)
+            inst.schedule_slots = remaining
+            await coord.async_update_installation(inst)
+            return self.json({"success": True})
 
         sid = data.get("slot_id")
         if not sid:
@@ -551,6 +650,13 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 slot.name = str(data["name"] or "").strip()
             if "week_parity" in data:
                 slot.week_parity = str(data["week_parity"])
+            if "cycle_id" in data:
+                slot.cycle_id = str(data["cycle_id"]) if data["cycle_id"] else None
+            if "cycle_kind" in data:
+                slot.cycle_kind = str(data["cycle_kind"])
+            if "cycle_meta" in data:
+                meta_raw = data["cycle_meta"]
+                slot.cycle_meta = dict(meta_raw) if isinstance(meta_raw, dict) else None
             await coord.async_update_installation(inst)
             return self.json({"success": True})
 

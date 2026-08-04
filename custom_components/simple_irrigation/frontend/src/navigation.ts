@@ -8,13 +8,13 @@ export interface PanelPath {
 export const getPath = (): PanelPath => {
   const parts = window.location.pathname.split("/").filter(Boolean);
   if (parts[0] !== BASE) {
-    return { entryId: null, page: "general" };
+    return { entryId: null, page: "overview" };
   }
   if (parts.length < 2) {
-    return { entryId: null, page: "general" };
+    return { entryId: null, page: "overview" };
   }
   const entryId = parts[1];
-  const page = parts[2] || "general";
+  const page = parts[2] || "overview";
   return { entryId, page };
 };
 

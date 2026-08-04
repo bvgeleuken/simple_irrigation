@@ -1,14 +1,17 @@
 # Screenshots
 
-These files are embedded in the root [`README.md`](../README.md).
+These files are embedded in the root [`README.md`](../README.md) and are regenerated
+with [`scripts/make_screenshots.js`](../scripts/make_screenshots.js) against a running
+sandbox.
 
 | File | Content |
 |------|---------|
-| `general_1.png` | General tab — current run, schedule overview, plan control |
-| `general_2.png` | General tab — installation settings |
-| `zones.png` | Zones list |
-| `zones_edit.png` | Zone editor dialog |
-| `schedule.png` | Schedule slots list |
-| `schedule_edit.png` | Slot editor (run order / phases) |
+| `overview.png` | Overview tab — current run, next runs, watering mode |
+| `zones.png` | Zones tab — list with modes, exclusive and issue filters |
+| `zone_edit.png` | Zone editor — outputs, per-mode runtimes, exclusive |
+| `schedule.png` | Schedule tab — cycles and slots, a cycle expanded to its 14-day strip |
+| `cycle_wizard.png` | New irrigation cycle wizard — live 14-day preview |
+| `schedule_edit.png` | Slot editor — weekday picker, week cycle, run order and phases |
 | `timetable.png` | Timetable tab — weekly grid (zones × weekdays, time-of-day rows) |
-| `status.png` | Runtime status |
+| `settings.png` | Settings tab — installation, pre-start, watering, defaults |
+| `simple_irrigation_logo.png` | Logo used in the README header |

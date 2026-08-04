@@ -30,6 +30,34 @@ export const saveSlot = (
 ): Promise<{ success: boolean; error?: string; slot_id?: string }> =>
   hass.callApi("POST", "simple_irrigation/panel/slot", { entry_id: entryId, ...body });
 
+export const upsertCycle = (
+  hass: HomeAssistant,
+  entryId: string,
+  body: {
+    cycle_id: string | null;
+    cycle_kind: string;
+    cycle_meta: Record<string, unknown>;
+    zone_ids_ordered: string[];
+    enabled: boolean;
+  }
+): Promise<{ success: boolean; error?: string; cycle_id?: string; slots?: string[] }> =>
+  hass.callApi("POST", "simple_irrigation/panel/slot", {
+    entry_id: entryId,
+    action: "cycle_upsert",
+    ...body,
+  });
+
+export const deleteCycle = (
+  hass: HomeAssistant,
+  entryId: string,
+  cycleId: string
+): Promise<{ success: boolean; error?: string }> =>
+  hass.callApi("POST", "simple_irrigation/panel/slot", {
+    entry_id: entryId,
+    action: "cycle_delete",
+    cycle_id: cycleId,
+  });
+
 export const runSlotNow = (
   hass: HomeAssistant,
   entryId: string,

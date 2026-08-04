@@ -20,6 +20,7 @@ import {
   type TimetableEntry,
   type WeekParity,
 } from "../timetable-model";
+import { sharedStyles } from "../shared-styles";
 import type { HomeAssistant } from "../types";
 
 export class ViewTimetable extends LitElement {
@@ -33,19 +34,9 @@ export class ViewTimetable extends LitElement {
   entryId!: string;
   installation!: Record<string, unknown>;
 
-  static styles = css`
-    ha-card {
-      margin-bottom: 16px;
-    }
-    .card-content {
-      padding: 0 8px 16px;
-    }
-    .intro {
-      font-size: 0.875rem;
-      color: var(--secondary-text-color);
-      line-height: 1.45;
-      margin: 0 0 12px;
-    }
+  static styles = [
+    sharedStyles,
+    css`
     .table-wrap {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -369,10 +360,104 @@ export class ViewTimetable extends LitElement {
         height: 16px;
       }
     }
-  `;
+    /* Sticky header row + first (zone) column on horizontal scroll. */
+    .tt-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .tt-zone-name {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+    .tt-foot-total {
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.72rem;
+      color: var(--secondary-text-color);
+      background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    }
+    .tt-foot-label {
+      text-align: right;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--secondary-text-color);
+      background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    }
+    /* Mobile day view */
+    .day-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 4px 0 14px;
+    }
+    .day-pill {
+      flex: 1 1 auto;
+      min-width: 40px;
+      border: 1px solid var(--divider-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-text-color);
+      font: inherit;
+      font-size: 0.8rem;
+      padding: 8px 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .day-pill.selected {
+      background: var(--primary-color);
+      color: var(--text-primary-color, #fff);
+      border-color: var(--primary-color);
+    }
+    .day-pill .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--primary-color);
+    }
+    .day-pill.selected .dot {
+      background: var(--text-primary-color, #fff);
+    }
+    .day-run {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--divider-color);
+      border-left: 3px solid var(--primary-color);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .day-run.disabled {
+      border-left-color: var(--disabled-text-color, #6d7476);
+      opacity: 0.75;
+    }
+    .day-run-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .day-run-time {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .day-total {
+      font-size: 0.8rem;
+      color: var(--secondary-text-color);
+      margin: 6px 0 0;
+    }
+  `,
+  ];
 
   /** Selected week view; null = follow the current calendar week. */
   @state() private _weekView: Exclude<WeekParity, "every"> | null = null;
+  /** Selected weekday for the mobile day view; null = today. */
+  @state() private _selectedDay: number | null = null;
 
   private _parityLabel(parity: WeekParity): string {
     if (parity === "odd") return t(this.hass, "config_panel.week_parity_odd");
@@ -468,10 +553,16 @@ export class ViewTimetable extends LitElement {
 
     if (!zones || zoneIds.length === 0) {
       return html`
-        <ha-card .header=${t(this.hass, "config_panel.timetable_card_title")}>
+        <ha-card>
+          <div class="card-header">
+            <ha-icon icon="mdi:calendar-week"></ha-icon>
+            ${t(this.hass, "config_panel.timetable_card_title")}
+          </div>
           <div class="card-content">
-            <p class="intro">${t(this.hass, "config_panel.timetable_intro")}</p>
-            <p class="empty">${t(this.hass, "config_panel.timetable_empty_no_zones")}</p>
+            <div class="empty-state">
+              <ha-icon icon="mdi:calendar-week"></ha-icon>
+              <p>${t(this.hass, "config_panel.timetable_empty_no_zones")}</p>
+            </div>
           </div>
         </ha-card>
       `;
@@ -479,10 +570,16 @@ export class ViewTimetable extends LitElement {
 
     if (!slots?.length) {
       return html`
-        <ha-card .header=${t(this.hass, "config_panel.timetable_card_title")}>
+        <ha-card>
+          <div class="card-header">
+            <ha-icon icon="mdi:calendar-week"></ha-icon>
+            ${t(this.hass, "config_panel.timetable_card_title")}
+          </div>
           <div class="card-content">
-            <p class="intro">${t(this.hass, "config_panel.timetable_intro")}</p>
-            <p class="empty">${t(this.hass, "config_panel.timetable_empty_no_slots")}</p>
+            <div class="empty-state">
+              <ha-icon icon="mdi:calendar-blank-outline"></ha-icon>
+              <p>${t(this.hass, "config_panel.timetable_empty_no_slots")}</p>
+            </div>
           </div>
         </ha-card>
       `;
@@ -495,10 +592,33 @@ export class ViewTimetable extends LitElement {
       byCell.get(k)!.push(e);
     }
 
+    // Per-weekday totals (sum of visible-entry durations) for the footer row.
+    const dayTotals = new Map<number, number>();
+    for (const e of entries) {
+      dayTotals.set(e.weekday, (dayTotals.get(e.weekday) ?? 0) + (e.endMin - e.startMin));
+    }
+    // Mobile day view: runs on the selected weekday, chronological.
+    const todayWd = (new Date().getDay() + 6) % 7;
+    const selDay = this._selectedDay ?? todayWd;
+    const dayEntries = entries
+      .filter((e) => e.weekday === selDay)
+      .sort((a, b) => a.startMin - b.startMin);
+    const dayTotal = Math.round(dayEntries.reduce((s, e) => s + (e.endMin - e.startMin), 0));
+
     return html`
-      <ha-card .header=${t(this.hass, "config_panel.timetable_card_title")}>
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:calendar-week"></ha-icon>
+          ${t(this.hass, "config_panel.timetable_card_title")}
+        </div>
         <div class="card-content">
-          <p class="intro">${t(this.hass, "config_panel.timetable_intro")}</p>
+          <details class="inline-help">
+            <summary>
+              <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+              ${t(this.hass, "config_panel.timetable_help_summary")}
+            </summary>
+            <p>${t(this.hass, "config_panel.timetable_intro")}</p>
+          </details>
           ${viewParity
             ? html`
                 <div
@@ -532,7 +652,52 @@ export class ViewTimetable extends LitElement {
                 </div>
               `
             : nothing}
-          <div class="table-wrap">
+          <div class="only-narrow">
+            <div class="day-pills" role="group" aria-label=${t(this.hass, "config_panel.timetable_col_zone")}>
+              ${colOrder.map((wd) => {
+                const has = (dayTotals.get(wd) ?? 0) > 0;
+                return html`<button
+                  type="button"
+                  class="day-pill ${wd === selDay ? "selected" : ""}"
+                  aria-pressed=${wd === selDay ? "true" : "false"}
+                  @click=${() => (this._selectedDay = wd)}
+                >
+                  <span>${weekdayLong(this.hass, wd)}</span>
+                  ${has ? html`<span class="dot" aria-hidden="true"></span>` : nothing}
+                </button>`;
+              })}
+            </div>
+            ${dayEntries.length
+              ? html`
+                  ${dayEntries.map((e) => {
+                    const start = formatSlotTimeForProfile(this.hass, minutesToTimeLocal(e.startMin));
+                    const end = formatSlotTimeForProfile(this.hass, minutesToTimeLocal(e.endMin));
+                    return html`
+                      <div
+                        class="day-run ${e.enabled ? "" : "disabled"}"
+                        role="button"
+                        tabindex="0"
+                        @click=${() => this._openSlotEditor(e.slotId)}
+                        @keydown=${(ev: KeyboardEvent) => this._blockKeydown(ev, e.slotId)}
+                      >
+                        <ha-icon icon=${this._bucketIcon(e.bucket)} style="color:var(--secondary-text-color)"></ha-icon>
+                        <div class="day-run-main">
+                          <span class="day-run-time">${start} – ${end}</span>
+                          <div class="meta-line">
+                            <span class="meta ellipsis">${zoneDisplayName(inst, e.zoneId)}</span>
+                            <span class="meta">${t(this.hass, "config_panel.timetable_duration_min", {
+                              n: entryDurationMinutesRounded(e),
+                            })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+                  })}
+                  <p class="day-total">${t(this.hass, "config_panel.timetable_day_total", { n: dayTotal })}</p>
+                `
+              : html`<p class="muted" style="padding:8px 0">${t(this.hass, "config_panel.timetable_day_empty")}</p>`}
+          </div>
+          <div class="table-wrap hide-narrow">
             <table class="tt-table">
               <thead>
                 <tr>
@@ -623,6 +788,19 @@ export class ViewTimetable extends LitElement {
                   });
                 })}
               </tbody>
+              <tfoot>
+                <tr>
+                  <th class="tt-foot-label" scope="row" colspan="2">
+                    ${t(this.hass, "config_panel.timetable_totals_label")}
+                  </th>
+                  ${colOrder.map((wd) => {
+                    const total = Math.round(dayTotals.get(wd) ?? 0);
+                    return html`<td class="tt-foot-total">
+                      ${total > 0 ? t(this.hass, "config_panel.timetable_duration_min", { n: total }) : "—"}
+                    </td>`;
+                  })}
+                </tr>
+              </tfoot>
             </table>
           </div>
           <div class="foot">

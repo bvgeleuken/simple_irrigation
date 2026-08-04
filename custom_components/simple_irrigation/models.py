@@ -104,6 +104,11 @@ class ScheduleSlot:
     zone_ids_ordered: list[str] = field(default_factory=list)
     name: str = ""  # optional label for automations / recognition in the UI
     week_parity: str = WEEK_PARITY_EVERY  # every | odd | even (ISO calendar week)
+    # --- Cycle grouping (presentation + generation metadata only) -----------
+    # The runtime never reads these; scheduling still uses weekdays/time/parity.
+    cycle_id: str | None = None  # uuid4 shared by all slots of one cycle
+    cycle_kind: str = "custom"  # daily | twice_daily | every_n_days | n_per_week | weekly | biweekly | custom
+    cycle_meta: dict[str, Any] | None = None  # {"n", "anchor_weekday", "times", "label"}
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-compatible dict."""
@@ -117,11 +122,14 @@ class ScheduleSlot:
             "zone_ids_ordered": list(self.zone_ids_ordered),
             "name": self.name,
             "week_parity": self.week_parity,
+            "cycle_id": self.cycle_id,
+            "cycle_kind": self.cycle_kind,
+            "cycle_meta": dict(self.cycle_meta) if self.cycle_meta else None,
         }
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> ScheduleSlot:
-        """Deserialize from store dict."""
+        """Deserialize from store dict (tolerates missing cycle keys)."""
         parity = str(data.get("week_parity") or WEEK_PARITY_EVERY)
         if parity not in WEEK_PARITIES:
             parity = WEEK_PARITY_EVERY
@@ -130,6 +138,11 @@ class ScheduleSlot:
             weekdays = normalize_weekdays([data.get("weekday")])
         if not weekdays:
             weekdays = [0]
+        cycle_id_raw = data.get("cycle_id")
+        cycle_id = str(cycle_id_raw) if cycle_id_raw else None
+        cycle_kind = str(data.get("cycle_kind") or "custom")
+        cycle_meta_raw = data.get("cycle_meta")
+        cycle_meta = dict(cycle_meta_raw) if isinstance(cycle_meta_raw, dict) else None
         return ScheduleSlot(
             slot_id=data["slot_id"],
             weekdays=weekdays,
@@ -138,6 +151,9 @@ class ScheduleSlot:
             zone_ids_ordered=list(data.get("zone_ids_ordered", [])),
             name=str(data.get("name") or ""),
             week_parity=parity,
+            cycle_id=cycle_id,
+            cycle_kind=cycle_kind,
+            cycle_meta=cycle_meta,
         )
 
 

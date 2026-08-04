@@ -40,6 +40,9 @@ async def async_get_config_entry_diagnostics(
                 "week_parity": slot.week_parity,
                 "enabled": slot.enabled,
                 "zone_ids_ordered": list(slot.zone_ids_ordered),
+                "cycle_id": slot.cycle_id,
+                "cycle_kind": slot.cycle_kind,
+                "cycle_meta": slot.cycle_meta,
                 "computed_phases": phases,
             }
         )

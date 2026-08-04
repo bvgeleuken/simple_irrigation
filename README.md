@@ -1,5 +1,6 @@
 [![CI](https://github.com/florianbaethge/simple_irrigation/actions/workflows/ci.yml/badge.svg)](https://github.com/florianbaethge/simple_irrigation/actions/workflows/ci.yml)
 [![HACS Default](https://img.shields.io/badge/HACS-Default-41BDF5.svg)](https://hacs.xyz)
+[![License: MIT](https://img.shields.io/github/license/florianbaethge/simple_irrigation)](https://github.com/florianbaethge/simple_irrigation/blob/main/LICENSE)
 
 <p align="center">
   <img
@@ -9,52 +10,59 @@
   >
 </p>
 
+**Irrigation scheduler for [Home Assistant](https://www.home-assistant.io/) with a built-in dashboard panel — zones, watering cycles & modes.**
 
-- **Three watering modes** — Eco / Normal / Extra (swappable via automation)
-- **Smart parallel runs** — configurable concurrency + exclusive zones
-- **Complete configuration in GUI** — Zones · Schedule · Timetable 
-- **Multi-installation** — create multiple irrigation installations to control multiple gardens or add seasonal control
+- **Watering cycles, not raw cron** — a guided wizard turns *“every 2 days, evenings”* into a working schedule; the panel previews the **next 14 days** live before you save.
+- **Three watering modes** — Eco / Normal / Extra, switchable by hand or from automations (weather, tank level, season …).
+- **Smart runs** — ordered zones grouped into **phases**, configurable parallelism, and **exclusive** zones that always run alone.
+- **Everything in the UI** — Overview · Zones · Schedule · Timetable · Settings. No YAML for zones or schedules.
+- **Multiple gardens** — add several installations for different plots or seasonal plans.
 
-**Custom integration for [Home Assistant](https://www.home-assistant.io/)** that orchestrates one irrigation system per config entry: weekly schedule slots, irrigation outputs (switches, `input_boolean`, groups, valves), global **Eco / Normal / Extra** watering modes, optional **pre-start** outputs, **parallel** runs with **exclusive** zones, **pause** and **skip today**, and a **sidebar panel** for full configuration (no YAML for zones or schedule). The panel includes a **Timetable** tab with a week-at-a-glance grid (zones × weekdays, morning/day/evening buckets) derived from your slots and current mode.
+Outputs can be any mix of `switch`, `input_boolean`, `group` and `valve` entities. Optional **pre-start** outputs (pump / master valve) fire first. Full **English**, **German** and **Italian** translations. Responsive down to the Home Assistant companion app.
 
----
-
-## Overview
-
-| Area | What it does |
-|------|----------------|
-| **General** | Live run state (preparing / running / stopping), next scheduled run, plan on/off, skip today / clear pause, pre-start entities, mode, max parallel zones, stop / skip phase / clear error |
-| **Zones** | Named zones, one or more output entities per zone, Eco/Normal/Extra runtimes (minutes), enabled flag, **exclusive** (never parallel with others) |
-| **Schedule** | Weekly slots (one or more **weekdays** + local time, with quick presets “Every day / Mon–Fri / Weekend”), optional slot name, ordered zone list, **phase** preview from parallel rules, “run this slot now”, and “split into single days” |
-| **Timetable** | Weekly overview: each zone’s planned runs by weekday, split into **morning / daytime / evening** rows; uses the same phase and mode timing as a real run; **click a block** to jump to **Schedule** and open that slot’s editor |
-| **Status** | Human-readable runtime summary and optional **raw JSON** for debugging |
-
-Languages: **English** and **German** (UI strings, config flow, entities, services, panel). The panel follows the Home Assistant user language when translations are loaded.
-
-**Requirements:** Home Assistant **2024.1** or newer (see `hacs.json`).
+**Requirements:** Home Assistant **2024.1** or newer.
 
 ---
 
-## Repository layout
+## The panel at a glance
 
-```
-simple_irrigation/
-├── custom_components/simple_irrigation/   # Integration code (Python + built panel)
-│   ├── frontend/
-│   │   ├── src/                           # Lit/TypeScript panel sources
-│   │   └── dist/simple-irrigation-panel.js # Built bundle (commit this for HACS)
-│   ├── translations/en.json               # English strings
-│   ├── translations/de.json             # German strings
-│   ├── strings.json                     # Config flow source strings (English)
-│   ├── manifest.json
-│   └── …
-├── tests/                               # Pytest
-├── screenshots/                         # Optional UI screenshots (see screenshots/README.md)
-├── .github/workflows/ci.yml             # Tests, panel build, hassfest, HACS validation
-├── hacs.json
-├── LICENSE
-└── README.md
-```
+| Tab | What it does |
+|-----|----------------|
+| **Overview** | Live run state with a countdown to the next run, the next few upcoming runs, the active watering mode, and quick actions: *Run next slot now*, *Skip today*, *Pause 48 h* (plus *Stop* / *Skip phase* while running). |
+| **Zones** | Named zones with one or more output entities, Eco / Normal / Extra runtimes, an **enabled** toggle and **exclusive** flag. Filter by **All / Enabled / Issues**, run a zone now, see how many cycles use it. |
+| **Schedule** | Your watering **cycles** and single slots. A guided **New irrigation cycle** wizard (daily, every 2/3 days, x-per-week, weekly, every 2 weeks, custom). Every row expands to a **14-day run strip**; multi-slot cycles show their members and can be detached. |
+| **Timetable** | Week-at-a-glance grid (zones × weekdays, morning / daytime / evening) with per-day totals, using the same phase and mode timing as a real run. On phones it becomes a per-day list. Click a run to jump straight to its editor. |
+| **Settings** | Installation name (shown in the panel header), pre-start outputs & delay, watering mode, max parallel zones, default installation, service reference and raw diagnostics. |
+
+---
+
+## Screenshots
+
+### Overview
+
+![Overview tab — current run, next runs, watering mode](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/overview.png)
+
+### Zones
+
+![Zones tab — zone list with modes, exclusive and issue filters](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/zones.png)
+
+![Edit zone — outputs, per-mode runtimes, exclusive](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/zone_edit.png)
+
+### Schedule & cycles
+
+![Schedule tab — cycles and slots, with a cycle expanded to its 14-day strip](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/schedule.png)
+
+![New irrigation cycle wizard — live 14-day preview](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/cycle_wizard.png)
+
+![Edit slot — weekday picker, week cycle, run order and phases](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/schedule_edit.png)
+
+### Timetable
+
+![Timetable tab — weekly overview by zone and weekday](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/timetable.png)
+
+### Settings
+
+![Settings tab — installation, pre-start, watering, defaults](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/settings.png)
 
 ---
 
@@ -62,7 +70,7 @@ simple_irrigation/
 
 ### HACS (recommended)
 
-1. Open HACS → **Integrations** → search **Simple Irrigation**.
+1. Open HACS → search **Simple Irrigation**.
 2. Click **Download** and restart Home Assistant.
 3. **Settings → Devices & services → Add integration** → search **Simple Irrigation**.
 
@@ -75,84 +83,70 @@ Copy the folder `custom_components/simple_irrigation/` into your Home Assistant 
 ## First-time setup
 
 1. Complete the **config flow**: installation name, optional pre-start outputs, default mode, max parallel zones.
-2. Open the sidebar entry **Simple Irrigation** (admin only).
-3. Pick your installation if you have several entries.
-4. On **Zones**, add zones and outputs; set durations for Eco / Normal / Extra.
-5. On **Schedule**, add slots (weekday + time), then **Edit** each slot to set **run order** and review **phases**.
-6. Use **Timetable** to see when each zone runs across the week; open a slot for editing by **clicking** a run block.
+2. Open the sidebar entry **Simple Irrigation** (admin only). If you have several installations, pick one.
+3. On **Zones**, add your zones and their output entities; set Eco / Normal / Extra runtimes and mark any **exclusive** zone.
+4. On **Schedule**, click **New irrigation cycle** and let the wizard build the cadence — the 14-day strip previews exactly when it will run before you create it.
+5. Use **Timetable** to see the whole week at a glance; click any run to open its editor.
 
-You can add **multiple** config entries for separate gardens or seasonal plans (each appears in the panel picker).
-
----
-
-## Customization
-
-- **Watering mode (Eco / Normal / Extra):** Each zone has three duration columns. The active mode chooses which column is used for scheduled and default service runs. Change it in the panel or with the `simple_irrigation.set_mode` service (ideal for automations driven by weather, tank level, etc.).
-- **Max parallel zones:** Caps how many zones may run at once. **Exclusive** zones still run alone.
-- **Pre-start outputs:** Turned on before zones (e.g. pump / master valve). The delay before zones start defaults to **10 seconds** (`PRE_START_DELAY_SEC` in `const.py`) and is stored per installation; the General tab edits the pre-start entity list only, not the delay.
-- **Plan off:** Disables automatic starts for that entry; manual runs may still be possible depending on your use of services.
-- **Pause / skip today:** Pause respects **scheduled** starts only; an **already running** cycle is stopped from **General** with **Stop irrigation**.
+You can add **multiple** config entries for separate gardens or seasonal plans (each appears in the panel picker, and its name shows in the panel header).
 
 ---
 
-## Zones and schedule slots
+## Concepts
 
 ### Zones
 
-- **Outputs:** Any mix of `switch`, `input_boolean`, `group`, and `valve` entities. Most use `turn_on` / `turn_off`; valves use `open_valve` / `close_valve`.
-- **Exclusive:** When checked, that zone never runs in parallel with others (useful for high-flow or shared supply lines).
-- **Disabled:** Skipped at runtime and omitted from phase previews where applicable.
+- **Outputs:** any mix of `switch`, `input_boolean`, `group` and `valve` entities. Most use `turn_on` / `turn_off`; valves use `open_valve` / `close_valve`. A zone can drive **several outputs** at once.
+- **Runtimes:** three values per zone — Eco / Normal / Extra. The installation’s active **mode** picks which one is used.
+- **Exclusive:** the zone never runs in parallel with others (high-flow lines, shared supply, drip circuits).
+- **Issues filter:** zones whose output entity is missing or `unavailable` are flagged so you can spot broken wiring at a glance.
 
-### Schedule slots
+### Cycles and slots
 
-- Each slot is a **weekday** and **local time** (Home Assistant timezone), with an **enabled** toggle (disabled slots are ignored by the scheduler).
-- **Week rhythm:** A slot fires **every week** (default), or only in **odd** / **even** ISO calendar weeks. Two slots on alternating weeks give an every-two-weeks rhythm without changing anything else.
-- **Run order** is the ordered list of zone IDs. **Phases** group zones that may start together according to **max parallel** and **exclusive** rules.
-- **Edit** a slot to reorder (**Up** / **Down**), **Remove** from list, or **Add zone** from the dropdown.
-- **Run this slot now** starts that slot’s sequence immediately (shown as a manual run on **Status**). The same behavior is available to automations as `simple_irrigation.run_schedule_slot` with `slot_id`.
-- On the **Zones** tab, **Run zone now** starts a single zone with the same pre-start and shutdown behavior as a scheduled run; automations can use `simple_irrigation.run_zone` (or `run_zone_with_duration`) with `zone_id`.
+A **cycle** is a repeating watering cadence. The wizard offers:
 
-Tuning **phases:** Reorder zones or adjust **max parallel** / **exclusive** flags until the phase breakdown matches how you want water to overlap.
+| Cadence | Result |
+|---------|--------|
+| **Daily** / **Weekly** / **Every 2 weeks** / **x days per week** / **Custom days** | a single schedule slot |
+| **Every 2 days** / **Every 3 days** | a grouped **cycle** of two linked slots |
+
+Why the split? A slot can water on chosen weekdays and, optionally, only in **odd** or **even** ISO calendar weeks. That covers most cadences in one slot — but a true *every-2-days* rhythm needs two slots on alternating parity (odd weeks Mon/Wed/Fri/Sun, even weeks Tue/Thu/Sat). Only those grouped multi-slot cadences appear as a **cycle** with member rows and a **Detach into single slots** action; everything else is a plain, single slot. Either way, **every row expands to a 14-day run strip** so you can see exactly when it fires.
+
+- **Run order & phases:** the ordered zone list is grouped into **phases** by the *max parallel* limit and *exclusive* flags. The editor shows the phase breakdown live.
+- **Optimize cycles:** detects existing single-day slots that together form a known cadence and offers to merge them into one cycle — no re-entry, nothing runs differently.
+- **Run now:** *Run next slot now* (Overview), *Run this slot now* (a schedule row) and *Run zone now* (Zones) all use the same pre-start and shutdown pipeline as a scheduled run.
+
+### Modes, pre-start, pause
+
+- **Watering mode (Eco / Normal / Extra):** chosen on Overview or Settings, or via `simple_irrigation.set_mode` for weather/tank automations.
+- **Max parallel zones:** caps concurrency; exclusive zones still run alone.
+- **Pre-start outputs & delay:** outputs turned on before any zone (pump / master valve), with an editable delay to build pressure — both configured on **Settings**.
+- **Pause / Skip today / Pause 48 h:** affect **scheduled** starts only; an already-running cycle is stopped from **Overview**.
 
 ### Timetable
 
-- **Grid:** One row group per **zone**; columns are **weekdays** (order follows your Home Assistant profile’s week start when set). Each zone has three **time-of-day** rows (icons: morning 0:00–8:00, daytime 8:00–16:00, evening 16:00–24:00). A run appears in the row that matches its **start** time.
-- **Timing:** Computed from your **schedule slots**, **pre-start delay**, current **Eco / Normal / Extra** mode, and the same **phase** rules as the runtime (including **disabled** zones/slots shown in a muted style).
-- **Week rhythm:** If any slot runs only in odd/even calendar weeks, a toggle above the grid switches between the two weeks (the current week is preselected and labeled). Biweekly runs are drawn with a **dashed** border and a small calendar badge.
-- **Zones** list shows how many slots reference each zone (**Added to *n* slots**).
-- **Deep link:** Clicking a timetable block opens the **Schedule** tab with that slot’s **Edit** dialog (URL uses `?editSlot=…`, then cleans up without reloading the panel).
-
----
-
-## Logs and debugging
-
-- **Home Assistant log:** Filter for `simple_irrigation` or set default logging:
-
-  ```yaml
-  logger:
-    logs:
-      custom_components.simple_irrigation: debug
-  ```
-
-- **Diagnostics:** **Settings → Devices & services → Simple Irrigation → Download diagnostics** (integration supports diagnostics).
-- **Panel:** **Status** tab → **Show raw state (debug)** for the live `run_state` object.
+- **Grid:** one row group per zone; columns are weekdays (order follows your HA profile’s week start). Three time-of-day rows per zone (morning 0–8, daytime 8–16, evening 16–24), a **total per weekday** footer, and the same phase/mode timing as the runtime. Disabled zones/slots render muted.
+- **Odd/even weeks:** a toggle switches between calendar-week parities when any cycle uses them; biweekly runs are drawn dashed.
+- **Mobile:** below ~700 px the grid becomes a **per-day list** with the day’s runs and total — no horizontal scrolling.
+- **Deep link:** clicking a run opens the **Schedule** editor for that slot (and expands its cycle).
 
 ---
 
 ## Automations and services
 
-All services accept optional `config_entry_id` when you have more than one Simple Irrigation entry. Find the ID under **Settings → Devices & services → Simple Irrigation → …** (or in diagnostics).
+All services accept an optional `config_entry_id` when you run more than one Simple Irrigation entry (find it in **Settings → Devices & services** or in diagnostics).
 
 | Service | Typical use |
 |---------|-------------|
-| `simple_irrigation.run_zone` | Start one zone with pre-start outputs, duration from current mode, then off |
+| `simple_irrigation.run_zone` | Start one zone with pre-start, duration from the current mode, then off |
 | `simple_irrigation.run_zone_with_duration` | Same pipeline with a fixed duration (minutes) |
-| `simple_irrigation.run_schedule_slot` | Run one slot’s full sequence now (same as **Run this slot now** in the panel) |
+| `simple_irrigation.run_schedule_slot` | Run one slot’s full sequence now (`slot_id`) |
 | `simple_irrigation.run_due_zones` | Trigger “what’s due now” |
 | `simple_irrigation.stop_all` | Stop the active cycle |
 | `simple_irrigation.set_mode` | Set `eco` / `normal` / `extra` |
+| `simple_irrigation.set_zone_enabled` | Enable/disable a zone |
 | `simple_irrigation.pause_until` | Pause automatic runs until a datetime (`until` field) |
-| `simple_irrigation.clear_pause` | Clear pause |
+| `simple_irrigation.clear_pause` | Clear the pause |
 
 Example — set mode from an automation:
 
@@ -163,37 +157,22 @@ data:
   # config_entry_id: abc123...  # if multiple entries
 ```
 
-Use **Developer tools → Services** to explore fields with translated descriptions.
+Every schedule slot and per-slot toggle is also exposed as a **switch** entity, so you can enable/disable individual runs from dashboards and automations. Use **Developer tools → Actions** to explore fields with translated descriptions.
 
 ---
 
-## Screenshots
+## Logs and debugging
 
-### General
+- **Home Assistant log:**
 
-![General tab — current run, schedule overview, plan control](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/general_1.png)
+  ```yaml
+  logger:
+    logs:
+      custom_components.simple_irrigation: debug
+  ```
 
-![General tab — general settings (pre-start, mode, max parallel)](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/general_2.png)
-
-### Zones
-
-![Zones tab — list](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/zones.png)
-
-![Zones tab — edit zone](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/zones_edit.png)
-
-### Schedule
-
-![Schedule tab — slots](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/schedule.png)
-
-![Schedule tab — edit slot (run order and phases)](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/schedule_edit.png)
-
-### Timetable
-
-![Timetable tab — weekly overview by zone and weekday](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/timetable.png)
-
-### Status
-
-![Status tab — runtime summary](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/status.png)
+- **Diagnostics:** **Settings → Devices & services → Simple Irrigation → Download diagnostics**.
+- **Panel:** the **Settings** tab has a *Diagnostics (raw run state)* disclosure and a *For automations* block with service names and the `config_entry_id`.
 
 ---
 
@@ -208,32 +187,25 @@ pytest tests/
 cd custom_components/simple_irrigation/frontend
 npm ci
 npm run build
+
+# Regenerate screenshots against a running sandbox (see scripts/make_screenshots.js)
+cd custom_components/simple_irrigation/scripts && npm i
+HA_URL=http://localhost:8123 HA_TOKEN=<long-lived-token> SI_ENTRY=<config-entry-id> \
+  node scripts/make_screenshots.js
 ```
 
 Commit the updated `frontend/dist/simple-irrigation-panel.js` when you change the panel sources so HACS users do not need Node.
 
-## Version Management
+## Version management
 
-The integration version is centrally managed in the `VERSION` file. To update the version across all files:
+The version is centrally managed in the `VERSION` file:
 
 ```bash
-# Update to a new version
-make update-version VERSION=1.0.0
-
-# Or use the Python script directly
-python3 update_version.py 1.0.0
-
-# Check current version
-make version
+make update-version VERSION=1.0.0   # or: python3 update_version.py 1.0.0
+make version                        # show current version
 ```
 
-This automatically updates:
-- `VERSION` file (source of truth)
-- `manifest.json` 
-- `frontend/package.json`
-- `frontend/src/simple-irrigation-panel.ts` (TypeScript source)
-- `custom_components/simple_irrigation/version.py` (embedded version)
-- `frontend/dist/simple-irrigation-panel.js` (rebuilt automatically)
+This updates `VERSION`, `manifest.json`, `frontend/package.json`, the panel TypeScript/embedded version, and rebuilds `frontend/dist/simple-irrigation-panel.js`.
 
 ---
 
