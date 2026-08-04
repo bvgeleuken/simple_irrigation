@@ -5,9 +5,10 @@ from __future__ import annotations
 import datetime as dt
 from zoneinfo import ZoneInfo
 
-from custom_components.simple_irrigation.models import ScheduleSlot
+from custom_components.simple_irrigation.models import ScheduleSlot, normalize_weekdays
 from custom_components.simple_irrigation.time_util import (
     next_slot_fire_local,
+    next_slot_fire_local_any,
     parse_hh_mm,
     week_parity_matches,
 )
@@ -91,3 +92,50 @@ def test_schedule_slot_week_parity_serialization() -> None:
         {"slot_id": "c", "weekday": 3, "time_local": "08:00", "week_parity": "nope"}
     )
     assert bogus.week_parity == "every"
+
+
+def test_normalize_weekdays() -> None:
+    """Sorted, de-duplicated, clamped to 0..6."""
+    assert normalize_weekdays([3, 0, 0, 6, 9, -1]) == [0, 3, 6]
+    assert normalize_weekdays([]) == []
+    assert normalize_weekdays(None) == []
+    assert normalize_weekdays(["1", 2]) == [1, 2]
+
+
+def test_schedule_slot_weekdays_serialization() -> None:
+    """Legacy scalar upgrades to weekdays; to_dict keeps both keys."""
+    # Legacy single-weekday dicts load as weekdays=[x].
+    legacy = ScheduleSlot.from_dict({"slot_id": "a", "weekday": 1, "time_local": "06:00"})
+    assert legacy.weekdays == [1]
+
+    multi = ScheduleSlot.from_dict(
+        {"slot_id": "b", "weekdays": [6, 0, 3], "time_local": "06:00"}
+    )
+    assert multi.weekdays == [0, 3, 6]
+
+    d = multi.to_dict()
+    assert d["weekdays"] == [0, 3, 6]
+    assert d["weekday"] == 0  # legacy key = first weekday (downgrade safety)
+    assert ScheduleSlot.from_dict(d).weekdays == [0, 3, 6]
+
+    # Missing/empty weekdays fall back to [0].
+    assert ScheduleSlot.from_dict({"slot_id": "c", "time_local": "06:00"}).weekdays == [0]
+
+
+def test_next_slot_fire_local_any() -> None:
+    """Earliest fire across multiple weekdays; empty list -> None."""
+    tz = ZoneInfo("Europe/Berlin")
+    after = dt.datetime(2025, 3, 23, 12, 0, tzinfo=tz)  # Sunday
+
+    # Monday (0) beats Wednesday (2) -> next Monday 2025-03-24.
+    nxt = next_slot_fire_local_any(after, [2, 0], "06:00", tz)
+    assert nxt is not None
+    assert nxt.date() == dt.date(2025, 3, 24)
+
+    # Single-day list matches the scalar helper.
+    assert next_slot_fire_local_any(after, [0], "06:00", tz) == next_slot_fire_local(
+        after, 0, "06:00", tz
+    )
+
+    # No weekdays -> no fire.
+    assert next_slot_fire_local_any(after, [], "06:00", tz) is None

@@ -13,7 +13,7 @@ from homeassistant.util import dt as dt_util
 
 from .grouping import compute_phases
 from .models import Installation, ScheduleSlot, Zone
-from .time_util import next_slot_fire_local
+from .time_util import next_slot_fire_local_any
 
 if TYPE_CHECKING:
     from .coordinator import SimpleIrrigationCoordinator
@@ -37,9 +37,9 @@ def compute_next_runs(
     for slot in inst.schedule_slots:
         if not slot.enabled:
             continue
-        nxt = next_slot_fire_local(
+        nxt = next_slot_fire_local_any(
             after,
-            slot.weekday,
+            slot.weekdays,
             slot.time_local,
             tz,
             slot.week_parity,
@@ -186,9 +186,9 @@ class IrrigationScheduler:
             for slot in inst.schedule_slots:
                 if not slot.enabled:
                     continue
-                nxt = next_slot_fire_local(
+                nxt = next_slot_fire_local_any(
                     now - timedelta(minutes=1),
-                    slot.weekday,
+                    slot.weekdays,
                     slot.time_local,
                     tz,
                     slot.week_parity,

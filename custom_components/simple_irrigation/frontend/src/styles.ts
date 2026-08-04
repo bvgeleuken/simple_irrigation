@@ -44,7 +44,9 @@ export const panelStyles = css`
   }
   .view-inner {
     width: 100%;
-    max-width: 840px;
+    max-width: 1100px;
+    container-type: inline-size;
+    container-name: siview;
   }
   .entry-picker {
     padding: 24px;

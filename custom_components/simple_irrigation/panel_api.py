@@ -30,10 +30,11 @@ from .const import (
     WEEK_PARITY_EVERY,
 )
 from .grouping import compute_phases
-from .models import Installation, ScheduleSlot, Zone
+from .models import Installation, ScheduleSlot, Zone, normalize_weekdays
+from .cycle import CYCLE_KINDS, anchor_week_parity, generate_cycle_slots
 from .runtime import ScheduleSlotRunError, ZoneManualRunError
 from .scheduler import compute_next_runs, phases_for_slot
-from .time_util import next_slot_fire_local, parse_hh_mm
+from .time_util import next_slot_fire_local_any, parse_hh_mm
 from .validation import (
     parse_zone_switch_entities,
     validate_max_parallel,
@@ -96,14 +97,16 @@ def _schedule_next_summary(hass: HomeAssistant, inst: Installation) -> dict[str,
     for slot in inst.schedule_slots:
         if not slot.enabled:
             continue
-        nxt = next_slot_fire_local(
-            after, slot.weekday, slot.time_local, tz, slot.week_parity
+        nxt = next_slot_fire_local_any(
+            after, slot.weekdays, slot.time_local, tz, slot.week_parity
         )
         if nxt is None:
             continue
         if abs((nxt - global_next).total_seconds()) < 1:
             matching.append(slot)
 
+    # Weekday the schedule actually fires next (all matching slots share global_next).
+    fire_weekday = global_next.weekday()
     zones = inst.zones
     out_slots: list[dict[str, Any]] = []
     for s in matching:
@@ -111,7 +114,8 @@ def _schedule_next_summary(hass: HomeAssistant, inst: Installation) -> dict[str,
         out_slots.append(
             {
                 "slot_id": s.slot_id,
-                "weekday": s.weekday,
+                "weekday": fire_weekday,
+                "weekdays": list(s.weekdays),
                 "time_local": s.time_local,
                 "zone_names": names,
                 "name": s.name or "",
@@ -426,12 +430,16 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                         "add",
                         "update",
                         "delete",
+                        "split",
                         "add_zone",
                         "reorder_zone",
+                        "cycle_upsert",
+                        "cycle_delete",
                     )
                 ),
                 vol.Optional("slot_id"): cv.string,
                 vol.Optional("weekday"): vol.All(int, vol.Range(min=0, max=6)),
+                vol.Optional("weekdays"): [vol.All(int, vol.Range(min=0, max=6))],
                 vol.Optional("time_local"): cv.string,
                 vol.Optional("enabled"): cv.boolean,
                 vol.Optional("zone_id"): cv.string,
@@ -439,6 +447,17 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 vol.Optional("zone_ids_ordered"): [cv.string],
                 vol.Optional("name"): cv.string,
                 vol.Optional("week_parity"): vol.In(WEEK_PARITIES),
+                vol.Optional("cycle_id"): vol.Any(cv.string, None),
+                vol.Optional("cycle_kind"): vol.In(CYCLE_KINDS),
+                vol.Optional("cycle_meta"): vol.Schema(
+                    {
+                        vol.Optional("label"): cv.string,
+                        vol.Optional("n"): vol.All(int, vol.Range(min=1, max=14)),
+                        vol.Optional("anchor_weekday"): vol.All(int, vol.Range(min=0, max=6)),
+                        vol.Optional("times"): [cv.string],
+                        vol.Optional("week_days"): [vol.All(int, vol.Range(min=0, max=6))],
+                    }
+                ),
             }
         )
     )
@@ -456,14 +475,24 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
         def _find_slot(sid: str) -> ScheduleSlot | None:
             return next((s for s in inst.schedule_slots if s.slot_id == sid), None)
 
+        def _resolve_weekdays(fallback: list[int] | None = None) -> list[int] | None:
+            """weekdays from payload (list preferred, legacy scalar accepted)."""
+            if "weekdays" in data:
+                return normalize_weekdays(data["weekdays"])
+            if "weekday" in data:
+                return normalize_weekdays([data["weekday"]])
+            return fallback
+
         if action == "add":
             t = data.get("time_local", "06:00")
             if parse_hh_mm(str(t).strip()) is None:
                 return self.json({"success": False, "error": "invalid_time"}, status=400)
-            wd = int(data.get("weekday", 0))
+            weekdays = _resolve_weekdays([0])
+            if not weekdays:
+                return self.json({"success": False, "error": "invalid_weekdays"}, status=400)
             slot = ScheduleSlot(
                 slot_id=str(uuid.uuid4()),
-                weekday=wd,
+                weekdays=weekdays,
                 time_local=str(t).strip(),
                 enabled=bool(data.get("enabled", True)),
                 name=str(data.get("name") or "").strip(),
@@ -472,6 +501,91 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             inst.schedule_slots.append(slot)
             await coord.async_update_installation(inst)
             return self.json({"success": True, "slot_id": slot.slot_id})
+
+        if action == "cycle_upsert":
+            kind = str(data.get("cycle_kind") or "custom")
+            meta = dict(data.get("cycle_meta") or {})
+            zone_ids = list(data.get("zone_ids_ordered", []))
+            seen_z: set[str] = set()
+            for zid in zone_ids:
+                if zid not in inst.zones:
+                    return self.json({"success": False, "error": "unknown_zone"}, status=400)
+                if zid in seen_z:
+                    return self.json({"success": False, "error": "duplicate_zone"}, status=400)
+                seen_z.add(zid)
+            for tstr in meta.get("times") or []:
+                if parse_hh_mm(str(tstr).strip()) is None:
+                    return self.json({"success": False, "error": "invalid_time"}, status=400)
+            enabled = bool(data.get("enabled", True))
+            incoming_id = str(data.get("cycle_id") or "")  # set when editing an existing cycle
+            anchor = int(meta.get("anchor_weekday", 0))
+            p0 = anchor_week_parity(anchor, dt_util.now().date())
+            specs = generate_cycle_slots(kind, meta, anchor_parity=p0)
+            if not specs:
+                return self.json({"success": False, "error": "invalid_cycle"}, status=400)
+            label = str(meta.get("label") or "").strip()
+
+            # A "cycle" only exists when the cadence genuinely needs >=2 slots
+            # (e.g. every 2/3 days via odd/even parity). Cadences expressible as a
+            # single slot (daily, weekly, biweekly, n-per-week, custom) are stored
+            # as a plain slot with no cycle_id — so the UI treats them uniformly.
+            is_cycle = len(specs) >= 2
+            new_cid = (incoming_id or uuid.uuid4().hex) if is_cycle else None
+
+            existing = (
+                [s for s in inst.schedule_slots if incoming_id and s.cycle_id == incoming_id]
+                if incoming_id
+                else []
+            )
+            reused_ids = [s.slot_id for s in existing]
+            new_members = [
+                ScheduleSlot(
+                    slot_id=(reused_ids[i] if i < len(reused_ids) else uuid.uuid4().hex),
+                    weekdays=list(spec["weekdays"]),
+                    time_local=spec["time_local"],
+                    enabled=enabled,
+                    zone_ids_ordered=list(zone_ids),
+                    name=label,
+                    week_parity=spec["week_parity"],
+                    cycle_id=new_cid,
+                    cycle_kind=kind if is_cycle else "custom",
+                    cycle_meta=dict(meta) if is_cycle else None,
+                )
+                for i, spec in enumerate(specs)
+            ]
+            # Rebuild the slot list, replacing the previous group's members (matched
+            # by the incoming id) in place; append at the end when brand new.
+            result: list[ScheduleSlot] = []
+            inserted = False
+            for s in inst.schedule_slots:
+                if incoming_id and s.cycle_id == incoming_id:
+                    if not inserted:
+                        result.extend(new_members)
+                        inserted = True
+                    continue
+                result.append(s)
+            if not inserted:
+                result.extend(new_members)
+            inst.schedule_slots = result
+            await coord.async_update_installation(inst)
+            return self.json(
+                {
+                    "success": True,
+                    "cycle_id": new_cid,
+                    "slots": [s.slot_id for s in new_members],
+                }
+            )
+
+        if action == "cycle_delete":
+            rid = data.get("cycle_id")
+            if not rid:
+                return self.json({"success": False, "error": "missing_cycle_id"}, status=400)
+            remaining = [s for s in inst.schedule_slots if s.cycle_id != rid]
+            if len(remaining) == len(inst.schedule_slots):
+                return self.json({"success": False, "error": "unknown_cycle"}, status=400)
+            inst.schedule_slots = remaining
+            await coord.async_update_installation(inst)
+            return self.json({"success": True})
 
         sid = data.get("slot_id")
         if not sid:
@@ -485,9 +599,36 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             await coord.async_update_installation(inst)
             return self.json({"success": True})
 
+        if action == "split":
+            if len(slot.weekdays) <= 1:
+                return self.json({"success": False, "error": "nothing_to_split"}, status=400)
+            idx = inst.schedule_slots.index(slot)
+            new_slots = [
+                ScheduleSlot(
+                    slot_id=str(uuid.uuid4()),
+                    weekdays=[wd],
+                    time_local=slot.time_local,
+                    enabled=slot.enabled,
+                    zone_ids_ordered=list(slot.zone_ids_ordered),
+                    name=slot.name,
+                    week_parity=slot.week_parity,
+                )
+                for wd in slot.weekdays
+            ]
+            inst.schedule_slots[idx : idx + 1] = new_slots
+            await coord.async_update_installation(inst)
+            return self.json(
+                {"success": True, "slot_ids": [s.slot_id for s in new_slots]}
+            )
+
         if action == "update":
-            if "weekday" in data:
-                slot.weekday = int(data["weekday"])
+            weekdays = _resolve_weekdays()
+            if weekdays is not None:
+                if not weekdays:
+                    return self.json(
+                        {"success": False, "error": "invalid_weekdays"}, status=400
+                    )
+                slot.weekdays = weekdays
             if "time_local" in data:
                 tl = str(data["time_local"]).strip()
                 if parse_hh_mm(tl) is None:
@@ -509,6 +650,13 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 slot.name = str(data["name"] or "").strip()
             if "week_parity" in data:
                 slot.week_parity = str(data["week_parity"])
+            if "cycle_id" in data:
+                slot.cycle_id = str(data["cycle_id"]) if data["cycle_id"] else None
+            if "cycle_kind" in data:
+                slot.cycle_kind = str(data["cycle_kind"])
+            if "cycle_meta" in data:
+                meta_raw = data["cycle_meta"]
+                slot.cycle_meta = dict(meta_raw) if isinstance(meta_raw, dict) else None
             await coord.async_update_installation(inst)
             return self.json({"success": True})
 

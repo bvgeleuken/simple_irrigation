@@ -10,9 +10,9 @@ import { loadHaPanelElements } from "./load-ha-elements";
 import { exportPath, getPath } from "./navigation";
 import { panelStyles } from "./styles";
 import type { HomeAssistant, PanelStateResult } from "./types";
-import "./views/view-general";
+import "./views/view-overview";
 import "./views/view-schedule";
-import "./views/view-status";
+import "./views/view-settings";
 import "./views/view-timetable";
 import "./views/view-zones";
 
@@ -20,20 +20,35 @@ import "./views/view-zones";
 declare const __VERSION__: string;
 const VERSION = __VERSION__;
 
-const PANEL_PAGES = ["general", "zones", "schedule", "timetable", "status"] as const;
+const PANEL_PAGES = ["overview", "zones", "schedule", "timetable", "settings"] as const;
 type PanelPage = (typeof PANEL_PAGES)[number];
 
+/** Legacy path aliases so existing links / deep links keep working. */
+const PAGE_ALIASES: Record<string, PanelPage> = {
+  general: "overview",
+  status: "settings",
+};
+
 const TAB_LABEL_KEYS: Record<PanelPage, string> = {
-  general: "config_panel.tab_general",
+  overview: "config_panel.tab_overview",
   zones: "config_panel.tab_zones",
   schedule: "config_panel.tab_schedule",
   timetable: "config_panel.tab_timetable",
-  status: "config_panel.tab_status",
+  settings: "config_panel.tab_settings",
+};
+
+const TAB_ICONS: Record<PanelPage, string> = {
+  overview: "mdi:view-dashboard-outline",
+  zones: "mdi:vector-square",
+  schedule: "mdi:format-list-bulleted-type",
+  timetable: "mdi:calendar-week",
+  settings: "mdi:cog-outline",
 };
 
 function normalizePanelPage(raw: string | undefined): PanelPage {
-  const p = raw || "general";
-  return (PANEL_PAGES as readonly string[]).includes(p) ? (p as PanelPage) : "general";
+  const p = raw || "overview";
+  if ((PANEL_PAGES as readonly string[]).includes(p)) return p as PanelPage;
+  return PAGE_ALIASES[p] ?? "overview";
 }
 
 export class SimpleIrrigationPanel extends LitElement {
@@ -234,7 +249,7 @@ export class SimpleIrrigationPanel extends LitElement {
       }
       const defaultEntry = this._entries.find((e) => e.is_default);
       if (defaultEntry) {
-        navigate(this, exportPath(defaultEntry.entry_id, "general"));
+        navigate(this, exportPath(defaultEntry.entry_id, "overview"));
         this.requestUpdate();
         return;
       }
@@ -244,8 +259,11 @@ export class SimpleIrrigationPanel extends LitElement {
       return;
     }
     await this._loadState(entryId);
-    if (page && !(PANEL_PAGES as readonly string[]).includes(page)) {
-      navigate(this, exportPath(entryId, "general"));
+    // Redirect legacy/aliased/invalid page paths to their canonical page.
+    // (Must not compare against a dead literal — that would loop forever.)
+    const canonical = normalizePanelPage(page);
+    if (page !== canonical) {
+      navigate(this, exportPath(entryId, canonical));
     }
   }
 
@@ -357,7 +375,7 @@ export class SimpleIrrigationPanel extends LitElement {
   }
 
   private _pickEntry(entryId: string): void {
-    navigate(this, exportPath(entryId, "general"));
+    navigate(this, exportPath(entryId, "overview"));
     /* `location-changed` runs `_reloadPath` → `_loadState`; avoid a second concurrent fetch. */
   }
 
@@ -439,13 +457,16 @@ export class SimpleIrrigationPanel extends LitElement {
       <div class="header">
         <div class="toolbar">
           <ha-menu-button .hass=${this.hass} .narrow=${this.narrow}></ha-menu-button>
-          <div class="main-title">${t(this.hass, "config_panel.main_title")}</div>
+          <div class="main-title">
+            ${String(inst.name || "").trim() || t(this.hass, "config_panel.main_title")}
+          </div>
           <div class="version">v${VERSION}</div>
         </div>
         <ha-tab-group @wa-tab-show=${this._onTab}>
           ${PANEL_PAGES.map(
             (p) => html`
               <ha-tab-group-tab slot="nav" panel=${p} .active=${page === p}>
+                <ha-icon slot="prefix" icon=${TAB_ICONS[p]}></ha-icon>
                 ${t(this.hass, TAB_LABEL_KEYS[p])}
               </ha-tab-group-tab>
             `
@@ -454,16 +475,15 @@ export class SimpleIrrigationPanel extends LitElement {
       </div>
       <div class="view">
         <div class="view-inner">
-          ${page === "general"
-            ? html`<si-view-general
+          ${page === "overview"
+            ? html`<si-view-overview
                 .hass=${this.hass}
                 .entryId=${path.entryId!}
                 .installation=${inst}
                 .scheduleNext=${scheduleNext}
                 .runState=${rs}
-                .outputEntityDomains=${this._state?.output_entity_domains ?? ["switch", "input_boolean", "group", "valve"]}
                 .onSaved=${() => this._loadState(path.entryId!, { silent: true })}
-              ></si-view-general>`
+              ></si-view-overview>`
             : nothing}
           ${page === "zones"
             ? html`<si-view-zones
@@ -491,12 +511,15 @@ export class SimpleIrrigationPanel extends LitElement {
                 .installation=${inst}
               ></si-view-timetable>`
             : nothing}
-          ${page === "status"
-            ? html`<si-view-status
+          ${page === "settings"
+            ? html`<si-view-settings
                 .hass=${this.hass}
-                .runState=${rs}
+                .entryId=${path.entryId!}
                 .installation=${inst}
-              ></si-view-status>`
+                .runState=${rs}
+                .outputEntityDomains=${this._state?.output_entity_domains ?? ["switch", "input_boolean", "group", "valve"]}
+                .onSaved=${() => this._loadState(path.entryId!, { silent: true })}
+              ></si-view-settings>`
             : nothing}
         </div>
       </div>

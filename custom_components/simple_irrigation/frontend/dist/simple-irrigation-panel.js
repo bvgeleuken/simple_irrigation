@@ -3,20 +3,20 @@
  * Copyright 2019 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const t$2=globalThis,e$2=t$2.ShadowRoot&&(void 0===t$2.ShadyCSS||t$2.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,s$2=Symbol(),o$4=new WeakMap;let n$3 = class n{constructor(t,e,o){if(this._$cssResult$=true,o!==s$2)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e;}get styleSheet(){let t=this.o;const s=this.t;if(e$2&&void 0===t){const e=void 0!==s&&1===s.length;e&&(t=o$4.get(s)),void 0===t&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),e&&o$4.set(s,t));}return t}toString(){return this.cssText}};const r$4=t=>new n$3("string"==typeof t?t:t+"",void 0,s$2),i$3=(t,...e)=>{const o=1===t.length?t[0]:e.reduce((e,s,o)=>e+(t=>{if(true===t._$cssResult$)return t.cssText;if("number"==typeof t)return t;throw Error("Value passed to 'css' function must be a 'css' function result: "+t+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(s)+t[o+1],t[0]);return new n$3(o,t,s$2)},S$1=(s,o)=>{if(e$2)s.adoptedStyleSheets=o.map(t=>t instanceof CSSStyleSheet?t:t.styleSheet);else for(const e of o){const o=document.createElement("style"),n=t$2.litNonce;void 0!==n&&o.setAttribute("nonce",n),o.textContent=e.cssText,s.appendChild(o);}},c$2=e$2?t=>t:t=>t instanceof CSSStyleSheet?(t=>{let e="";for(const s of t.cssRules)e+=s.cssText;return r$4(e)})(t):t;
+const t$2=globalThis,e$4=t$2.ShadowRoot&&(void 0===t$2.ShadyCSS||t$2.ShadyCSS.nativeShadow)&&"adoptedStyleSheets"in Document.prototype&&"replace"in CSSStyleSheet.prototype,s$2=Symbol(),o$4=new WeakMap;let n$3 = class n{constructor(t,e,o){if(this._$cssResult$=true,o!==s$2)throw Error("CSSResult is not constructable. Use `unsafeCSS` or `css` instead.");this.cssText=t,this.t=e;}get styleSheet(){let t=this.o;const s=this.t;if(e$4&&void 0===t){const e=void 0!==s&&1===s.length;e&&(t=o$4.get(s)),void 0===t&&((this.o=t=new CSSStyleSheet).replaceSync(this.cssText),e&&o$4.set(s,t));}return t}toString(){return this.cssText}};const r$4=t=>new n$3("string"==typeof t?t:t+"",void 0,s$2),i$3=(t,...e)=>{const o=1===t.length?t[0]:e.reduce((e,s,o)=>e+(t=>{if(true===t._$cssResult$)return t.cssText;if("number"==typeof t)return t;throw Error("Value passed to 'css' function must be a 'css' function result: "+t+". Use 'unsafeCSS' to pass non-literal values, but take care to ensure page security.")})(s)+t[o+1],t[0]);return new n$3(o,t,s$2)},S$1=(s,o)=>{if(e$4)s.adoptedStyleSheets=o.map(t=>t instanceof CSSStyleSheet?t:t.styleSheet);else for(const e of o){const o=document.createElement("style"),n=t$2.litNonce;void 0!==n&&o.setAttribute("nonce",n),o.textContent=e.cssText,s.appendChild(o);}},c$2=e$4?t=>t:t=>t instanceof CSSStyleSheet?(t=>{let e="";for(const s of t.cssRules)e+=s.cssText;return r$4(e)})(t):t;
 
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
- */const{is:i$2,defineProperty:e$1,getOwnPropertyDescriptor:h$1,getOwnPropertyNames:r$3,getOwnPropertySymbols:o$3,getPrototypeOf:n$2}=Object,a$1=globalThis,c$1=a$1.trustedTypes,l$1=c$1?c$1.emptyScript:"",p$1=a$1.reactiveElementPolyfillSupport,d$1=(t,s)=>t,u$1={toAttribute(t,s){switch(s){case Boolean:t=t?l$1:null;break;case Object:case Array:t=null==t?t:JSON.stringify(t);}return t},fromAttribute(t,s){let i=t;switch(s){case Boolean:i=null!==t;break;case Number:i=null===t?null:Number(t);break;case Object:case Array:try{i=JSON.parse(t);}catch(t){i=null;}}return i}},f$1=(t,s)=>!i$2(t,s),b$1={attribute:true,type:String,converter:u$1,reflect:false,useDefault:false,hasChanged:f$1};Symbol.metadata??=Symbol("metadata"),a$1.litPropertyMetadata??=new WeakMap;let y$1 = class y extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t);}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,s=b$1){if(s.state&&(s.attribute=false),this._$Ei(),this.prototype.hasOwnProperty(t)&&((s=Object.create(s)).wrapped=true),this.elementProperties.set(t,s),!s.noAccessor){const i=Symbol(),h=this.getPropertyDescriptor(t,i,s);void 0!==h&&e$1(this.prototype,t,h);}}static getPropertyDescriptor(t,s,i){const{get:e,set:r}=h$1(this.prototype,t)??{get(){return this[s]},set(t){this[s]=t;}};return {get:e,set(s){const h=e?.call(this);r?.call(this,s),this.requestUpdate(t,h,i);},configurable:true,enumerable:true}}static getPropertyOptions(t){return this.elementProperties.get(t)??b$1}static _$Ei(){if(this.hasOwnProperty(d$1("elementProperties")))return;const t=n$2(this);t.finalize(),void 0!==t.l&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties);}static finalize(){if(this.hasOwnProperty(d$1("finalized")))return;if(this.finalized=true,this._$Ei(),this.hasOwnProperty(d$1("properties"))){const t=this.properties,s=[...r$3(t),...o$3(t)];for(const i of s)this.createProperty(i,t[i]);}const t=this[Symbol.metadata];if(null!==t){const s=litPropertyMetadata.get(t);if(void 0!==s)for(const[t,i]of s)this.elementProperties.set(t,i);}this._$Eh=new Map;for(const[t,s]of this.elementProperties){const i=this._$Eu(t,s);void 0!==i&&this._$Eh.set(i,t);}this.elementStyles=this.finalizeStyles(this.styles);}static finalizeStyles(s){const i=[];if(Array.isArray(s)){const e=new Set(s.flat(1/0).reverse());for(const s of e)i.unshift(c$2(s));}else void 0!==s&&i.push(c$2(s));return i}static _$Eu(t,s){const i=s.attribute;return  false===i?void 0:"string"==typeof i?i:"string"==typeof t?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=false,this.hasUpdated=false,this._$Em=null,this._$Ev();}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this));}addController(t){(this._$EO??=new Set).add(t),void 0!==this.renderRoot&&this.isConnected&&t.hostConnected?.();}removeController(t){this._$EO?.delete(t);}_$E_(){const t=new Map,s=this.constructor.elementProperties;for(const i of s.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t);}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return S$1(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(true),this._$EO?.forEach(t=>t.hostConnected?.());}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.());}attributeChangedCallback(t,s,i){this._$AK(t,i);}_$ET(t,s){const i=this.constructor.elementProperties.get(t),e=this.constructor._$Eu(t,i);if(void 0!==e&&true===i.reflect){const h=(void 0!==i.converter?.toAttribute?i.converter:u$1).toAttribute(s,i.type);this._$Em=t,null==h?this.removeAttribute(e):this.setAttribute(e,h),this._$Em=null;}}_$AK(t,s){const i=this.constructor,e=i._$Eh.get(t);if(void 0!==e&&this._$Em!==e){const t=i.getPropertyOptions(e),h="function"==typeof t.converter?{fromAttribute:t.converter}:void 0!==t.converter?.fromAttribute?t.converter:u$1;this._$Em=e;const r=h.fromAttribute(s,t.type);this[e]=r??this._$Ej?.get(e)??r,this._$Em=null;}}requestUpdate(t,s,i,e=false,h){if(void 0!==t){const r=this.constructor;if(false===e&&(h=this[t]),i??=r.getPropertyOptions(t),!((i.hasChanged??f$1)(h,s)||i.useDefault&&i.reflect&&h===this._$Ej?.get(t)&&!this.hasAttribute(r._$Eu(t,i))))return;this.C(t,s,i);} false===this.isUpdatePending&&(this._$ES=this._$EP());}C(t,s,{useDefault:i,reflect:e,wrapped:h},r){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,r??s??this[t]),true!==h||void 0!==r)||(this._$AL.has(t)||(this.hasUpdated||i||(s=void 0),this._$AL.set(t,s)),true===e&&this._$Em!==t&&(this._$Eq??=new Set).add(t));}async _$EP(){this.isUpdatePending=true;try{await this._$ES;}catch(t){Promise.reject(t);}const t=this.scheduleUpdate();return null!=t&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[t,s]of this._$Ep)this[t]=s;this._$Ep=void 0;}const t=this.constructor.elementProperties;if(t.size>0)for(const[s,i]of t){const{wrapped:t}=i,e=this[s];true!==t||this._$AL.has(s)||void 0===e||this.C(s,void 0,i,e);}}let t=false;const s=this._$AL;try{t=this.shouldUpdate(s),t?(this.willUpdate(s),this._$EO?.forEach(t=>t.hostUpdate?.()),this.update(s)):this._$EM();}catch(s){throw t=false,this._$EM(),s}t&&this._$AE(s);}willUpdate(t){}_$AE(t){this._$EO?.forEach(t=>t.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=true,this.firstUpdated(t)),this.updated(t);}_$EM(){this._$AL=new Map,this.isUpdatePending=false;}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return  true}update(t){this._$Eq&&=this._$Eq.forEach(t=>this._$ET(t,this[t])),this._$EM();}updated(t){}firstUpdated(t){}};y$1.elementStyles=[],y$1.shadowRootOptions={mode:"open"},y$1[d$1("elementProperties")]=new Map,y$1[d$1("finalized")]=new Map,p$1?.({ReactiveElement:y$1}),(a$1.reactiveElementVersions??=[]).push("2.1.2");
+ */const{is:i$2,defineProperty:e$3,getOwnPropertyDescriptor:h$1,getOwnPropertyNames:r$3,getOwnPropertySymbols:o$3,getPrototypeOf:n$2}=Object,a$1=globalThis,c$1=a$1.trustedTypes,l$1=c$1?c$1.emptyScript:"",p$1=a$1.reactiveElementPolyfillSupport,d$1=(t,s)=>t,u$1={toAttribute(t,s){switch(s){case Boolean:t=t?l$1:null;break;case Object:case Array:t=null==t?t:JSON.stringify(t);}return t},fromAttribute(t,s){let i=t;switch(s){case Boolean:i=null!==t;break;case Number:i=null===t?null:Number(t);break;case Object:case Array:try{i=JSON.parse(t);}catch(t){i=null;}}return i}},f$1=(t,s)=>!i$2(t,s),b$1={attribute:true,type:String,converter:u$1,reflect:false,useDefault:false,hasChanged:f$1};Symbol.metadata??=Symbol("metadata"),a$1.litPropertyMetadata??=new WeakMap;let y$1 = class y extends HTMLElement{static addInitializer(t){this._$Ei(),(this.l??=[]).push(t);}static get observedAttributes(){return this.finalize(),this._$Eh&&[...this._$Eh.keys()]}static createProperty(t,s=b$1){if(s.state&&(s.attribute=false),this._$Ei(),this.prototype.hasOwnProperty(t)&&((s=Object.create(s)).wrapped=true),this.elementProperties.set(t,s),!s.noAccessor){const i=Symbol(),h=this.getPropertyDescriptor(t,i,s);void 0!==h&&e$3(this.prototype,t,h);}}static getPropertyDescriptor(t,s,i){const{get:e,set:r}=h$1(this.prototype,t)??{get(){return this[s]},set(t){this[s]=t;}};return {get:e,set(s){const h=e?.call(this);r?.call(this,s),this.requestUpdate(t,h,i);},configurable:true,enumerable:true}}static getPropertyOptions(t){return this.elementProperties.get(t)??b$1}static _$Ei(){if(this.hasOwnProperty(d$1("elementProperties")))return;const t=n$2(this);t.finalize(),void 0!==t.l&&(this.l=[...t.l]),this.elementProperties=new Map(t.elementProperties);}static finalize(){if(this.hasOwnProperty(d$1("finalized")))return;if(this.finalized=true,this._$Ei(),this.hasOwnProperty(d$1("properties"))){const t=this.properties,s=[...r$3(t),...o$3(t)];for(const i of s)this.createProperty(i,t[i]);}const t=this[Symbol.metadata];if(null!==t){const s=litPropertyMetadata.get(t);if(void 0!==s)for(const[t,i]of s)this.elementProperties.set(t,i);}this._$Eh=new Map;for(const[t,s]of this.elementProperties){const i=this._$Eu(t,s);void 0!==i&&this._$Eh.set(i,t);}this.elementStyles=this.finalizeStyles(this.styles);}static finalizeStyles(s){const i=[];if(Array.isArray(s)){const e=new Set(s.flat(1/0).reverse());for(const s of e)i.unshift(c$2(s));}else void 0!==s&&i.push(c$2(s));return i}static _$Eu(t,s){const i=s.attribute;return  false===i?void 0:"string"==typeof i?i:"string"==typeof t?t.toLowerCase():void 0}constructor(){super(),this._$Ep=void 0,this.isUpdatePending=false,this.hasUpdated=false,this._$Em=null,this._$Ev();}_$Ev(){this._$ES=new Promise(t=>this.enableUpdating=t),this._$AL=new Map,this._$E_(),this.requestUpdate(),this.constructor.l?.forEach(t=>t(this));}addController(t){(this._$EO??=new Set).add(t),void 0!==this.renderRoot&&this.isConnected&&t.hostConnected?.();}removeController(t){this._$EO?.delete(t);}_$E_(){const t=new Map,s=this.constructor.elementProperties;for(const i of s.keys())this.hasOwnProperty(i)&&(t.set(i,this[i]),delete this[i]);t.size>0&&(this._$Ep=t);}createRenderRoot(){const t=this.shadowRoot??this.attachShadow(this.constructor.shadowRootOptions);return S$1(t,this.constructor.elementStyles),t}connectedCallback(){this.renderRoot??=this.createRenderRoot(),this.enableUpdating(true),this._$EO?.forEach(t=>t.hostConnected?.());}enableUpdating(t){}disconnectedCallback(){this._$EO?.forEach(t=>t.hostDisconnected?.());}attributeChangedCallback(t,s,i){this._$AK(t,i);}_$ET(t,s){const i=this.constructor.elementProperties.get(t),e=this.constructor._$Eu(t,i);if(void 0!==e&&true===i.reflect){const h=(void 0!==i.converter?.toAttribute?i.converter:u$1).toAttribute(s,i.type);this._$Em=t,null==h?this.removeAttribute(e):this.setAttribute(e,h),this._$Em=null;}}_$AK(t,s){const i=this.constructor,e=i._$Eh.get(t);if(void 0!==e&&this._$Em!==e){const t=i.getPropertyOptions(e),h="function"==typeof t.converter?{fromAttribute:t.converter}:void 0!==t.converter?.fromAttribute?t.converter:u$1;this._$Em=e;const r=h.fromAttribute(s,t.type);this[e]=r??this._$Ej?.get(e)??r,this._$Em=null;}}requestUpdate(t,s,i,e=false,h){if(void 0!==t){const r=this.constructor;if(false===e&&(h=this[t]),i??=r.getPropertyOptions(t),!((i.hasChanged??f$1)(h,s)||i.useDefault&&i.reflect&&h===this._$Ej?.get(t)&&!this.hasAttribute(r._$Eu(t,i))))return;this.C(t,s,i);} false===this.isUpdatePending&&(this._$ES=this._$EP());}C(t,s,{useDefault:i,reflect:e,wrapped:h},r){i&&!(this._$Ej??=new Map).has(t)&&(this._$Ej.set(t,r??s??this[t]),true!==h||void 0!==r)||(this._$AL.has(t)||(this.hasUpdated||i||(s=void 0),this._$AL.set(t,s)),true===e&&this._$Em!==t&&(this._$Eq??=new Set).add(t));}async _$EP(){this.isUpdatePending=true;try{await this._$ES;}catch(t){Promise.reject(t);}const t=this.scheduleUpdate();return null!=t&&await t,!this.isUpdatePending}scheduleUpdate(){return this.performUpdate()}performUpdate(){if(!this.isUpdatePending)return;if(!this.hasUpdated){if(this.renderRoot??=this.createRenderRoot(),this._$Ep){for(const[t,s]of this._$Ep)this[t]=s;this._$Ep=void 0;}const t=this.constructor.elementProperties;if(t.size>0)for(const[s,i]of t){const{wrapped:t}=i,e=this[s];true!==t||this._$AL.has(s)||void 0===e||this.C(s,void 0,i,e);}}let t=false;const s=this._$AL;try{t=this.shouldUpdate(s),t?(this.willUpdate(s),this._$EO?.forEach(t=>t.hostUpdate?.()),this.update(s)):this._$EM();}catch(s){throw t=false,this._$EM(),s}t&&this._$AE(s);}willUpdate(t){}_$AE(t){this._$EO?.forEach(t=>t.hostUpdated?.()),this.hasUpdated||(this.hasUpdated=true,this.firstUpdated(t)),this.updated(t);}_$EM(){this._$AL=new Map,this.isUpdatePending=false;}get updateComplete(){return this.getUpdateComplete()}getUpdateComplete(){return this._$ES}shouldUpdate(t){return  true}update(t){this._$Eq&&=this._$Eq.forEach(t=>this._$ET(t,this[t])),this._$EM();}updated(t){}firstUpdated(t){}};y$1.elementStyles=[],y$1.shadowRootOptions={mode:"open"},y$1[d$1("elementProperties")]=new Map,y$1[d$1("finalized")]=new Map,p$1?.({ReactiveElement:y$1}),(a$1.reactiveElementVersions??=[]).push("2.1.2");
 
 /**
  * @license
  * Copyright 2017 Google LLC
  * SPDX-License-Identifier: BSD-3-Clause
  */
-const t$1=globalThis,i$1=t=>t,s$1=t$1.trustedTypes,e=s$1?s$1.createPolicy("lit-html",{createHTML:t=>t}):void 0,h="$lit$",o$2=`lit$${Math.random().toFixed(9).slice(2)}$`,n$1="?"+o$2,r$2=`<${n$1}>`,l=document,c=()=>l.createComment(""),a=t=>null===t||"object"!=typeof t&&"function"!=typeof t,u=Array.isArray,d=t=>u(t)||"function"==typeof t?.[Symbol.iterator],f="[ \t\n\f\r]",v=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,_=/-->/g,m=/>/g,p=RegExp(`>|${f}(?:([^\\s"'>=/]+)(${f}*=${f}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),g=/'/g,$=/"/g,y=/^(?:script|style|textarea|title)$/i,x=t=>(i,...s)=>({_$litType$:t,strings:i,values:s}),b=x(1),E=Symbol.for("lit-noChange"),A=Symbol.for("lit-nothing"),C=new WeakMap,P=l.createTreeWalker(l,129);function V(t,i){if(!u(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==e?e.createHTML(i):i}const N=(t,i)=>{const s=t.length-1,e=[];let n,l=2===i?"<svg>":3===i?"<math>":"",c=v;for(let i=0;i<s;i++){const s=t[i];let a,u,d=-1,f=0;for(;f<s.length&&(c.lastIndex=f,u=c.exec(s),null!==u);)f=c.lastIndex,c===v?"!--"===u[1]?c=_:void 0!==u[1]?c=m:void 0!==u[2]?(y.test(u[2])&&(n=RegExp("</"+u[2],"g")),c=p):void 0!==u[3]&&(c=p):c===p?">"===u[0]?(c=n??v,d=-1):void 0===u[1]?d=-2:(d=c.lastIndex-u[2].length,a=u[1],c=void 0===u[3]?p:'"'===u[3]?$:g):c===$||c===g?c=p:c===_||c===m?c=v:(c=p,n=void 0);const x=c===p&&t[i+1].startsWith("/>")?" ":"";l+=c===v?s+r$2:d>=0?(e.push(a),s.slice(0,d)+h+s.slice(d)+o$2+x):s+o$2+(-2===d?i:x);}return [V(t,l+(t[s]||"<?>")+(2===i?"</svg>":3===i?"</math>":"")),e]};class S{constructor({strings:t,_$litType$:i},e){let r;this.parts=[];let l=0,a=0;const u=t.length-1,d=this.parts,[f,v]=N(t,i);if(this.el=S.createElement(f,e),P.currentNode=this.el.content,2===i||3===i){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes);}for(;null!==(r=P.nextNode())&&d.length<u;){if(1===r.nodeType){if(r.hasAttributes())for(const t of r.getAttributeNames())if(t.endsWith(h)){const i=v[a++],s=r.getAttribute(t).split(o$2),e=/([.?@])?(.*)/.exec(i);d.push({type:1,index:l,name:e[2],strings:s,ctor:"."===e[1]?I:"?"===e[1]?L:"@"===e[1]?z:H}),r.removeAttribute(t);}else t.startsWith(o$2)&&(d.push({type:6,index:l}),r.removeAttribute(t));if(y.test(r.tagName)){const t=r.textContent.split(o$2),i=t.length-1;if(i>0){r.textContent=s$1?s$1.emptyScript:"";for(let s=0;s<i;s++)r.append(t[s],c()),P.nextNode(),d.push({type:2,index:++l});r.append(t[i],c());}}}else if(8===r.nodeType)if(r.data===n$1)d.push({type:2,index:l});else {let t=-1;for(;-1!==(t=r.data.indexOf(o$2,t+1));)d.push({type:7,index:l}),t+=o$2.length-1;}l++;}}static createElement(t,i){const s=l.createElement("template");return s.innerHTML=t,s}}function M(t,i,s=t,e){if(i===E)return i;let h=void 0!==e?s._$Co?.[e]:s._$Cl;const o=a(i)?void 0:i._$litDirective$;return h?.constructor!==o&&(h?._$AO?.(false),void 0===o?h=void 0:(h=new o(t),h._$AT(t,s,e)),void 0!==e?(s._$Co??=[])[e]=h:s._$Cl=h),void 0!==h&&(i=M(t,h._$AS(t,i.values),h,e)),i}class R{constructor(t,i){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=i;}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:i},parts:s}=this._$AD,e=(t?.creationScope??l).importNode(i,true);P.currentNode=e;let h=P.nextNode(),o=0,n=0,r=s[0];for(;void 0!==r;){if(o===r.index){let i;2===r.type?i=new k(h,h.nextSibling,this,t):1===r.type?i=new r.ctor(h,r.name,r.strings,this,t):6===r.type&&(i=new Z(h,this,t)),this._$AV.push(i),r=s[++n];}o!==r?.index&&(h=P.nextNode(),o++);}return P.currentNode=l,e}p(t){let i=0;for(const s of this._$AV) void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,i),i+=s.strings.length-2):s._$AI(t[i])),i++;}}class k{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,i,s,e){this.type=2,this._$AH=A,this._$AN=void 0,this._$AA=t,this._$AB=i,this._$AM=s,this.options=e,this._$Cv=e?.isConnected??true;}get parentNode(){let t=this._$AA.parentNode;const i=this._$AM;return void 0!==i&&11===t?.nodeType&&(t=i.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,i=this){t=M(this,t,i),a(t)?t===A||null==t||""===t?(this._$AH!==A&&this._$AR(),this._$AH=A):t!==this._$AH&&t!==E&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):d(t)?this.k(t):this._(t);}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t));}_(t){this._$AH!==A&&a(this._$AH)?this._$AA.nextSibling.data=t:this.T(l.createTextNode(t)),this._$AH=t;}$(t){const{values:i,_$litType$:s}=t,e="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=S.createElement(V(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===e)this._$AH.p(i);else {const t=new R(e,this),s=t.u(this.options);t.p(i),this.T(s),this._$AH=t;}}_$AC(t){let i=C.get(t.strings);return void 0===i&&C.set(t.strings,i=new S(t)),i}k(t){u(this._$AH)||(this._$AH=[],this._$AR());const i=this._$AH;let s,e=0;for(const h of t)e===i.length?i.push(s=new k(this.O(c()),this.O(c()),this,this.options)):s=i[e],s._$AI(h),e++;e<i.length&&(this._$AR(s&&s._$AB.nextSibling,e),i.length=e);}_$AR(t=this._$AA.nextSibling,s){for(this._$AP?.(false,true,s);t!==this._$AB;){const s=i$1(t).nextSibling;i$1(t).remove(),t=s;}}setConnected(t){ void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t));}}class H{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,i,s,e,h){this.type=1,this._$AH=A,this._$AN=void 0,this.element=t,this.name=i,this._$AM=e,this.options=h,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=A;}_$AI(t,i=this,s,e){const h=this.strings;let o=false;if(void 0===h)t=M(this,t,i,0),o=!a(t)||t!==this._$AH&&t!==E,o&&(this._$AH=t);else {const e=t;let n,r;for(t=h[0],n=0;n<h.length-1;n++)r=M(this,e[s+n],i,n),r===E&&(r=this._$AH[n]),o||=!a(r)||r!==this._$AH[n],r===A?t=A:t!==A&&(t+=(r??"")+h[n+1]),this._$AH[n]=r;}o&&!e&&this.j(t);}j(t){t===A?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"");}}class I extends H{constructor(){super(...arguments),this.type=3;}j(t){this.element[this.name]=t===A?void 0:t;}}class L extends H{constructor(){super(...arguments),this.type=4;}j(t){this.element.toggleAttribute(this.name,!!t&&t!==A);}}class z extends H{constructor(t,i,s,e,h){super(t,i,s,e,h),this.type=5;}_$AI(t,i=this){if((t=M(this,t,i,0)??A)===E)return;const s=this._$AH,e=t===A&&s!==A||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,h=t!==A&&(s===A||e);e&&this.element.removeEventListener(this.name,this,s),h&&this.element.addEventListener(this.name,this,t),this._$AH=t;}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t);}}class Z{constructor(t,i,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=i,this.options=s;}get _$AU(){return this._$AM._$AU}_$AI(t){M(this,t);}}const B=t$1.litHtmlPolyfillSupport;B?.(S,k),(t$1.litHtmlVersions??=[]).push("3.3.2");const D=(t,i,s)=>{const e=s?.renderBefore??i;let h=e._$litPart$;if(void 0===h){const t=s?.renderBefore??null;e._$litPart$=h=new k(i.insertBefore(c(),t),t,void 0,s??{});}return h._$AI(t),h};
+const t$1=globalThis,i$1=t=>t,s$1=t$1.trustedTypes,e$2=s$1?s$1.createPolicy("lit-html",{createHTML:t=>t}):void 0,h="$lit$",o$2=`lit$${Math.random().toFixed(9).slice(2)}$`,n$1="?"+o$2,r$2=`<${n$1}>`,l=document,c=()=>l.createComment(""),a=t=>null===t||"object"!=typeof t&&"function"!=typeof t,u=Array.isArray,d=t=>u(t)||"function"==typeof t?.[Symbol.iterator],f="[ \t\n\f\r]",v=/<(?:(!--|\/[^a-zA-Z])|(\/?[a-zA-Z][^>\s]*)|(\/?$))/g,_=/-->/g,m=/>/g,p=RegExp(`>|${f}(?:([^\\s"'>=/]+)(${f}*=${f}*(?:[^ \t\n\f\r"'\`<>=]|("|')|))|$)`,"g"),g=/'/g,$=/"/g,y=/^(?:script|style|textarea|title)$/i,x=t=>(i,...s)=>({_$litType$:t,strings:i,values:s}),b=x(1),E=Symbol.for("lit-noChange"),A=Symbol.for("lit-nothing"),C=new WeakMap,P=l.createTreeWalker(l,129);function V(t,i){if(!u(t)||!t.hasOwnProperty("raw"))throw Error("invalid template strings array");return void 0!==e$2?e$2.createHTML(i):i}const N=(t,i)=>{const s=t.length-1,e=[];let n,l=2===i?"<svg>":3===i?"<math>":"",c=v;for(let i=0;i<s;i++){const s=t[i];let a,u,d=-1,f=0;for(;f<s.length&&(c.lastIndex=f,u=c.exec(s),null!==u);)f=c.lastIndex,c===v?"!--"===u[1]?c=_:void 0!==u[1]?c=m:void 0!==u[2]?(y.test(u[2])&&(n=RegExp("</"+u[2],"g")),c=p):void 0!==u[3]&&(c=p):c===p?">"===u[0]?(c=n??v,d=-1):void 0===u[1]?d=-2:(d=c.lastIndex-u[2].length,a=u[1],c=void 0===u[3]?p:'"'===u[3]?$:g):c===$||c===g?c=p:c===_||c===m?c=v:(c=p,n=void 0);const x=c===p&&t[i+1].startsWith("/>")?" ":"";l+=c===v?s+r$2:d>=0?(e.push(a),s.slice(0,d)+h+s.slice(d)+o$2+x):s+o$2+(-2===d?i:x);}return [V(t,l+(t[s]||"<?>")+(2===i?"</svg>":3===i?"</math>":"")),e]};class S{constructor({strings:t,_$litType$:i},e){let r;this.parts=[];let l=0,a=0;const u=t.length-1,d=this.parts,[f,v]=N(t,i);if(this.el=S.createElement(f,e),P.currentNode=this.el.content,2===i||3===i){const t=this.el.content.firstChild;t.replaceWith(...t.childNodes);}for(;null!==(r=P.nextNode())&&d.length<u;){if(1===r.nodeType){if(r.hasAttributes())for(const t of r.getAttributeNames())if(t.endsWith(h)){const i=v[a++],s=r.getAttribute(t).split(o$2),e=/([.?@])?(.*)/.exec(i);d.push({type:1,index:l,name:e[2],strings:s,ctor:"."===e[1]?I:"?"===e[1]?L:"@"===e[1]?z:H}),r.removeAttribute(t);}else t.startsWith(o$2)&&(d.push({type:6,index:l}),r.removeAttribute(t));if(y.test(r.tagName)){const t=r.textContent.split(o$2),i=t.length-1;if(i>0){r.textContent=s$1?s$1.emptyScript:"";for(let s=0;s<i;s++)r.append(t[s],c()),P.nextNode(),d.push({type:2,index:++l});r.append(t[i],c());}}}else if(8===r.nodeType)if(r.data===n$1)d.push({type:2,index:l});else {let t=-1;for(;-1!==(t=r.data.indexOf(o$2,t+1));)d.push({type:7,index:l}),t+=o$2.length-1;}l++;}}static createElement(t,i){const s=l.createElement("template");return s.innerHTML=t,s}}function M(t,i,s=t,e){if(i===E)return i;let h=void 0!==e?s._$Co?.[e]:s._$Cl;const o=a(i)?void 0:i._$litDirective$;return h?.constructor!==o&&(h?._$AO?.(false),void 0===o?h=void 0:(h=new o(t),h._$AT(t,s,e)),void 0!==e?(s._$Co??=[])[e]=h:s._$Cl=h),void 0!==h&&(i=M(t,h._$AS(t,i.values),h,e)),i}class R{constructor(t,i){this._$AV=[],this._$AN=void 0,this._$AD=t,this._$AM=i;}get parentNode(){return this._$AM.parentNode}get _$AU(){return this._$AM._$AU}u(t){const{el:{content:i},parts:s}=this._$AD,e=(t?.creationScope??l).importNode(i,true);P.currentNode=e;let h=P.nextNode(),o=0,n=0,r=s[0];for(;void 0!==r;){if(o===r.index){let i;2===r.type?i=new k(h,h.nextSibling,this,t):1===r.type?i=new r.ctor(h,r.name,r.strings,this,t):6===r.type&&(i=new Z(h,this,t)),this._$AV.push(i),r=s[++n];}o!==r?.index&&(h=P.nextNode(),o++);}return P.currentNode=l,e}p(t){let i=0;for(const s of this._$AV) void 0!==s&&(void 0!==s.strings?(s._$AI(t,s,i),i+=s.strings.length-2):s._$AI(t[i])),i++;}}class k{get _$AU(){return this._$AM?._$AU??this._$Cv}constructor(t,i,s,e){this.type=2,this._$AH=A,this._$AN=void 0,this._$AA=t,this._$AB=i,this._$AM=s,this.options=e,this._$Cv=e?.isConnected??true;}get parentNode(){let t=this._$AA.parentNode;const i=this._$AM;return void 0!==i&&11===t?.nodeType&&(t=i.parentNode),t}get startNode(){return this._$AA}get endNode(){return this._$AB}_$AI(t,i=this){t=M(this,t,i),a(t)?t===A||null==t||""===t?(this._$AH!==A&&this._$AR(),this._$AH=A):t!==this._$AH&&t!==E&&this._(t):void 0!==t._$litType$?this.$(t):void 0!==t.nodeType?this.T(t):d(t)?this.k(t):this._(t);}O(t){return this._$AA.parentNode.insertBefore(t,this._$AB)}T(t){this._$AH!==t&&(this._$AR(),this._$AH=this.O(t));}_(t){this._$AH!==A&&a(this._$AH)?this._$AA.nextSibling.data=t:this.T(l.createTextNode(t)),this._$AH=t;}$(t){const{values:i,_$litType$:s}=t,e="number"==typeof s?this._$AC(t):(void 0===s.el&&(s.el=S.createElement(V(s.h,s.h[0]),this.options)),s);if(this._$AH?._$AD===e)this._$AH.p(i);else {const t=new R(e,this),s=t.u(this.options);t.p(i),this.T(s),this._$AH=t;}}_$AC(t){let i=C.get(t.strings);return void 0===i&&C.set(t.strings,i=new S(t)),i}k(t){u(this._$AH)||(this._$AH=[],this._$AR());const i=this._$AH;let s,e=0;for(const h of t)e===i.length?i.push(s=new k(this.O(c()),this.O(c()),this,this.options)):s=i[e],s._$AI(h),e++;e<i.length&&(this._$AR(s&&s._$AB.nextSibling,e),i.length=e);}_$AR(t=this._$AA.nextSibling,s){for(this._$AP?.(false,true,s);t!==this._$AB;){const s=i$1(t).nextSibling;i$1(t).remove(),t=s;}}setConnected(t){ void 0===this._$AM&&(this._$Cv=t,this._$AP?.(t));}}class H{get tagName(){return this.element.tagName}get _$AU(){return this._$AM._$AU}constructor(t,i,s,e,h){this.type=1,this._$AH=A,this._$AN=void 0,this.element=t,this.name=i,this._$AM=e,this.options=h,s.length>2||""!==s[0]||""!==s[1]?(this._$AH=Array(s.length-1).fill(new String),this.strings=s):this._$AH=A;}_$AI(t,i=this,s,e){const h=this.strings;let o=false;if(void 0===h)t=M(this,t,i,0),o=!a(t)||t!==this._$AH&&t!==E,o&&(this._$AH=t);else {const e=t;let n,r;for(t=h[0],n=0;n<h.length-1;n++)r=M(this,e[s+n],i,n),r===E&&(r=this._$AH[n]),o||=!a(r)||r!==this._$AH[n],r===A?t=A:t!==A&&(t+=(r??"")+h[n+1]),this._$AH[n]=r;}o&&!e&&this.j(t);}j(t){t===A?this.element.removeAttribute(this.name):this.element.setAttribute(this.name,t??"");}}class I extends H{constructor(){super(...arguments),this.type=3;}j(t){this.element[this.name]=t===A?void 0:t;}}class L extends H{constructor(){super(...arguments),this.type=4;}j(t){this.element.toggleAttribute(this.name,!!t&&t!==A);}}class z extends H{constructor(t,i,s,e,h){super(t,i,s,e,h),this.type=5;}_$AI(t,i=this){if((t=M(this,t,i,0)??A)===E)return;const s=this._$AH,e=t===A&&s!==A||t.capture!==s.capture||t.once!==s.once||t.passive!==s.passive,h=t!==A&&(s===A||e);e&&this.element.removeEventListener(this.name,this,s),h&&this.element.addEventListener(this.name,this,t),this._$AH=t;}handleEvent(t){"function"==typeof this._$AH?this._$AH.call(this.options?.host??this.element,t):this._$AH.handleEvent(t);}}class Z{constructor(t,i,s){this.element=t,this.type=6,this._$AN=void 0,this._$AM=i,this.options=s;}get _$AU(){return this._$AM._$AU}_$AI(t){M(this,t);}}const B=t$1.litHtmlPolyfillSupport;B?.(S,k),(t$1.litHtmlVersions??=[]).push("3.3.2");const D=(t,i,s)=>{const e=s?.renderBefore??i;let h=e._$litPart$;if(void 0===h){const t=s?.renderBefore??null;e._$litPart$=h=new k(i.insertBefore(c(),t),t,void 0,s??{});}return h._$AI(t),h};
 
 /**
  * @license
@@ -31,6 +31,16 @@ const fetchPanelState = (hass, entryId) => hass.callWS({
 const saveGlobal = (hass, entryId, body) => hass.callApi("POST", "simple_irrigation/panel/global", { entry_id: entryId, ...body });
 const saveZone = (hass, entryId, body) => hass.callApi("POST", "simple_irrigation/panel/zone", { entry_id: entryId, ...body });
 const saveSlot = (hass, entryId, body) => hass.callApi("POST", "simple_irrigation/panel/slot", { entry_id: entryId, ...body });
+const upsertCycle = (hass, entryId, body) => hass.callApi("POST", "simple_irrigation/panel/slot", {
+    entry_id: entryId,
+    action: "cycle_upsert",
+    ...body,
+});
+const deleteCycle = (hass, entryId, cycleId) => hass.callApi("POST", "simple_irrigation/panel/slot", {
+    entry_id: entryId,
+    action: "cycle_delete",
+    cycle_id: cycleId,
+});
 const runSlotNow = (hass, entryId, slotId) => hass.callApi("POST", "simple_irrigation/panel/run_slot", {
     entry_id: entryId,
     slot_id: slotId,
@@ -149,13 +159,13 @@ const BASE = "simple-irrigation";
 const getPath = () => {
     const parts = window.location.pathname.split("/").filter(Boolean);
     if (parts[0] !== BASE) {
-        return { entryId: null, page: "general" };
+        return { entryId: null, page: "overview" };
     }
     if (parts.length < 2) {
-        return { entryId: null, page: "general" };
+        return { entryId: null, page: "overview" };
     }
     const entryId = parts[1];
-    const page = parts[2] || "general";
+    const page = parts[2] || "overview";
     return { entryId, page };
 };
 const exportPath = (entryId, page) => {
@@ -224,7 +234,9 @@ const panelStyles = i$3 `
   }
   .view-inner {
     width: 100%;
-    max-width: 840px;
+    max-width: 1100px;
+    container-type: inline-size;
+    container-name: siview;
   }
   .entry-picker {
     padding: 24px;
@@ -396,42 +408,2107 @@ typeof SuppressedError === "function" ? SuppressedError : function (error, suppr
  * SPDX-License-Identifier: BSD-3-Clause
  */function r(r){return n({...r,state:true,attribute:false})}
 
-/** Entity IDs for allowed output domains (same rule set as the backend). */
-function entityIdsForDomains(hass, domains) {
-    return Object.keys(hass.states)
-        .filter((eid) => domains.includes(eid.split(".", 1)[0]))
-        .sort((a, b) => a.localeCompare(b));
+/**
+ * @license
+ * Copyright 2017 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
+const e$1=(e,t,c)=>(c.configurable=true,c.enumerable=true,Reflect.decorate&&"object"!=typeof t&&Object.defineProperty(e,t,c),c);
+
+/**
+ * @license
+ * Copyright 2017 Google LLC
+ * SPDX-License-Identifier: BSD-3-Clause
+ */function e(e,r){return (n,s,i)=>{const o=t=>t.renderRoot?.querySelector(e)??null;return e$1(n,s,{get(){return o(this)}})}}
+
+/**
+ * Shared visual system for the Simple Irrigation panel views.
+ *
+ * Ported from the advanced_cover integration's `sharedStyles`, minus the
+ * cover-specific primitives (`.position-bar`, `.cond-row` sentence rows,
+ * `.compass`). Every view imports `[sharedStyles, formLayoutStyles, css` …local… `]`
+ * so cards, rows, buttons, chips, badges and dialogs stay identical across tabs.
+ */
+const sharedStyles = i$3 `
+  ha-card {
+    margin-bottom: 20px;
+    border-radius: 14px;
+  }
+  .card-content {
+    padding: 20px 22px 22px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 22px 0;
+    font-size: 1.25rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+    line-height: 1.3;
+  }
+  .card-header ha-icon {
+    --mdc-icon-size: 22px;
+    color: var(--primary-color);
+    flex-shrink: 0;
+  }
+  .card-header .header-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    font-weight: 400;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+  }
+  .intro {
+    font-size: 0.875rem;
+    color: var(--secondary-text-color);
+    line-height: 1.5;
+    margin: 6px 0 18px;
+  }
+
+  /* Expandable inline help (info icon) — tier 2 help text. */
+  details.inline-help {
+    margin: 6px 0 10px;
+    font-size: 0.82rem;
+  }
+  details.inline-help summary {
+    cursor: pointer;
+    color: var(--secondary-text-color);
+    list-style: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+    transition: color 0.15s ease;
+  }
+  details.inline-help summary::-webkit-details-marker {
+    display: none;
+  }
+  details.inline-help summary:hover,
+  details.inline-help[open] summary {
+    color: var(--primary-color);
+  }
+  details.inline-help summary:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+  details.inline-help .inline-help-icon {
+    --mdc-icon-size: 16px;
+    flex-shrink: 0;
+    color: currentColor;
+  }
+  details.inline-help p,
+  details.inline-help .help-body {
+    margin: 8px 0 4px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--primary-color);
+    border-radius: 0 8px 8px 0;
+    background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    color: var(--secondary-text-color);
+    line-height: 1.55;
+    max-width: 640px;
+  }
+  details.inline-help .help-body code {
+    font-family: var(--code-font-family, monospace);
+    font-size: 0.92em;
+    background: color-mix(in srgb, var(--primary-color) 10%, transparent);
+    padding: 1px 5px;
+    border-radius: 4px;
+  }
+
+  /* Tier-1 microcopy: one-line consequence, always visible under a control. */
+  .hint {
+    font-size: 0.8rem;
+    color: var(--secondary-text-color);
+    line-height: 1.4;
+    margin: 4px 0 0;
+  }
+
+  .error {
+    color: var(--error-color);
+    margin: 8px 0;
+  }
+  .warning {
+    color: var(--warning-color, #b85c00);
+    margin: 8px 0;
+    font-size: 0.875rem;
+  }
+  .muted {
+    color: var(--secondary-text-color);
+    font-size: 0.875rem;
+  }
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    align-items: flex-end;
+    margin-bottom: 12px;
+  }
+  .grow {
+    flex: 1;
+    min-width: 160px;
+  }
+  .section-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--secondary-text-color);
+    margin: 26px 0 10px;
+  }
+  .section-title::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--divider-color);
+  }
+  .section-title:first-child {
+    margin-top: 0;
+  }
+  .section-desc {
+    font-size: 0.825rem;
+    color: var(--secondary-text-color);
+    margin: 0 0 10px;
+    line-height: 1.4;
+  }
+
+  /* Buttons */
+  .btn,
+  .btn-outline,
+  .btn-danger,
+  .btn-icon {
+    font: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    border-radius: 8px;
+    padding: 8px 16px;
+    cursor: pointer;
+    border: 1px solid transparent;
+    box-sizing: border-box;
+    transition:
+      background 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease,
+      opacity 0.15s ease;
+  }
+  .btn {
+    background: var(--primary-color);
+    color: var(--text-primary-color, #fff);
+  }
+  .btn:hover:not(:disabled) {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.22);
+  }
+  .btn:disabled,
+  .btn-outline:disabled,
+  .btn-danger:disabled {
+    opacity: 0.5;
+    cursor: default;
+  }
+  .btn-outline {
+    background: transparent;
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+  }
+  .btn-outline:hover:not(:disabled) {
+    background: rgba(var(--rgb-primary-color, 33, 150, 243), 0.08);
+  }
+  .btn-danger {
+    background: transparent;
+    color: var(--error-color);
+    border-color: var(--error-color);
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: rgba(244, 67, 54, 0.08);
+  }
+  .btn-icon {
+    background: transparent;
+    color: var(--primary-text-color);
+    border: 1px solid var(--divider-color);
+    padding: 6px 10px;
+    line-height: 1;
+  }
+  .btn-icon:hover {
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+  }
+  .btn:focus-visible,
+  .btn-outline:focus-visible,
+  .btn-danger:focus-visible,
+  .btn-icon:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+
+  /* Inputs */
+  label.field-label {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--secondary-text-color);
+    margin-bottom: 4px;
+  }
+  input[type="text"],
+  input[type="time"],
+  input[type="number"],
+  select {
+    font: inherit;
+    color: var(--primary-text-color);
+    background: var(--card-background-color);
+    border: 1px solid var(--divider-color);
+    border-radius: 8px;
+    padding: 8px 10px;
+    box-sizing: border-box;
+    width: 100%;
+  }
+  input:focus-visible,
+  select:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+  input[type="range"] {
+    width: 100%;
+  }
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 8px 0;
+    font-size: 0.9rem;
+  }
+
+  /* Chips */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .chip {
+    font: inherit;
+    font-size: 0.8rem;
+    padding: 5px 10px;
+    border-radius: 14px;
+    border: 1px solid var(--divider-color);
+    background: transparent;
+    color: var(--primary-text-color);
+    cursor: pointer;
+  }
+  .chip.selected {
+    background: var(--primary-color);
+    color: var(--text-primary-color, #fff);
+    border-color: var(--primary-color);
+  }
+  .chip.readonly {
+    cursor: default;
+    color: var(--secondary-text-color);
+  }
+  .chip:disabled {
+    opacity: 0.55;
+    cursor: default;
+  }
+
+  /* Status badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background: var(--secondary-background-color, rgba(0, 0, 0, 0.06));
+    color: var(--secondary-text-color);
+  }
+  .badge.badge-dot::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    flex-shrink: 0;
+  }
+  .badge-primary {
+    color: var(--primary-color);
+  }
+  .badge-warn {
+    color: var(--warning-color, #b85c00);
+  }
+  .badge-danger {
+    color: var(--error-color);
+  }
+  .badge-muted {
+    color: var(--secondary-text-color);
+  }
+  .badge ha-icon {
+    --mdc-icon-size: 14px;
+  }
+
+  /* Dialog (plain, works inside scoped registries) */
+  .dialog-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.45);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 4vh 16px;
+    z-index: 10;
+    overflow-y: auto;
+  }
+  .dialog {
+    background: var(--card-background-color);
+    color: var(--primary-text-color);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 680px;
+    padding: 26px 28px;
+    box-sizing: border-box;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+  }
+  .dialog h3 {
+    margin: 0 0 20px;
+    font-size: 1.3rem;
+    font-weight: 500;
+    letter-spacing: -0.01em;
+  }
+  .dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+  }
+  .dialog-actions .spacer {
+    flex: 1;
+  }
+
+  /* Empty states */
+  .empty-state {
+    text-align: center;
+    padding: 36px 20px;
+    color: var(--secondary-text-color);
+  }
+  .empty-state ha-icon {
+    --mdc-icon-size: 44px;
+    opacity: 0.35;
+    display: block;
+    margin: 0 auto 10px;
+  }
+  .empty-state p {
+    margin: 0 0 12px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+  }
+  .empty-state .btn,
+  .empty-state .btn-outline {
+    margin-top: 4px;
+  }
+
+  table.plain {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+  }
+  table.plain th,
+  table.plain td {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--divider-color);
+    vertical-align: top;
+  }
+  table.plain th {
+    color: var(--secondary-text-color);
+    font-weight: 500;
+  }
+
+  /* Preflight / status badge (would run / issue / unknown). */
+  .preflight-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    padding: 3px 9px 3px 7px;
+    border-radius: 999px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .preflight-badge ha-icon {
+    --mdc-icon-size: 15px;
+  }
+  .preflight-badge.would_run {
+    color: var(--primary-color);
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--primary-color) 45%, transparent);
+  }
+  .preflight-badge.would_skip {
+    color: var(--warning-color, #f0b23a);
+    background: color-mix(in srgb, var(--warning-color, #f0b23a) 12%, transparent);
+    border-color: color-mix(in srgb, var(--warning-color, #f0b23a) 45%, transparent);
+  }
+  .preflight-badge.unknown {
+    color: var(--secondary-text-color);
+    background: color-mix(in srgb, var(--secondary-text-color) 12%, transparent);
+    border-color: color-mix(in srgb, var(--secondary-text-color) 40%, transparent);
+  }
+
+  /* Segmented icon button group (run · edit · expand). */
+  .icon-group {
+    display: inline-flex;
+    border: 1px solid var(--divider-color);
+    border-radius: 9px;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .icon-group button {
+    font: inherit;
+    border: none;
+    background: transparent;
+    color: var(--primary-text-color);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 38px;
+    height: 34px;
+    padding: 0 6px;
+    border-left: 1px solid var(--divider-color);
+    transition:
+      background 0.12s ease,
+      color 0.12s ease;
+  }
+  .icon-group button:first-child {
+    border-left: none;
+  }
+  .icon-group button:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+    color: var(--primary-color);
+  }
+  .icon-group button.selected {
+    background: var(--primary-color);
+    color: var(--text-primary-color, #fff);
+  }
+  .icon-group button:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .icon-group ha-icon {
+    --mdc-icon-size: 20px;
+  }
+
+  /* Compact list row: header + optional expanded detail stack vertically. */
+  .compact-row {
+    border: 1px solid var(--divider-color);
+    border-left: 3px solid var(--primary-color);
+    border-radius: 10px;
+    background: var(--card-background-color);
+    margin-bottom: 8px;
+    overflow: hidden;
+    transition: background 0.12s ease;
+  }
+  .compact-row:hover {
+    background: color-mix(in srgb, var(--primary-color) 4%, var(--card-background-color));
+  }
+  .compact-row.inactive {
+    border-left-color: var(--disabled-text-color, #6d7476);
+  }
+  .compact-row.warn {
+    border-left-color: var(--warning-color, #f0b23a);
+  }
+  .compact-row.danger {
+    border-left-color: var(--error-color, #d93025);
+  }
+  .compact-row-header {
+    display: flex;
+    align-items: center;
+    gap: 10px 14px;
+    padding: 12px 14px;
+    flex-wrap: wrap;
+  }
+  .compact-row-main {
+    flex: 1;
+    min-width: 0;
+  }
+  .compact-row-title {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+    min-width: 0;
+  }
+  .compact-row-detail {
+    padding: 0 14px 14px;
+    border-top: 1px solid var(--divider-color);
+    margin-top: -2px;
+  }
+
+  /* Icon-only button with a guaranteed hit area + focus ring. */
+  .iconbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    border: none;
+    background: transparent;
+    color: var(--primary-text-color);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .iconbtn:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--primary-color) 12%, transparent);
+    color: var(--primary-color);
+  }
+  .iconbtn:disabled {
+    opacity: 0.4;
+    cursor: default;
+  }
+  .iconbtn.danger:hover:not(:disabled) {
+    background: color-mix(in srgb, var(--error-color) 14%, transparent);
+    color: var(--error-color);
+  }
+  .iconbtn ha-icon {
+    --mdc-icon-size: 22px;
+  }
+  .iconbtn:focus-visible,
+  .icon-group button:focus-visible,
+  .chip:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+  }
+
+  /* Meta line with inline mdi icons. */
+  .meta-line {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+    font-size: 0.8rem;
+    color: var(--secondary-text-color);
+    min-width: 0;
+  }
+  .meta-line .meta {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+  }
+  .meta-line .meta.strong {
+    color: var(--primary-text-color);
+    font-weight: 600;
+  }
+  .meta-line ha-icon {
+    --mdc-icon-size: 16px;
+    flex-shrink: 0;
+  }
+
+  /* Segmented filter control (All / Enabled / Issues). */
+  .segmented {
+    display: inline-flex;
+    border: 1px solid var(--divider-color);
+    border-radius: 9px;
+    overflow: hidden;
+  }
+  .segmented button {
+    font: inherit;
+    font-size: 0.8rem;
+    border: none;
+    border-left: 1px solid var(--divider-color);
+    background: transparent;
+    color: var(--secondary-text-color);
+    padding: 6px 12px;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .segmented button:first-child {
+    border-left: none;
+  }
+  .segmented button.selected {
+    background: var(--primary-color);
+    color: var(--text-primary-color, #fff);
+  }
+  .segmented button:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: -2px;
+  }
+  .segmented .count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--warning-color, #f0b23a) 22%, transparent);
+    color: var(--warning-color, #f0b23a);
+  }
+  .segmented button.selected .count {
+    background: rgba(255, 255, 255, 0.25);
+    color: inherit;
+  }
+
+  /* 14-day run strip (rhythm preview + expanded rhythm rows). */
+  .day-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin: 6px 0;
+  }
+  .day-strip .day-cell {
+    flex: 1 1 calc(100% / 14 - 4px);
+    min-width: 30px;
+    height: 34px;
+    border-radius: 7px;
+    border: 1px solid var(--divider-color);
+    background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.62rem;
+    line-height: 1.1;
+    color: var(--secondary-text-color);
+    box-sizing: border-box;
+  }
+  .day-strip .day-cell .dc-dow {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+  .day-strip .day-cell .dc-dom {
+    opacity: 0.8;
+  }
+  .day-strip .day-cell.run {
+    background: color-mix(in srgb, var(--primary-color) 80%, var(--card-background-color));
+    border-color: color-mix(in srgb, var(--primary-color) 45%, transparent);
+    color: var(--text-primary-color, #fff);
+  }
+  .day-strip .day-cell.today {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 1px;
+  }
+
+  /* Truncating text that must never wrap in a data row. */
+  .ellipsis {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* ---- Mobile / narrow (container query — collapses sidebar-open too) ---- */
+  @container siview (max-width: 700px) {
+    .card-content {
+      padding: 14px 16px 16px;
+    }
+    .card-header {
+      padding: 16px 16px 0;
+      font-size: 1.15rem;
+    }
+    ha-card {
+      border-radius: 12px;
+    }
+    .compact-row-header {
+      padding: 12px 14px;
+    }
+    /* Touch targets: paired dialog buttons split the width. */
+    .dialog-actions .btn,
+    .dialog-actions .btn-outline,
+    .dialog-actions .btn-danger {
+      flex: 1;
+      min-height: 44px;
+    }
+    .chip {
+      min-height: 34px;
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+  /* Floating action button for the primary add action on narrow screens. */
+  .fab {
+    position: fixed;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+    width: 56px;
+    height: 56px;
+    border-radius: 18px;
+    border: none;
+    background: var(--primary-color);
+    color: var(--text-primary-color, #fff);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    cursor: pointer;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 6;
+  }
+  .fab ha-icon {
+    --mdc-icon-size: 28px;
+  }
+  .fab:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+  }
+  @container siview (max-width: 700px) {
+    .fab {
+      display: inline-flex;
+    }
+    .hide-narrow {
+      display: none !important;
+    }
+  }
+  @container siview (min-width: 701px) {
+    .only-narrow {
+      display: none !important;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
+`;
+
+const LOCAL_TZ = Intl.DateTimeFormat?.().resolvedOptions?.().timeZone ?? "UTC";
+function resolveTimeZonePref(localeTz, serverTimeZone) {
+    if (localeTz === "local" && LOCAL_TZ)
+        return LOCAL_TZ;
+    return serverTimeZone;
 }
-/** One shared `<datalist>` per form (by stable `listId`). */
-function renderEntityDatalist(hass, listId, domains) {
-    const ids = entityIdsForDomains(hass, domains);
-    return b `
-    <datalist id=${listId}>
-      ${ids.map((id) => b `<option value=${id}></option>`)}
-    </datalist>
-  `;
+function useAmPmFromLocale(locale) {
+    const tf = locale.time_format;
+    if (tf === "language" || tf === "system") {
+        const testLang = tf === "language" ? locale.language : undefined;
+        const test = new Date("January 1, 2023 22:00:00").toLocaleString(testLang);
+        return test.includes("10");
+    }
+    return tf === "12";
+}
+function formatDateNumericPart(date, locale, serverTz) {
+    const tz = resolveTimeZonePref(locale.time_zone, serverTz);
+    const df = locale.date_format;
+    if (df === "language" || df === "system") {
+        return new Intl.DateTimeFormat(df === "system" ? undefined : locale.language, {
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+            timeZone: tz,
+        }).format(date);
+    }
+    const formatter = new Intl.DateTimeFormat(locale.language, {
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+        timeZone: tz,
+    });
+    const parts = formatter.formatToParts(date);
+    const literal = parts.find((p) => p.type === "literal")?.value ?? "/";
+    const day = parts.find((p) => p.type === "day")?.value ?? "";
+    const month = parts.find((p) => p.type === "month")?.value ?? "";
+    const year = parts.find((p) => p.type === "year")?.value ?? "";
+    const lastPart = parts[parts.length - 1];
+    const lastLiteral = lastPart?.type === "literal" ? lastPart.value : "";
+    if (df === "DMY")
+        return `${day}${literal}${month}${literal}${year}${lastLiteral}`;
+    if (df === "MDY")
+        return `${month}${literal}${day}${literal}${year}${lastLiteral}`;
+    if (df === "YMD")
+        return `${year}${literal}${month}${literal}${day}${lastLiteral}`;
+    return formatter.format(date);
+}
+function formatTimePart(date, locale, serverTz) {
+    const tz = resolveTimeZonePref(locale.time_zone, serverTz);
+    const ampm = useAmPmFromLocale(locale);
+    return new Intl.DateTimeFormat(locale.language, {
+        hour: ampm ? "numeric" : "2-digit",
+        minute: "2-digit",
+        hourCycle: ampm ? "h12" : "h23",
+        timeZone: tz,
+    }).format(date);
 }
 /**
- * Browser autocomplete for entity_id — works inside panel_custom scoped registries where
- * `ha-entity-picker` is not registered.
+ * Absolute instant (e.g. next run, pause until): weekday + profile date + profile time + TZ preference.
  */
-function renderNativeEntityField(hass, listId, label, value, onValue) {
-    return b `
-    <div class="native-entity-field">
-      <label class="native-entity-label">${label}</label>
-      <input
-        type="text"
-        class="entity-id-input"
-        list=${listId}
-        .value=${value}
-        placeholder=${t(hass, "config_panel.entity_placeholder_example")}
-        spellcheck="false"
-        autocomplete="off"
-        @input=${(e) => onValue(e.target.value)}
-      />
-    </div>
-  `;
+function formatDateTimeForProfile(hass, date) {
+    if (!hass)
+        return date.toLocaleString();
+    const loc = hass.locale;
+    const serverTz = hass.config?.time_zone ?? LOCAL_TZ;
+    const lang = (loc?.language ?? hass.language)?.replace(/_/g, "-");
+    const locComplete = loc &&
+        typeof loc.language === "string" &&
+        typeof loc.time_format === "string" &&
+        typeof loc.date_format === "string";
+    if (!locComplete) {
+        return new Intl.DateTimeFormat(lang, {
+            weekday: "long",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        }).format(date);
+    }
+    const tz = resolveTimeZonePref(loc.time_zone, serverTz);
+    const weekday = new Intl.DateTimeFormat(loc.language, {
+        weekday: "long",
+        timeZone: tz,
+    }).format(date);
+    const datePart = formatDateNumericPart(date, loc, serverTz);
+    const timePart = formatTimePart(date, loc, serverTz);
+    return `${weekday}, ${datePart}, ${timePart}`;
 }
+/**
+ * Schedule slot wall time (stored as HH:MM): same clock face, 12h/24h and spacing from profile.
+ */
+function formatSlotTimeForProfile(hass, timeLocal) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(String(timeLocal).trim());
+    if (!m)
+        return timeLocal;
+    const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+    const min = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+    const d = new Date(2000, 0, 1, h, min, 0, 0);
+    const loc = hass?.locale;
+    const lang = (loc?.language ?? hass?.language)?.replace(/_/g, "-") ?? undefined;
+    if (!loc?.language || !loc.time_format) {
+        return new Intl.DateTimeFormat(lang, {
+            hour: "2-digit",
+            minute: "2-digit",
+        }).format(d);
+    }
+    const ampm = useAmPmFromLocale(loc);
+    return new Intl.DateTimeFormat(loc.language, {
+        hour: ampm ? "numeric" : "2-digit",
+        minute: "2-digit",
+        hourCycle: ampm ? "h12" : "h23",
+    }).format(d);
+}
+
+function locale(hass) {
+    const lang = hass?.locale?.language ?? hass?.language;
+    if (!lang)
+        return undefined;
+    return lang.replace(/_/g, "-");
+}
+/**
+ * Schedule slots use weekday 0 = Monday … 6 = Sunday (same as the Python model).
+ * Uses the user's HA language for localized weekday names.
+ */
+function weekdayLong(hass, mondayBasedIndex) {
+    const i = Math.max(0, Math.min(6, mondayBasedIndex));
+    // 2024-01-01 is a Monday in local calendar semantics for display.
+    const d = new Date(2024, 0, 1 + i);
+    return new Intl.DateTimeFormat(locale(hass), { weekday: "long" }).format(d);
+}
+/** Short localized weekday name (e.g. "Mon" / "Mo"), Monday-based index. */
+function weekdayShort(hass, mondayBasedIndex) {
+    const i = Math.max(0, Math.min(6, mondayBasedIndex));
+    const d = new Date(2024, 0, 1 + i);
+    return new Intl.DateTimeFormat(locale(hass), { weekday: "short" }).format(d);
+}
+/** Normalize to sorted, de-duplicated Monday-based indices in 0..6. */
+function normalizeWeekdays(raw) {
+    const out = [];
+    const seen = new Set();
+    const push = (v) => {
+        const n = Number(v);
+        if (Number.isInteger(n) && n >= 0 && n <= 6 && !seen.has(n)) {
+            seen.add(n);
+            out.push(n);
+        }
+    };
+    if (Array.isArray(raw))
+        raw.forEach(push);
+    out.sort((a, b) => a - b);
+    return out;
+}
+/**
+ * Compact human summary of the weekdays a slot runs on:
+ * "Daily" (all 7), "Mon–Fri" (workdays), "Weekend" (Sat/Sun), else a short list.
+ */
+function weekdaysSummary(hass, weekdays) {
+    const wds = normalizeWeekdays(weekdays);
+    if (wds.length === 0)
+        return "";
+    if (wds.length === 7)
+        return t(hass, "config_panel.weekdays_summary_daily");
+    const key = wds.join(",");
+    if (key === "0,1,2,3,4")
+        return t(hass, "config_panel.weekdays_summary_workdays");
+    if (key === "5,6")
+        return t(hass, "config_panel.weekdays_summary_weekend");
+    return wds.map((i) => weekdayShort(hass, i)).join(", ");
+}
+/**
+ * Absolute instant: weekday + date + time using the user’s profile (12h/24h, DMY/MDY/YMD, server vs local TZ).
+ */
+function formatDateTimeForDisplay(hass, date) {
+    return formatDateTimeForProfile(hass, date);
+}
+/** Slot wall time HH:MM with profile 12h/24h (same numbers as stored; presentation only). */
+function formatTimeLocalForDisplay(hass, timeLocal) {
+    return formatSlotTimeForProfile(hass, timeLocal);
+}
+
+/** Mirrors `grouping.compute_phases` for schedule slot preview in the panel. */
+function computePhases(orderedZoneIds, zonesById, maxParallelZones, skipDisabled = true) {
+    const mp = Math.max(1, maxParallelZones);
+    const phases = [];
+    let current = [];
+    for (const zid of orderedZoneIds) {
+        const zone = zonesById[zid];
+        if (!zone)
+            continue;
+        if (skipDisabled && !zone.enabled)
+            continue;
+        if (zone.exclusive) {
+            if (current.length) {
+                phases.push(current);
+                current = [];
+            }
+            phases.push([zid]);
+            continue;
+        }
+        if (!current.length) {
+            current = [zid];
+            continue;
+        }
+        if (current.length >= mp) {
+            phases.push(current);
+            current = [zid];
+            continue;
+        }
+        current.push(zid);
+    }
+    if (current.length)
+        phases.push(current);
+    return phases;
+}
+/** First occurrence of each zone id → 1-based phase index (same as `phase_index_per_zone`). */
+function phaseIndexByZoneId(orderedZoneIds, zonesById, maxParallelZones) {
+    const phases = computePhases(orderedZoneIds, zonesById, maxParallelZones, true);
+    const m = new Map();
+    for (let i = 0; i < phases.length; i++) {
+        const n = i + 1;
+        for (const zid of phases[i]) {
+            if (!m.has(zid))
+                m.set(zid, n);
+        }
+    }
+    return m;
+}
+
+/** Weekly timetable entries from schedule slots (local wall clock, Mon=0 … Sun=6). */
+function normalizeWeekParity(raw) {
+    return raw === "odd" || raw === "even" ? raw : "every";
+}
+/** ISO-8601 week number (same numbering as Python's isocalendar). */
+function isoWeekNumber(d) {
+    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+    const dayNum = (date.getUTCDay() + 6) % 7; // Mon=0
+    date.setUTCDate(date.getUTCDate() - dayNum + 3); // Thursday decides the ISO week
+    const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
+    const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
+    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
+    return 1 + Math.round((date.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
+}
+function weekParityOfWeekNumber(week) {
+    return week % 2 === 1 ? "odd" : "even";
+}
+function parseTimeLocalToMinutes(timeLocal) {
+    const m = /^(\d{1,2}):(\d{2})$/.exec(timeLocal.trim());
+    if (!m)
+        return 0;
+    const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
+    const min = Math.min(59, Math.max(0, parseInt(m[2], 10)));
+    return h * 60 + min;
+}
+function durationForMode(zone, mode) {
+    if (!zone)
+        return 0;
+    if (mode === "eco")
+        return Math.max(0, Number(zone.duration_eco_min ?? 0));
+    if (mode === "extra")
+        return Math.max(0, Number(zone.duration_extra_min ?? 0));
+    return Math.max(0, Number(zone.duration_normal_min ?? 0));
+}
+/** Bucket by wall-clock hour of segment start ([0,8), [8,16), [16,24)). */
+function bucketFromStartMin(startMin) {
+    const h = Math.floor(Math.max(0, startMin) / 60);
+    if (h < 8)
+        return 0;
+    if (h < 16)
+        return 1;
+    return 2;
+}
+/**
+ * Weekday column order: values are internal indices 0=Monday … 6=Sunday.
+ */
+function weekdayIndicesForDisplay(firstWeekday, language) {
+    const monFirst = [0, 1, 2, 3, 4, 5, 6];
+    const sunFirst = [6, 0, 1, 2, 3, 4, 5];
+    const fw = (firstWeekday || "monday").toLowerCase();
+    if (fw === "sunday")
+        return sunFirst;
+    if (fw === "monday")
+        return monFirst;
+    if (fw === "language" && language) {
+        try {
+            const loc = new Intl.Locale(language.replace(/_/g, "-"));
+            const fd = loc.weekInfo?.firstDay;
+            if (fd === 7)
+                return sunFirst;
+            return monFirst;
+        }
+        catch {
+            return monFirst;
+        }
+    }
+    return monFirst;
+}
+function zonesPhaseInputFromInstallation(zones) {
+    const out = {};
+    if (!zones)
+        return out;
+    for (const [id, z] of Object.entries(zones)) {
+        out[id] = {
+            enabled: Boolean(z.enabled ?? true),
+            exclusive: Boolean(z.exclusive),
+        };
+    }
+    return out;
+}
+/**
+ * Phase grouping includes disabled zones (they render gray) but phase advance
+ * uses max duration among enabled zones only (matches runtime).
+ */
+function buildTimetableEntries(installation) {
+    const planEnabled = Boolean(installation?.enabled ?? true);
+    const preStartSec = Math.max(0, Number(installation?.pre_start_delay_sec ?? 10));
+    const mode = String(installation?.mode ?? "normal");
+    const maxParallel = Math.max(1, Number(installation?.max_parallel_zones ?? 2));
+    const zones = installation?.zones;
+    const slots = installation?.schedule_slots;
+    const zonesById = zonesPhaseInputFromInstallation(zones);
+    const entries = [];
+    if (!slots?.length || !zones) {
+        return entries;
+    }
+    for (const slot of slots) {
+        const slotId = String(slot.slot_id ?? "");
+        const slotEnabled = Boolean(slot.enabled ?? true);
+        const rawWeekdays = Array.isArray(slot.weekdays)
+            ? slot.weekdays
+                .map((n) => Math.max(0, Math.min(6, Number(n))))
+                .filter((n) => Number.isInteger(n))
+            : [];
+        // Fall back to the legacy scalar weekday for pre-migration data.
+        const weekdays = rawWeekdays.length
+            ? Array.from(new Set(rawWeekdays))
+            : [Math.max(0, Math.min(6, Number(slot.weekday ?? 0)))];
+        const timeLocal = String(slot.time_local ?? "00:00");
+        const weekParity = normalizeWeekParity(slot.week_parity);
+        const ordered = Array.isArray(slot.zone_ids_ordered)
+            ? slot.zone_ids_ordered
+            : [];
+        const slotStartMin = parseTimeLocalToMinutes(timeLocal);
+        const phases = computePhases(ordered, zonesById, maxParallel, false);
+        for (const weekday of weekdays) {
+            let cursor = slotStartMin + preStartSec / 60;
+            for (const phase of phases) {
+                const phaseStart = cursor;
+                let phaseLenMin = 0;
+                for (const zid of phase) {
+                    const z = zones[zid];
+                    if (!z)
+                        continue;
+                    if (Boolean(z.enabled ?? true)) {
+                        const d = durationForMode(z, mode);
+                        phaseLenMin = Math.max(phaseLenMin, d);
+                    }
+                }
+                for (const zid of phase) {
+                    const z = zones[zid];
+                    if (!z)
+                        continue;
+                    const zoneEnabled = Boolean(z.enabled ?? true);
+                    const dur = durationForMode(z, mode);
+                    const startMin = phaseStart;
+                    const endMin = phaseStart + dur;
+                    entries.push({
+                        zoneId: zid,
+                        weekday,
+                        startMin,
+                        endMin,
+                        bucket: bucketFromStartMin(startMin),
+                        enabled: planEnabled && slotEnabled && zoneEnabled,
+                        mode,
+                        slotId,
+                        weekParity,
+                    });
+                }
+                cursor = phaseStart + phaseLenMin;
+            }
+        }
+    }
+    return entries;
+}
+function zoneRowOrder(installation) {
+    const zones = installation?.zones;
+    if (!zones)
+        return [];
+    return Object.keys(zones);
+}
+function zoneDisplayName(installation, zoneId) {
+    const zones = installation?.zones;
+    const z = zones?.[zoneId];
+    const name = z?.name != null ? String(z.name) : "";
+    return name.trim() || zoneId.slice(0, 8);
+}
+/** HH:MM for profile time formatting (minutes may be fractional from pre-start seconds). */
+function minutesToTimeLocal(totalMin) {
+    const t = Math.max(0, totalMin);
+    const m = Math.floor(t);
+    const h = Math.min(23, Math.floor(m / 60));
+    const mm = m % 60;
+    return `${h}:${String(mm).padStart(2, "0")}`;
+}
+/** Rounded duration in minutes for UI labels. */
+function entryDurationMinutesRounded(entry) {
+    return Math.max(0, Math.round(entry.endMin - entry.startMin));
+}
+const BUCKET_KEYS = [0, 1, 2];
+/** Horizontal stacking when multiple entries share the same zone, weekday, and bucket. */
+function assignEntryLanes(entries) {
+    const byCell = new Map();
+    for (const e of entries) {
+        const k = `${e.weekday}:${e.zoneId}:${e.bucket}`;
+        if (!byCell.has(k))
+            byCell.set(k, []);
+        byCell.get(k).push(e);
+    }
+    const out = new Map();
+    for (const list of byCell.values()) {
+        list.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
+        const ends = [];
+        for (const e of list) {
+            let lane = 0;
+            while (lane < ends.length && ends[lane] > e.startMin + 1e-3) {
+                lane++;
+            }
+            if (lane === ends.length) {
+                ends.push(e.endMin);
+            }
+            else {
+                ends[lane] = Math.max(ends[lane], e.endMin);
+            }
+            out.set(e, { lane, maxLanes: 0 });
+        }
+        const maxLanes = Math.max(1, ends.length);
+        for (const e of list) {
+            out.get(e).maxLanes = maxLanes;
+        }
+    }
+    return out;
+}
+const TIMETABLE_BUCKET_INDICES = BUCKET_KEYS;
+/**
+ * How many schedule slots include `zone_id` in `zone_ids_ordered` (distinct slots;
+ * each slot counts at most once per zone).
+ */
+function slotInclusionCountPerZone(installation) {
+    const slots = installation?.schedule_slots;
+    const counts = {};
+    if (!Array.isArray(slots))
+        return counts;
+    for (const slot of slots) {
+        const ordered = Array.isArray(slot.zone_ids_ordered)
+            ? slot.zone_ids_ordered
+            : [];
+        const seen = new Set();
+        for (const zid of ordered) {
+            if (seen.has(zid))
+                continue;
+            seen.add(zid);
+            counts[zid] = (counts[zid] ?? 0) + 1;
+        }
+    }
+    return counts;
+}
+
+/**
+ * Cycle → schedule-slot generation, mirroring `cycle.py` exactly.
+ *
+ * Used for the live wizard preview; the identical rules run server-side in
+ * `cycle.py` for `cycle_upsert`, so the preview and the created slots always
+ * agree (acceptance §8.4). Cycle length is 7 or 14 days because `week_parity`
+ * can only express a 2-week cycle.
+ */
+/** Round half up (matches JS Math.round and Python `round_half_up`). */
+function roundHalfUp(x) {
+    return Math.floor(x + 0.5);
+}
+function oppositeParity(p) {
+    if (p === "odd")
+        return "even";
+    if (p === "even")
+        return "odd";
+    return "every";
+}
+/** Monday-based weekday of a JS Date (0 = Monday … 6 = Sunday). */
+function mondayBasedWeekday(d) {
+    return (d.getDay() + 6) % 7;
+}
+/** Parity of the ISO week containing the next occurrence of the anchor weekday. */
+function anchorWeekParity(anchorWeekday, today) {
+    const a = Math.max(0, Math.min(6, Math.round(anchorWeekday)));
+    for (let i = 0; i < 8; i++) {
+        const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+        if (mondayBasedWeekday(d) === a) {
+            return isoWeekNumber(d) % 2 === 1 ? "odd" : "even";
+        }
+    }
+    return "odd";
+}
+function times(meta) {
+    const raw = meta?.times;
+    const out = [];
+    if (Array.isArray(raw)) {
+        for (const x of raw) {
+            const s = String(x).trim();
+            if (s)
+                out.push(s);
+        }
+    }
+    return out.length ? out : ["06:00"];
+}
+function anchor(meta) {
+    const n = Number(meta?.anchor_weekday ?? 0);
+    return Number.isFinite(n) ? Math.max(0, Math.min(6, Math.round(n))) : 0;
+}
+function nValue(meta, def = 2) {
+    const n = Number(meta?.n ?? def);
+    return Number.isFinite(n) ? Math.max(1, Math.round(n)) : def;
+}
+function weekDays(meta) {
+    const raw = meta?.week_days;
+    const out = [];
+    const seen = new Set();
+    if (Array.isArray(raw)) {
+        for (const x of raw) {
+            const v = Number(x);
+            if (Number.isInteger(v) && v >= 0 && v <= 6 && !seen.has(v)) {
+                seen.add(v);
+                out.push(v);
+            }
+        }
+    }
+    out.sort((a, b) => a - b);
+    return out;
+}
+function everyNDaysSlots(n, a, timeLocal, p0) {
+    const runs = Math.max(1, roundHalfUp(14 / n));
+    const offsets = [];
+    for (let k = 0; k < runs; k++)
+        offsets.push(roundHalfUp((k * 14) / runs));
+    const weekA = [];
+    const weekB = [];
+    const seenA = new Set();
+    const seenB = new Set();
+    for (const off of offsets) {
+        const wd = (a + off) % 7;
+        if (off < 7) {
+            if (!seenA.has(wd)) {
+                seenA.add(wd);
+                weekA.push(wd);
+            }
+        }
+        else if (!seenB.has(wd)) {
+            seenB.add(wd);
+            weekB.push(wd);
+        }
+    }
+    weekA.sort((x, y) => x - y);
+    weekB.sort((x, y) => x - y);
+    const sameSet = weekA.length === weekB.length && weekA.every((v, i) => v === weekB[i]);
+    if (weekA.length && weekB.length && sameSet) {
+        return [{ weekdays: weekA, time_local: timeLocal, week_parity: "every" }];
+    }
+    const out = [];
+    if (weekA.length)
+        out.push({ weekdays: weekA, time_local: timeLocal, week_parity: p0 });
+    if (weekB.length)
+        out.push({ weekdays: weekB, time_local: timeLocal, week_parity: oppositeParity(p0) });
+    return out;
+}
+function generateCycleSlots(kind, meta, anchorParity = "odd") {
+    const ts = times(meta);
+    const a = anchor(meta);
+    const allDays = [0, 1, 2, 3, 4, 5, 6];
+    switch (kind) {
+        case "daily":
+            return [{ weekdays: allDays, time_local: ts[0], week_parity: "every" }];
+        case "twice_daily": {
+            const t2 = ts.length > 1 ? ts[1] : ts[0];
+            return [
+                { weekdays: allDays, time_local: ts[0], week_parity: "every" },
+                { weekdays: allDays, time_local: t2, week_parity: "every" },
+            ];
+        }
+        case "weekly":
+            return [{ weekdays: [a], time_local: ts[0], week_parity: "every" }];
+        case "biweekly":
+            return [{ weekdays: [a], time_local: ts[0], week_parity: anchorParity }];
+        case "n_per_week": {
+            const days = weekDays(meta);
+            return [
+                { weekdays: days.length ? days : [a], time_local: ts[0], week_parity: "every" },
+            ];
+        }
+        case "every_n_days":
+            return everyNDaysSlots(nValue(meta), a, ts[0], anchorParity);
+        default: {
+            const days = weekDays(meta);
+            return [
+                { weekdays: days.length ? days : [a], time_local: ts[0], week_parity: "every" },
+            ];
+        }
+    }
+}
+function cycleIsExact(kind, meta) {
+    if (kind !== "every_n_days")
+        return true;
+    return 14 % nValue(meta) === 0;
+}
+/** Whether ``d`` falls in a week matching the slot cycle (ISO calendar week). */
+function weekParityMatches(d, parity) {
+    if (parity === "odd")
+        return isoWeekNumber(d) % 2 === 1;
+    if (parity === "even")
+        return isoWeekNumber(d) % 2 === 0;
+    return true;
+}
+/** 14-day strip starting at `start`; a day runs when any slot fires on it. */
+function previewStrip(slots, start, today, days = 14) {
+    const out = [];
+    const tKey = today.toDateString();
+    for (let i = 0; i < days; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const wd = mondayBasedWeekday(d);
+        const run = slots.some((s) => s.weekdays.includes(wd) && weekParityMatches(d, s.week_parity));
+        out.push({ date: d, run, isToday: d.toDateString() === tKey });
+    }
+    return out;
+}
+/** Day-gaps between consecutive fires over a 28-day window from `start`. */
+function previewGaps(slots, start, days = 28) {
+    const fires = [];
+    for (let i = 0; i < days; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const wd = mondayBasedWeekday(d);
+        if (slots.some((s) => s.weekdays.includes(wd) && weekParityMatches(d, s.week_parity))) {
+            fires.push(d);
+        }
+    }
+    const gaps = [];
+    for (let i = 0; i < fires.length - 1; i++) {
+        gaps.push(Math.round((fires[i + 1].getTime() - fires[i].getTime()) / 86400000));
+    }
+    return gaps;
+}
+/** First date on/after `start` on which any slot fires (null if none within 28 days). */
+function firstRunDate(slots, start, days = 28) {
+    for (let i = 0; i < days; i++) {
+        const d = new Date(start.getFullYear(), start.getMonth(), start.getDate() + i);
+        const wd = mondayBasedWeekday(d);
+        if (slots.some((s) => s.weekdays.includes(wd) && weekParityMatches(d, s.week_parity))) {
+            return d;
+        }
+    }
+    return null;
+}
+
+const MODES = ["eco", "normal", "extra"];
+class ViewOverview extends i {
+    constructor() {
+        super(...arguments);
+        this._busy = false;
+    }
+    static { this.properties = {
+        hass: { attribute: false },
+        entryId: { type: String },
+        installation: { type: Object },
+        scheduleNext: { type: Object },
+        runState: { type: Object },
+        onSaved: { attribute: false },
+    }; }
+    static { this.styles = [
+        sharedStyles,
+        i$3 `
+      .overview-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        align-items: start;
+        margin-bottom: 20px;
+      }
+      @container siview (min-width: 780px) {
+        .overview-grid {
+          grid-template-columns: minmax(300px, 0.85fr) 1.15fr;
+        }
+      }
+      .overview-grid ha-card {
+        margin-bottom: 0;
+        height: 100%;
+        box-sizing: border-box;
+      }
+      .pause-banner {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        border: 1px solid color-mix(in srgb, var(--warning-color, #f0b23a) 45%, transparent);
+        background: color-mix(in srgb, var(--warning-color, #f0b23a) 10%, transparent);
+        margin-bottom: 20px;
+        font-size: 0.9rem;
+      }
+      .pause-banner ha-icon {
+        color: var(--warning-color, #f0b23a);
+        flex-shrink: 0;
+      }
+      .pause-banner .btn-outline {
+        margin-left: auto;
+      }
+      .state-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: var(--secondary-background-color, rgba(0, 0, 0, 0.06));
+        color: var(--secondary-text-color);
+      }
+      .state-badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: currentColor;
+      }
+      .state-badge.running {
+        color: var(--primary-color);
+        background: color-mix(in srgb, var(--primary-color) 14%, transparent);
+      }
+      .state-badge.error {
+        color: var(--error-color);
+        background: color-mix(in srgb, var(--error-color) 14%, transparent);
+      }
+      .hero-state {
+        font-size: 2.6rem;
+        font-weight: 300;
+        line-height: 1.05;
+        letter-spacing: -0.03em;
+        margin: 8px 0 12px;
+      }
+      .hero-state.running {
+        color: var(--primary-color);
+      }
+      .hero-state.error {
+        color: var(--error-color);
+      }
+      .num {
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        color: var(--primary-text-color);
+      }
+      .pill-list {
+        list-style: none;
+        margin: 14px 0 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .pill {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 10px 12px;
+        border-radius: 10px;
+        border: 1px solid var(--divider-color);
+        background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
+        font-size: 0.9rem;
+        line-height: 1.45;
+      }
+      .pill ha-icon {
+        flex-shrink: 0;
+        --mdc-icon-size: 20px;
+        color: var(--primary-color);
+        margin-top: 1px;
+      }
+      .pill strong {
+        font-weight: 600;
+        color: var(--primary-text-color);
+      }
+      .action-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin-top: 18px;
+      }
+      /* Next-runs list */
+      .nr {
+        border: 1px solid var(--divider-color);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-bottom: 8px;
+        cursor: pointer;
+        transition: background 0.12s ease, border-color 0.12s ease;
+      }
+      .nr:hover {
+        border-color: var(--primary-color);
+        background: color-mix(in srgb, var(--primary-color) 4%, transparent);
+      }
+      .nr:focus-visible {
+        outline: 2px solid var(--primary-color);
+        outline-offset: 2px;
+      }
+      .nr.first {
+        border-left: 3px solid var(--primary-color);
+      }
+      .nr.faded {
+        border-style: dashed;
+        opacity: 0.72;
+      }
+      .nr-top {
+        display: flex;
+        align-items: baseline;
+        gap: 8px 10px;
+        flex-wrap: wrap;
+      }
+      .nr-when {
+        font-weight: 600;
+        font-variant-numeric: tabular-nums;
+      }
+      .nr-desc {
+        color: var(--secondary-text-color);
+        font-size: 0.88rem;
+      }
+      .nr-dur {
+        margin-left: auto;
+        color: var(--primary-color);
+        font-variant-numeric: tabular-nums;
+        font-size: 0.85rem;
+        white-space: nowrap;
+      }
+      .nr-zones {
+        color: var(--secondary-text-color);
+        font-size: 0.85rem;
+        margin-top: 4px;
+        line-height: 1.4;
+      }
+      .mode-total {
+        margin: 12px 0 0;
+        font-size: 0.85rem;
+        color: var(--secondary-text-color);
+      }
+      .mode-total .num {
+        color: var(--primary-text-color);
+      }
+    `,
+    ]; }
+    connectedCallback() {
+        super.connectedCallback();
+        this._tick = window.setInterval(() => this.requestUpdate(), 30000);
+    }
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        if (this._tick !== undefined)
+            window.clearInterval(this._tick);
+    }
+    get _inst() {
+        return this.installation ?? {};
+    }
+    _mode() {
+        const m = String(this._inst.mode ?? "normal");
+        return MODES.includes(m) ? m : "normal";
+    }
+    _planEnabled() {
+        return Boolean(this._inst.enabled ?? true);
+    }
+    _pauseUntil() {
+        const raw = this._inst.pause_until;
+        if (!raw || typeof raw !== "string")
+            return null;
+        const ms = Date.parse(raw);
+        return Number.isNaN(ms) || ms <= Date.now() ? null : ms;
+    }
+    _zoneName(zoneId) {
+        const zones = this._inst.zones;
+        const z = zones?.[zoneId];
+        return z ? String(z.name ?? zoneId) : zoneId;
+    }
+    _zonesPhaseInput() {
+        const zones = this._inst.zones;
+        const out = {};
+        if (!zones)
+            return out;
+        for (const [id, z] of Object.entries(zones)) {
+            out[id] = { enabled: Boolean(z?.enabled ?? true), exclusive: Boolean(z?.exclusive ?? false) };
+        }
+        return out;
+    }
+    _maxParallel() {
+        const n = Number(this._inst.max_parallel_zones ?? 2);
+        return Number.isFinite(n) && n >= 1 ? n : 2;
+    }
+    _slotEstimateMin(zoneIds, mode) {
+        const zones = this._inst.zones;
+        if (!zones)
+            return 0;
+        const phases = computePhases(zoneIds, this._zonesPhaseInput(), this._maxParallel(), true);
+        const preStart = Math.max(0, Number(this._inst.pre_start_delay_sec ?? 10)) / 60;
+        let total = preStart;
+        for (const phase of phases) {
+            let phaseMax = 0;
+            for (const zid of phase) {
+                const z = zones[zid];
+                if (z && Boolean(z.enabled ?? true))
+                    phaseMax = Math.max(phaseMax, durationForMode(z, mode));
+            }
+            total += phaseMax;
+        }
+        return Math.round(total);
+    }
+    _slotZoneIds(slotId) {
+        const slots = this._inst.schedule_slots;
+        const s = slots?.find((x) => String(x.slot_id) === slotId);
+        return s && Array.isArray(s.zone_ids_ordered) ? s.zone_ids_ordered : [];
+    }
+    /** Humanised cadence for a slot ("every 2 days", "weekly", or its weekday list). */
+    _kindLabel(slot) {
+        const kind = String(slot.cycle_kind ?? "custom");
+        const meta = slot.cycle_meta ?? null;
+        switch (kind) {
+            case "daily":
+                return t(this.hass, "config_panel.cycle_kind_daily");
+            case "weekly":
+                return t(this.hass, "config_panel.cycle_kind_weekly");
+            case "biweekly":
+                return t(this.hass, "config_panel.cycle_kind_biweekly");
+            case "n_per_week":
+                return t(this.hass, "config_panel.cycle_kind_n_per_week");
+            case "every_n_days":
+                return meta?.n === 3
+                    ? t(this.hass, "config_panel.cycle_kind_every_3_days")
+                    : t(this.hass, "config_panel.cycle_kind_every_2_days");
+            default: {
+                const wds = Array.isArray(slot.weekdays)
+                    ? slot.weekdays
+                    : [Number(slot.weekday ?? 0)];
+                return weekdaysSummary(this.hass, wds);
+            }
+        }
+    }
+    /** The next `limit` distinct run fires across all enabled slots (client-side). */
+    _upcomingRuns(limit) {
+        const slots = this._inst.schedule_slots ?? [];
+        if (!this._planEnabled())
+            return [];
+        const pauseMs = this._pauseUntil();
+        const now = new Date();
+        const runs = [];
+        const mode = this._mode();
+        for (let i = 0; i < 21 && runs.length < limit * 4; i++) {
+            const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+            const wd = mondayBasedWeekday(day);
+            for (const slot of slots) {
+                if (!(slot.enabled ?? true))
+                    continue;
+                const weekdays = Array.isArray(slot.weekdays)
+                    ? slot.weekdays
+                    : [Number(slot.weekday ?? 0)];
+                if (!weekdays.includes(wd))
+                    continue;
+                const parity = String(slot.week_parity ?? "every");
+                if (!weekParityMatches(day, parity))
+                    continue;
+                const [h, mi] = String(slot.time_local ?? "06:00").split(":").map(Number);
+                const when = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h || 0, mi || 0);
+                if (when <= now)
+                    continue;
+                if (pauseMs !== null && when.getTime() < pauseMs)
+                    continue;
+                const zoneIds = Array.isArray(slot.zone_ids_ordered)
+                    ? slot.zone_ids_ordered
+                    : [];
+                runs.push({
+                    when,
+                    label: String(slot.cycle_meta?.label ?? slot.name ?? "").trim(),
+                    kind: this._kindLabel(slot),
+                    zoneNames: zoneIds.map((id) => this._zoneName(id)),
+                    est: this._slotEstimateMin(zoneIds, mode),
+                    slotId: String(slot.slot_id ?? ""),
+                });
+            }
+        }
+        runs.sort((a, b) => a.when.getTime() - b.when.getTime());
+        return runs.slice(0, limit);
+    }
+    _relDay(d) {
+        const now = new Date();
+        const startToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const startD = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+        const diff = Math.round((startD.getTime() - startToday.getTime()) / 86400000);
+        if (diff === 0)
+            return t(this.hass, "config_panel.overview_today");
+        if (diff === 1)
+            return t(this.hass, "config_panel.overview_tomorrow");
+        return weekdayLong(this.hass, mondayBasedWeekday(d));
+    }
+    _fmtCountdown(ms) {
+        const diff = ms - Date.now();
+        if (diff <= 0)
+            return t(this.hass, "config_panel.overview_countdown_soon");
+        const totalMin = Math.round(diff / 60000);
+        const d = Math.floor(totalMin / 1440);
+        const h = Math.floor((totalMin % 1440) / 60);
+        const m = totalMin % 60;
+        if (d > 0)
+            return t(this.hass, "config_panel.overview_countdown_days", { d, h });
+        if (h > 0)
+            return t(this.hass, "config_panel.overview_countdown_hours", { h, m });
+        if (m > 0)
+            return t(this.hass, "config_panel.overview_countdown_minutes", { m });
+        return t(this.hass, "config_panel.overview_countdown_soon");
+    }
+    _fmtTime(d) {
+        return formatTimeLocalForDisplay(this.hass, `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`);
+    }
+    _runBusy() {
+        const s = String((this.runState ?? {}).run_state ?? "idle");
+        return ["preparing", "running", "stopping"].includes(s);
+    }
+    async _call(fn) {
+        this._busy = true;
+        this._msg = undefined;
+        this.requestUpdate();
+        try {
+            const res = await fn();
+            if (!res.success)
+                this._msg = formatApiError(res.error, this.hass);
+            else
+                this.onSaved?.();
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    _setMode(mode) {
+        if (mode === this._mode())
+            return;
+        void this._call(() => saveGlobal(this.hass, this.entryId, { mode }));
+    }
+    _runNextSlot(runs) {
+        const sid = runs[0]?.slotId || this.scheduleNext?.slots?.[0]?.slot_id;
+        if (!sid)
+            return;
+        void this._call(() => runSlotNow(this.hass, this.entryId, sid));
+    }
+    _pause48h() {
+        const until = new Date(Date.now() + 48 * 3600 * 1000).toISOString();
+        void this._call(() => saveGlobal(this.hass, this.entryId, { pause_until: until }));
+    }
+    _goSchedule(slotId) {
+        const q = slotId ? `?editSlot=${encodeURIComponent(slotId)}` : "";
+        navigate(this, `${exportPath(this.entryId, "schedule")}${q}`);
+    }
+    _renderCurrentRun(runs) {
+        const rs = (this.runState ?? {});
+        const runState = String(rs.run_state ?? "idle");
+        const runBusy = this._runBusy();
+        const activeIds = Array.isArray(rs.active_zone_ids) ? rs.active_zone_ids : [];
+        const lastErr = rs.last_error ? String(rs.last_error) : "";
+        const upcoming = Array.isArray(rs.upcoming_phases) ? rs.upcoming_phases : [];
+        const nextZones = upcoming
+            .map((g) => g.map((id) => this._zoneName(String(id))).join(", "))
+            .filter(Boolean)
+            .join(" → ");
+        const mode = this._mode();
+        const next = runs[0];
+        const badgeClass = runBusy ? "running" : runState === "error" ? "error" : "";
+        const stateWord = runBusy
+            ? runState === "preparing"
+                ? t(this.hass, "config_panel.general_state_preparing")
+                : runState === "stopping"
+                    ? t(this.hass, "config_panel.general_state_stopping")
+                    : t(this.hass, "config_panel.general_state_running")
+            : runState === "error"
+                ? t(this.hass, "config_panel.general_state_error_idle")
+                : t(this.hass, "config_panel.general_state_idle");
+        const showSkip = runBusy && runState !== "stopping" && (runState === "preparing" || upcoming.length > 0);
+        return b `
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:sprinkler-variant"></ha-icon>
+          ${t(this.hass, "config_panel.general_card_current_run")}
+          <span class="header-actions">
+            <span class="state-badge ${badgeClass}">${stateWord}</span>
+          </span>
+        </div>
+        <div class="card-content">
+          ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
+          <div class="hero-state ${badgeClass}">${stateWord}</div>
+
+          ${!runBusy && this._planEnabled() && next
+            ? b `
+                <div class="meta-line">
+                  <span class="meta"
+                    ><ha-icon icon="mdi:clock-outline"></ha-icon>${this._fmtCountdown(next.when.getTime())}</span
+                  >
+                  <span class="meta"
+                    ><ha-icon icon="mdi:water-percent"></ha-icon>${t(this.hass, `config_panel.general_mode_${mode}`)}</span
+                  >
+                  ${next.zoneNames.length
+                ? b `<span class="meta"
+                        ><ha-icon icon="mdi:format-list-numbered"></ha-icon>${t(this.hass, "config_panel.overview_zones_queued", { n: next.zoneNames.length })}</span
+                      >`
+                : A}
+                  ${next.est > 0
+                ? b `<span class="meta"
+                        ><ha-icon icon="mdi:timer-outline"></ha-icon
+                        ><span class="num">~${next.est}</span> min</span
+                      >`
+                : A}
+                </div>
+              `
+            : A}
+
+          ${activeIds.length || nextZones || lastErr
+            ? b `
+                <ul class="pill-list">
+                  ${activeIds.length
+                ? b `<li class="pill">
+                        <ha-icon icon="mdi:water"></ha-icon>
+                        <span><strong>${t(this.hass, "config_panel.general_active_zones")}</strong>
+                          ${activeIds.map((id) => this._zoneName(id)).join(", ")}</span>
+                      </li>`
+                : A}
+                  ${nextZones
+                ? b `<li class="pill">
+                        <ha-icon icon="mdi:playlist-play"></ha-icon>
+                        <span><strong>${t(this.hass, "config_panel.general_next_zones")}</strong>
+                          ${nextZones}</span>
+                      </li>`
+                : A}
+                  ${lastErr
+                ? b `<li class="pill">
+                        <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
+                        <span><strong>${t(this.hass, "config_panel.general_last_error")}</strong>
+                          ${lastErr}</span>
+                      </li>`
+                : A}
+                </ul>
+              `
+            : A}
+
+          <div class="action-row">
+            ${runBusy
+            ? b `
+                  <button type="button" class="btn-danger" ?disabled=${this._busy}
+                    @click=${() => this._call(() => panelControl(this.hass, this.entryId, "stop"))}>
+                    ${t(this.hass, "config_panel.general_stop_irrigation")}
+                  </button>
+                  ${showSkip
+                ? b `<button type="button" class="btn-outline" ?disabled=${this._busy}
+                        @click=${() => this._call(() => panelControl(this.hass, this.entryId, "skip_phase"))}>
+                        ${t(this.hass, "config_panel.general_skip_phase")}
+                      </button>`
+                : A}
+                `
+            : b `
+                  <button type="button" class="btn"
+                    ?disabled=${this._busy || !this._planEnabled() || !next}
+                    @click=${() => this._runNextSlot(runs)}>
+                    ${t(this.hass, "config_panel.overview_run_next_now")}
+                  </button>
+                  <button type="button" class="btn-outline"
+                    ?disabled=${this._busy || !this._planEnabled()}
+                    @click=${() => this._call(() => skipIrrigationToday(this.hass, this.entryId))}>
+                    ${t(this.hass, "config_panel.general_skip_today")}
+                  </button>
+                  <button type="button" class="btn-outline"
+                    ?disabled=${this._busy || !this._planEnabled()}
+                    @click=${() => this._pause48h()}>
+                    ${t(this.hass, "config_panel.overview_pause_48h")}
+                  </button>
+                `}
+            ${lastErr
+            ? b `<button type="button" class="btn-outline" ?disabled=${this._busy}
+                  @click=${() => this._call(() => panelControl(this.hass, this.entryId, "clear_error"))}>
+                  ${t(this.hass, "config_panel.general_clear_error")}
+                </button>`
+            : A}
+          </div>
+        </div>
+      </ha-card>
+    `;
+    }
+    _renderNextRuns(runs) {
+        return b `
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:calendar-clock"></ha-icon>
+          ${t(this.hass, "config_panel.overview_next_runs")}
+          <span class="header-actions">
+            <button type="button" class="btn-icon" @click=${() => this._goSchedule()}>
+              ${t(this.hass, "config_panel.tab_schedule")} →
+            </button>
+          </span>
+        </div>
+        <div class="card-content">
+          ${!this._planEnabled()
+            ? b `<p class="hint">${t(this.hass, "config_panel.general_plan_off_hint")}</p>`
+            : A}
+          ${runs.length
+            ? runs.map((r, i) => {
+                const desc = [r.label, r.kind].filter(Boolean).join(" · ");
+                return b `
+                  <div
+                    class="nr ${i === 0 ? "first" : ""} ${i >= 2 ? "faded" : ""}"
+                    role="button"
+                    tabindex="0"
+                    @click=${() => this._goSchedule(r.slotId)}
+                    @keydown=${(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        this._goSchedule(r.slotId);
+                    }
+                }}
+                  >
+                    <div class="nr-top">
+                      <span class="nr-when">${this._relDay(r.when)} ${this._fmtTime(r.when)}</span>
+                      <span class="nr-desc">${desc}</span>
+                      ${r.est > 0
+                    ? b `<span class="nr-dur">~${r.est} min</span>`
+                    : A}
+                    </div>
+                    ${r.zoneNames.length && i < 2
+                    ? b `<div class="nr-zones ellipsis">${r.zoneNames.join(", ")}</div>`
+                    : A}
+                  </div>
+                `;
+            })
+            : b `<div class="empty-state">
+                <ha-icon icon="mdi:calendar-blank-outline"></ha-icon>
+                <p>${t(this.hass, "config_panel.general_no_slots")}</p>
+                <button type="button" class="btn-outline" @click=${() => this._goSchedule()}>
+                  ${t(this.hass, "config_panel.tab_schedule")}
+                </button>
+              </div>`}
+        </div>
+      </ha-card>
+    `;
+    }
+    _renderMode(runs) {
+        const mode = this._mode();
+        const next = runs[0];
+        const zoneIds = next ? this._slotZoneIds(next.slotId) : [];
+        const eco = zoneIds.length ? this._slotEstimateMin(zoneIds, "eco") : 0;
+        const extra = zoneIds.length ? this._slotEstimateMin(zoneIds, "extra") : 0;
+        const cur = next?.est ?? 0;
+        return b `
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:water-percent"></ha-icon>
+          ${t(this.hass, "config_panel.general_watering_mode")}
+        </div>
+        <div class="card-content">
+          <div class="segmented" role="group" aria-label=${t(this.hass, "config_panel.general_watering_mode")}>
+            ${MODES.map((m) => b `<button
+                type="button"
+                class=${m === mode ? "selected" : ""}
+                aria-pressed=${m === mode ? "true" : "false"}
+                ?disabled=${this._busy}
+                @click=${() => this._setMode(m)}
+              >
+                ${t(this.hass, `config_panel.general_mode_${m}`)}
+              </button>`)}
+          </div>
+          ${next
+            ? b `<p class="mode-total">
+                ${t(this.hass, "config_panel.overview_mode_total", { n: cur })} ·
+                ${t(this.hass, "config_panel.general_mode_eco")}
+                <span class="num">${eco}</span> min ·
+                ${t(this.hass, "config_panel.general_mode_extra")}
+                <span class="num">${extra}</span> min
+              </p>`
+            : A}
+          <details class="inline-help">
+            <summary>
+              <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+              ${t(this.hass, "config_panel.general_watering_mode")}
+            </summary>
+            <p>${t(this.hass, "config_panel.general_watering_mode_desc")}</p>
+          </details>
+        </div>
+      </ha-card>
+    `;
+    }
+    render() {
+        const pauseMs = this._pauseUntil();
+        const runs = this._upcomingRuns(4);
+        return b `
+      ${pauseMs !== null
+            ? b `<div class="pause-banner">
+            <ha-icon icon="mdi:pause-circle-outline"></ha-icon>
+            <span>${t(this.hass, "config_panel.general_pause_active_hint", {
+                when: new Date(pauseMs).toLocaleString(),
+            })}</span>
+            <button type="button" class="btn-outline" ?disabled=${this._busy}
+              @click=${() => this._call(() => saveGlobal(this.hass, this.entryId, { pause_until: null }))}>
+              ${t(this.hass, "config_panel.general_clear_pause")}
+            </button>
+          </div>`
+            : A}
+
+      <div class="overview-grid">
+        ${this._renderCurrentRun(runs)}
+        ${this._renderNextRuns(runs)}
+      </div>
+      ${this._renderMode(runs)}
+    `;
+    }
+}
+__decorate([
+    r()
+], ViewOverview.prototype, "_busy", void 0);
+__decorate([
+    r()
+], ViewOverview.prototype, "_msg", void 0);
+defineCustomElementOnce("si-view-overview", ViewOverview);
 
 /** Shared stacked form layout: titles, helper text, full-width controls. */
 const formLayoutStyles = i$3 `
@@ -627,479 +2704,2028 @@ const formLayoutStyles = i$3 `
   }
 `;
 
-const LOCAL_TZ = Intl.DateTimeFormat?.().resolvedOptions?.().timeZone ?? "UTC";
-function resolveTimeZonePref(localeTz, serverTimeZone) {
-    if (localeTz === "local" && LOCAL_TZ)
-        return LOCAL_TZ;
-    return serverTimeZone;
-}
-function useAmPmFromLocale(locale) {
-    const tf = locale.time_format;
-    if (tf === "language" || tf === "system") {
-        const testLang = tf === "language" ? locale.language : undefined;
-        const test = new Date("January 1, 2023 22:00:00").toLocaleString(testLang);
-        return test.includes("10");
-    }
-    return tf === "12";
-}
-function formatDateNumericPart(date, locale, serverTz) {
-    const tz = resolveTimeZonePref(locale.time_zone, serverTz);
-    const df = locale.date_format;
-    if (df === "language" || df === "system") {
-        return new Intl.DateTimeFormat(df === "system" ? undefined : locale.language, {
-            year: "numeric",
-            month: "numeric",
-            day: "numeric",
-            timeZone: tz,
-        }).format(date);
-    }
-    const formatter = new Intl.DateTimeFormat(locale.language, {
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-        timeZone: tz,
-    });
-    const parts = formatter.formatToParts(date);
-    const literal = parts.find((p) => p.type === "literal")?.value ?? "/";
-    const day = parts.find((p) => p.type === "day")?.value ?? "";
-    const month = parts.find((p) => p.type === "month")?.value ?? "";
-    const year = parts.find((p) => p.type === "year")?.value ?? "";
-    const lastPart = parts[parts.length - 1];
-    const lastLiteral = lastPart?.type === "literal" ? lastPart.value : "";
-    if (df === "DMY")
-        return `${day}${literal}${month}${literal}${year}${lastLiteral}`;
-    if (df === "MDY")
-        return `${month}${literal}${day}${literal}${year}${lastLiteral}`;
-    if (df === "YMD")
-        return `${year}${literal}${month}${literal}${day}${lastLiteral}`;
-    return formatter.format(date);
-}
-function formatTimePart(date, locale, serverTz) {
-    const tz = resolveTimeZonePref(locale.time_zone, serverTz);
-    const ampm = useAmPmFromLocale(locale);
-    return new Intl.DateTimeFormat(locale.language, {
-        hour: ampm ? "numeric" : "2-digit",
-        minute: "2-digit",
-        hourCycle: ampm ? "h12" : "h23",
-        timeZone: tz,
-    }).format(date);
-}
-/**
- * Absolute instant (e.g. next run, pause until): weekday + profile date + profile time + TZ preference.
- */
-function formatDateTimeForProfile(hass, date) {
-    if (!hass)
-        return date.toLocaleString();
-    const loc = hass.locale;
-    const serverTz = hass.config?.time_zone ?? LOCAL_TZ;
-    const lang = (loc?.language ?? hass.language)?.replace(/_/g, "-");
-    const locComplete = loc &&
-        typeof loc.language === "string" &&
-        typeof loc.time_format === "string" &&
-        typeof loc.date_format === "string";
-    if (!locComplete) {
-        return new Intl.DateTimeFormat(lang, {
-            weekday: "long",
-            day: "2-digit",
-            month: "2-digit",
-            year: "numeric",
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(date);
-    }
-    const tz = resolveTimeZonePref(loc.time_zone, serverTz);
-    const weekday = new Intl.DateTimeFormat(loc.language, {
-        weekday: "long",
-        timeZone: tz,
-    }).format(date);
-    const datePart = formatDateNumericPart(date, loc, serverTz);
-    const timePart = formatTimePart(date, loc, serverTz);
-    return `${weekday}, ${datePart}, ${timePart}`;
-}
-/**
- * Schedule slot wall time (stored as HH:MM): same clock face, 12h/24h and spacing from profile.
- */
-function formatSlotTimeForProfile(hass, timeLocal) {
-    const m = /^(\d{1,2}):(\d{2})$/.exec(String(timeLocal).trim());
-    if (!m)
-        return timeLocal;
-    const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
-    const min = Math.min(59, Math.max(0, parseInt(m[2], 10)));
-    const d = new Date(2000, 0, 1, h, min, 0, 0);
-    const loc = hass?.locale;
-    const lang = (loc?.language ?? hass?.language)?.replace(/_/g, "-") ?? undefined;
-    if (!loc?.language || !loc.time_format) {
-        return new Intl.DateTimeFormat(lang, {
-            hour: "2-digit",
-            minute: "2-digit",
-        }).format(d);
-    }
-    const ampm = useAmPmFromLocale(loc);
-    return new Intl.DateTimeFormat(loc.language, {
-        hour: ampm ? "numeric" : "2-digit",
-        minute: "2-digit",
-        hourCycle: ampm ? "h12" : "h23",
-    }).format(d);
-}
-
-function locale(hass) {
-    const lang = hass?.locale?.language ?? hass?.language;
-    if (!lang)
-        return undefined;
-    return lang.replace(/_/g, "-");
-}
-/**
- * Schedule slots use weekday 0 = Monday … 6 = Sunday (same as the Python model).
- * Uses the user's HA language for localized weekday names.
- */
-function weekdayLong(hass, mondayBasedIndex) {
-    const i = Math.max(0, Math.min(6, mondayBasedIndex));
-    // 2024-01-01 is a Monday in local calendar semantics for display.
-    const d = new Date(2024, 0, 1 + i);
-    return new Intl.DateTimeFormat(locale(hass), { weekday: "long" }).format(d);
-}
-/**
- * Absolute instant: weekday + date + time using the user’s profile (12h/24h, DMY/MDY/YMD, server vs local TZ).
- */
-function formatDateTimeForDisplay(hass, date) {
-    return formatDateTimeForProfile(hass, date);
-}
-/** Slot wall time HH:MM with profile 12h/24h (same numbers as stored; presentation only). */
-function formatTimeLocalForDisplay(hass, timeLocal) {
-    return formatSlotTimeForProfile(hass, timeLocal);
-}
-
-class ViewGeneral extends i {
+const KIND_OPTIONS = [
+    { id: "daily", kind: "daily", multiAnchor: false, twoTimes: false },
+    { id: "every_2_days", kind: "every_n_days", n: 2, multiAnchor: false, twoTimes: false },
+    { id: "every_3_days", kind: "every_n_days", n: 3, multiAnchor: false, twoTimes: false },
+    { id: "n_per_week", kind: "n_per_week", multiAnchor: true, twoTimes: false },
+    { id: "weekly", kind: "weekly", multiAnchor: false, twoTimes: false },
+    { id: "biweekly", kind: "biweekly", multiAnchor: false, twoTimes: false },
+    { id: "custom", kind: "custom", multiAnchor: true, twoTimes: false },
+];
+const TIME_PRESETS = [
+    { key: "config_panel.cycle_time_preset_early", time: "05:30" },
+    { key: "config_panel.cycle_time_preset_morning", time: "08:15" },
+    { key: "config_panel.cycle_time_preset_evening", time: "19:00" },
+    { key: "config_panel.cycle_time_preset_late", time: "21:00" },
+];
+class CycleWizard extends i {
     constructor() {
         super(...arguments);
+        this.open = false;
+        this._step = 1;
+        this._optionId = "daily";
+        this._times = ["19:00", "06:00"];
+        this._anchor = 0;
+        this._weekDays = [0, 3];
+        this._zoneIds = [];
+        this._enabled = true;
+        this._label = "";
+        this._cycleId = null;
         this._busy = false;
-        this._runCtrlBusy = false;
-        this._name = "";
-        this._mode = "normal";
-        this._maxParallel = 2;
-        this._preStart = [];
-        this._preStartDelaySec = 10;
-        this._planEnabled = true;
-        this._isDefault = false;
-        this._defaultConfirmOpen = false;
-        this._defaultConfirmOtherName = "";
+        this._seeded = false;
     }
     static { this.properties = {
         hass: { attribute: false },
         entryId: { type: String },
         installation: { type: Object },
-        scheduleNext: { type: Object },
+        open: { type: Boolean },
+        onClose: { attribute: false },
+        onSaved: { attribute: false },
+    }; }
+    static { this.styles = [
+        sharedStyles,
+        formLayoutStyles,
+        i$3 `
+      .progress {
+        display: flex;
+        gap: 6px;
+        margin: 0 0 18px;
+      }
+      .progress .step {
+        flex: 1;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--divider-color);
+      }
+      .progress .step.done {
+        background: var(--primary-color);
+      }
+      .kind-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+      @container siview (max-width: 700px) {
+        .kind-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+      .kind-card {
+        text-align: left;
+        border: 1px solid var(--divider-color);
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: var(--card-background-color);
+        cursor: pointer;
+        font: inherit;
+        color: var(--primary-text-color);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .kind-card:hover {
+        border-color: var(--primary-color);
+      }
+      .kind-card.selected {
+        border-color: var(--primary-color);
+        background: color-mix(in srgb, var(--primary-color) 8%, var(--card-background-color));
+      }
+      .kind-card-title {
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        justify-content: space-between;
+      }
+      .kind-card-desc {
+        font-size: 0.8rem;
+        color: var(--secondary-text-color);
+        line-height: 1.4;
+      }
+      .weekday-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 4px 0 8px;
+      }
+      .weekday-chips .chip.day {
+        min-width: 44px;
+        min-height: 40px;
+        text-align: center;
+        justify-content: center;
+      }
+      .time-fields {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+      .time-fields input[type="time"] {
+        width: auto;
+        min-width: 120px;
+      }
+      .zone-pick {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 10px;
+        border: 1px solid var(--divider-color);
+        border-radius: 8px;
+        margin-bottom: 6px;
+      }
+      .zone-pick input[type="checkbox"] {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+      }
+      .zone-pick-main {
+        flex: 1;
+        min-width: 0;
+      }
+      .zone-pick-name {
+        font-weight: 500;
+      }
+      .summary-card {
+        border: 1px solid var(--divider-color);
+        border-radius: 10px;
+        padding: 12px 14px;
+        margin-top: 8px;
+        background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
+        font-size: 0.9rem;
+      }
+      .preview-line {
+        font-size: 0.85rem;
+        color: var(--secondary-text-color);
+        margin: 6px 0;
+        line-height: 1.5;
+      }
+    `,
+    ]; }
+    /** Open the wizard, optionally prefilled at a given step / from an existing cycle. */
+    start(opts) {
+        this._msg = undefined;
+        this._busy = false;
+        this._seeded = true;
+        if (opts?.seedFromSlots && opts.seedFromSlots.length) {
+            this._seedFromSlots(opts.seedFromSlots);
+        }
+        else {
+            this._optionId = opts?.optionId ?? "daily";
+            this._cycleId = opts?.cycleId ?? null;
+            this._zoneIds = this._defaultZoneIds();
+            this._enabled = true;
+            this._label = "";
+            this._syncDefaultsForOption();
+        }
+        this._step = opts?.step ?? 1;
+        this.open = true;
+        this.requestUpdate();
+    }
+    _seedFromSlots(slots) {
+        const first = slots[0];
+        this._cycleId = String(first.cycle_id ?? "") || null;
+        const meta = first.cycle_meta ?? {};
+        const kind = String(first.cycle_kind ?? "custom");
+        this._optionId =
+            kind === "every_n_days"
+                ? meta.n === 3
+                    ? "every_3_days"
+                    : "every_2_days"
+                : kind;
+        this._label = String(meta.label ?? first.name ?? "");
+        const times = slots.map((s) => String(s.time_local ?? "06:00"));
+        this._times = [times[0] ?? "19:00", times[1] ?? "06:00"];
+        this._anchor = Number(meta.anchor_weekday ?? 0);
+        this._weekDays =
+            Array.isArray(meta.week_days) && meta.week_days.length
+                ? [...meta.week_days]
+                : first.weekdays ?? [0];
+        this._zoneIds = Array.isArray(first.zone_ids_ordered)
+            ? [...first.zone_ids_ordered]
+            : this._defaultZoneIds();
+        this._enabled = Boolean(first.enabled ?? true);
+    }
+    _option() {
+        return KIND_OPTIONS.find((o) => o.id === this._optionId) ?? KIND_OPTIONS[0];
+    }
+    _syncDefaultsForOption() {
+        const opt = this._option();
+        if (opt.multiAnchor && this._weekDays.length === 0)
+            this._weekDays = [0, 3];
+    }
+    _defaultZoneIds() {
+        const zones = this.installation?.zones;
+        if (!zones)
+            return [];
+        return Object.entries(zones)
+            .filter(([, z]) => Boolean(z.enabled ?? true))
+            .map(([id]) => id);
+    }
+    _meta() {
+        const opt = this._option();
+        const meta = { label: this._label.trim(), times: this._times.slice(0, opt.twoTimes ? 2 : 1) };
+        if (opt.n)
+            meta.n = opt.n;
+        if (opt.multiAnchor)
+            meta.week_days = [...this._weekDays].sort((a, b) => a - b);
+        else
+            meta.anchor_weekday = this._anchor;
+        return meta;
+    }
+    _slots() {
+        const opt = this._option();
+        const p0 = anchorWeekParity(this._anchor, new Date());
+        return generateCycleSlots(opt.kind, this._meta(), p0);
+    }
+    _mode() {
+        return String(this.installation?.mode ?? "normal");
+    }
+    _zonesPhaseInput() {
+        const zones = this.installation?.zones;
+        const out = {};
+        if (!zones)
+            return out;
+        for (const [id, z] of Object.entries(zones)) {
+            out[id] = { enabled: Boolean(z?.enabled ?? true), exclusive: Boolean(z?.exclusive ?? false) };
+        }
+        return out;
+    }
+    _maxParallel() {
+        const n = Number(this.installation?.max_parallel_zones ?? 2);
+        return Number.isFinite(n) && n >= 1 ? n : 2;
+    }
+    _zoneName(id) {
+        const zones = this.installation?.zones;
+        const z = zones?.[id];
+        return z ? String(z.name ?? id) : id;
+    }
+    _zoneDuration(id) {
+        const zones = this.installation?.zones;
+        return durationForMode(zones?.[id], this._mode());
+    }
+    _estimateMin() {
+        const zones = this.installation?.zones;
+        if (!zones)
+            return 0;
+        const phases = computePhases(this._zoneIds, this._zonesPhaseInput(), this._maxParallel(), true);
+        let total = Math.max(0, Number(this.installation?.pre_start_delay_sec ?? 10)) / 60;
+        for (const phase of phases) {
+            let phaseMax = 0;
+            for (const zid of phase) {
+                const z = zones[zid];
+                if (z && Boolean(z.enabled ?? true))
+                    phaseMax = Math.max(phaseMax, durationForMode(z, this._mode()));
+            }
+            total += phaseMax;
+        }
+        return Math.round(total);
+    }
+    _close() {
+        this.open = false;
+        this._seeded = false;
+        this.onClose?.();
+        this.requestUpdate();
+    }
+    _canNext() {
+        if (this._step === 2) {
+            const opt = this._option();
+            if (opt.multiAnchor && this._weekDays.length === 0)
+                return false;
+        }
+        if (this._step === 3 && this._zoneIds.length === 0)
+            return false;
+        return true;
+    }
+    /** Conflict with an existing slot: shares a weekday and its [start, start+est] overlaps. */
+    _conflicts() {
+        const zones = this.installation?.zones;
+        if (!zones)
+            return false;
+        const est = this._estimateMin();
+        const mine = this._slots().map((s) => ({
+            days: new Set(s.weekdays),
+            start: parseTimeLocalToMinutes(s.time_local),
+            parity: s.week_parity,
+        }));
+        const existing = this.installation?.schedule_slots ?? [];
+        for (const slot of existing) {
+            if (this._cycleId && String(slot.cycle_id ?? "") === this._cycleId)
+                continue;
+            if (!(slot.enabled ?? true))
+                continue;
+            const days = new Set(Array.isArray(slot.weekdays) ? slot.weekdays : [Number(slot.weekday ?? 0)]);
+            const start = parseTimeLocalToMinutes(String(slot.time_local ?? "00:00"));
+            const parity = String(slot.week_parity ?? "every");
+            for (const m of mine) {
+                const shareDay = [...m.days].some((d) => days.has(d));
+                const shareWeek = m.parity === "every" || parity === "every" || m.parity === parity;
+                if (!shareDay || !shareWeek)
+                    continue;
+                // Assume similar duration window for the existing slot too.
+                if (m.start < start + est && start < m.start + est)
+                    return true;
+            }
+        }
+        return false;
+    }
+    _shiftLater() {
+        this._times = this._times.map((tl) => {
+            const min = Math.min(23 * 60 + 59, parseTimeLocalToMinutes(tl) + 60);
+            return minutesToTimeLocal(min).padStart(5, "0");
+        });
+    }
+    async _create() {
+        this._busy = true;
+        this._msg = undefined;
+        this.requestUpdate();
+        try {
+            const opt = this._option();
+            const res = await upsertCycle(this.hass, this.entryId, {
+                cycle_id: this._cycleId,
+                cycle_kind: opt.kind,
+                cycle_meta: this._meta(),
+                zone_ids_ordered: this._zoneIds,
+                enabled: this._enabled,
+            });
+            if (!res.success) {
+                this._msg = formatApiError(res.error, this.hass);
+            }
+            else {
+                const rid = res.cycle_id ?? this._cycleId ?? "";
+                this._close();
+                this.onSaved?.(rid);
+            }
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    _renderStep1() {
+        return b `
+      <div class="section-title">${t(this.hass, "config_panel.cycle_step_how_often")}</div>
+      <div class="kind-grid">
+        ${KIND_OPTIONS.map((opt) => {
+            const meta = opt.n ? { n: opt.n } : {};
+            const exact = cycleIsExact(opt.kind, meta);
+            return b `
+            <button
+              type="button"
+              class="kind-card ${this._optionId === opt.id ? "selected" : ""}"
+              @click=${() => {
+                this._optionId = opt.id;
+                this._syncDefaultsForOption();
+            }}
+            >
+              <span class="kind-card-title">
+                ${t(this.hass, `config_panel.cycle_kind_${opt.id}`)}
+                <span class="badge ${exact ? "badge-primary" : "badge-warn"}"
+                  >${exact
+                ? t(this.hass, "config_panel.cycle_badge_exact")
+                : t(this.hass, "config_panel.cycle_badge_approx")}</span
+                >
+              </span>
+              <span class="kind-card-desc">${t(this.hass, `config_panel.cycle_kind_${opt.id}_desc`)}</span>
+            </button>
+          `;
+        })}
+      </div>
+    `;
+    }
+    _renderWeekdayPicker(multi) {
+        const selected = multi ? this._weekDays : [this._anchor];
+        return b `
+      <div class="weekday-chips" role="group">
+        ${[0, 1, 2, 3, 4, 5, 6].map((i) => b `
+            <button
+              type="button"
+              class="chip day ${selected.includes(i) ? "selected" : ""}"
+              aria-pressed=${selected.includes(i) ? "true" : "false"}
+              title=${weekdayLong(this.hass, i)}
+              @click=${() => {
+            if (multi) {
+                this._weekDays = this._weekDays.includes(i)
+                    ? this._weekDays.filter((d) => d !== i)
+                    : [...this._weekDays, i].sort((a, b) => a - b);
+            }
+            else {
+                this._anchor = i;
+            }
+            this.requestUpdate();
+        }}
+            >
+              ${weekdayShort(this.hass, i)}
+            </button>
+          `)}
+      </div>
+    `;
+    }
+    _renderStep2() {
+        const opt = this._option();
+        const slots = this._slots();
+        const today = new Date();
+        const start = today;
+        const strip = previewStrip(slots, start, today, 14);
+        const gaps = previewGaps(slots, start);
+        const uniqueGaps = [...new Set(gaps)];
+        const first = firstRunDate(slots, start);
+        const exact = cycleIsExact(opt.kind, this._meta());
+        return b `
+      <div class="section-title">${t(this.hass, "config_panel.cycle_step_when")}</div>
+      <span class="field-title">${t(this.hass, "config_panel.cycle_time_title")}</span>
+      <div class="chips" style="margin:6px 0">
+        ${TIME_PRESETS.map((p) => b `
+            <button
+              type="button"
+              class="chip ${this._times[0] === p.time ? "selected" : ""}"
+              @click=${() => {
+            this._times = [p.time, this._times[1]];
+            this.requestUpdate();
+        }}
+            >
+              ${t(this.hass, p.key)} ${formatTimeLocalForDisplay(this.hass, p.time)}
+            </button>
+          `)}
+      </div>
+      <div class="time-fields">
+        <input
+          type="time"
+          .value=${this._times[0]}
+          @input=${(e) => {
+            this._times = [e.target.value || "06:00", this._times[1]];
+            this.requestUpdate();
+        }}
+        />
+        ${opt.twoTimes
+            ? b `<input
+              type="time"
+              .value=${this._times[1]}
+              @input=${(e) => {
+                this._times = [this._times[0], e.target.value || "18:00"];
+                this.requestUpdate();
+            }}
+            />`
+            : A}
+      </div>
+
+      ${opt.kind === "daily" || opt.kind === "twice_daily"
+            ? A
+            : b `
+            <div class="section-title">${t(this.hass, "config_panel.cycle_anchor_title")}</div>
+            <p class="hint">${t(this.hass, "config_panel.cycle_anchor_desc")}</p>
+            ${this._renderWeekdayPicker(opt.multiAnchor)}
+          `}
+
+      <div class="section-title">${t(this.hass, "config_panel.cycle_preview_title")}</div>
+      <div class="day-strip">
+        ${strip.map((d) => b `
+            <div class="day-cell ${d.run ? "run" : ""} ${d.isToday ? "today" : ""}">
+              <span class="dc-dow">${weekdayShort(this.hass, mondayBasedWeekday(d.date))}</span>
+              <span class="dc-dom">${d.date.getDate()}</span>
+            </div>
+          `)}
+      </div>
+      <p class="preview-line">
+        ${t(this.hass, "config_panel.cycle_preview_gaps", { gaps: uniqueGaps.join(", ") })}
+        ${!exact ? " · " + t(this.hass, "config_panel.cycle_badge_approx") : ""}
+      </p>
+      ${first
+            ? b `<p class="preview-line">
+            ${t(this.hass, "config_panel.cycle_preview_first_run", {
+                when: formatDateTimeForDisplay(this.hass, new Date(first.getFullYear(), first.getMonth(), first.getDate(), ...this._times[0].split(":").map(Number))),
+            })}
+          </p>`
+            : A}
+    `;
+    }
+    _renderStep3() {
+        const zones = this.installation?.zones;
+        const allIds = zones ? Object.keys(zones) : [];
+        const pmap = phaseIndexByZoneId(this._zoneIds, this._zonesPhaseInput(), this._maxParallel());
+        const est = this._estimateMin();
+        const slots = this._slots();
+        const first = firstRunDate(slots, new Date());
+        const conflict = this._conflicts();
+        return b `
+      <div class="section-title">
+        ${t(this.hass, "config_panel.cycle_step_zones")}
+        <button
+          type="button"
+          class="btn-outline"
+          style="margin-left:auto;margin-top:0;padding:4px 10px;font-size:0.8rem"
+          @click=${() => {
+            this._zoneIds = allIds.filter((id) => Boolean(zones?.[id]?.enabled ?? true));
+            this.requestUpdate();
+        }}
+        >
+          ${t(this.hass, "config_panel.cycle_select_all")}
+        </button>
+      </div>
+      ${allIds.map((id) => {
+            const checked = this._zoneIds.includes(id);
+            const pos = this._zoneIds.indexOf(id);
+            const phase = pmap.get(id);
+            const excl = Boolean(zones?.[id]?.exclusive ?? false);
+            return b `
+          <div class="zone-pick">
+            <input
+              type="checkbox"
+              .checked=${checked}
+              @change=${(e) => {
+                const on = e.target.checked;
+                this._zoneIds = on
+                    ? [...this._zoneIds, id]
+                    : this._zoneIds.filter((x) => x !== id);
+                this.requestUpdate();
+            }}
+            />
+            <div class="zone-pick-main">
+              <div class="zone-pick-name">${this._zoneName(id)}</div>
+              <div class="meta-line">
+                <span class="meta"
+                  ><ha-icon icon="mdi:timer-outline"></ha-icon>${t(this.hass, "config_panel.timetable_duration_min", { n: this._zoneDuration(id) })}</span
+                >
+                ${checked && phase
+                ? b `<span class="meta"
+                      ><ha-icon icon="mdi:layers-triple-outline"></ha-icon>${excl
+                    ? t(this.hass, "config_panel.cycle_phase_alone", { n: phase })
+                    : t(this.hass, "config_panel.schedule_phase_n", { n: phase })}</span
+                    >`
+                : A}
+              </div>
+            </div>
+            ${checked
+                ? b `
+                  <button
+                    type="button"
+                    class="iconbtn"
+                    aria-label=${t(this.hass, "config_panel.schedule_up")}
+                    ?disabled=${pos <= 0}
+                    @click=${() => {
+                    const a = [...this._zoneIds];
+                    [a[pos - 1], a[pos]] = [a[pos], a[pos - 1]];
+                    this._zoneIds = a;
+                    this.requestUpdate();
+                }}
+                  >
+                    <ha-icon icon="mdi:chevron-up"></ha-icon>
+                  </button>
+                  <button
+                    type="button"
+                    class="iconbtn"
+                    aria-label=${t(this.hass, "config_panel.schedule_down")}
+                    ?disabled=${pos < 0 || pos >= this._zoneIds.length - 1}
+                    @click=${() => {
+                    const a = [...this._zoneIds];
+                    [a[pos + 1], a[pos]] = [a[pos], a[pos + 1]];
+                    this._zoneIds = a;
+                    this.requestUpdate();
+                }}
+                  >
+                    <ha-icon icon="mdi:chevron-down"></ha-icon>
+                  </button>
+                `
+                : A}
+          </div>
+        `;
+        })}
+
+      <div class="field-block" style="margin-top:14px">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_slot_name")}</span>
+        <div class="field-row">
+          <ha-input
+            .value=${this._label}
+            @input=${(e) => {
+            this._label = e.target.value;
+        }}
+          ></ha-input>
+        </div>
+      </div>
+
+      <div class="summary-card">
+        <strong>${t(this.hass, "config_panel.cycle_creates_title")}</strong>
+        <ul style="margin:8px 0 0;padding-left:1.1rem">
+          ${slots.map((s) => b `<li>
+              ${s.weekdays.map((d) => weekdayShort(this.hass, d)).join(", ")}
+              · ${formatTimeLocalForDisplay(this.hass, s.time_local)}
+              ${s.week_parity !== "every"
+            ? " · " +
+                t(this.hass, s.week_parity === "odd"
+                    ? "config_panel.week_parity_odd"
+                    : "config_panel.week_parity_even")
+            : ""}
+            </li>`)}
+        </ul>
+        ${est > 0
+            ? b `<p class="preview-line" style="margin-bottom:0">
+              ${t(this.hass, "config_panel.overview_mode_total", { n: est })}
+            </p>`
+            : A}
+        ${first
+            ? b `<p class="preview-line" style="margin-bottom:0">
+              ${t(this.hass, "config_panel.cycle_preview_first_run", {
+                when: formatDateTimeForDisplay(this.hass, new Date(first.getFullYear(), first.getMonth(), first.getDate(), ...this._times[0].split(":").map(Number))),
+            })}
+            </p>`
+            : A}
+      </div>
+
+      ${conflict
+            ? b `<div class="warning" style="display:flex;align-items:center;gap:10px;margin-top:10px">
+            <span>${t(this.hass, "config_panel.cycle_conflict_warning")}</span>
+            <button type="button" class="btn-outline" style="margin-top:0" @click=${() => this._shiftLater()}>
+              ${t(this.hass, "config_panel.cycle_conflict_shift")}
+            </button>
+          </div>`
+            : A}
+    `;
+    }
+    render() {
+        if (!this.open)
+            return A;
+        const titleKey = this._cycleId
+            ? "config_panel.cycle_edit_title"
+            : "config_panel.cycle_new";
+        return b `
+      <ha-dialog
+        .open=${this.open}
+        header-title=${t(this.hass, titleKey)}
+        @closed=${() => this._close()}
+      >
+        <div class="progress" aria-hidden="true">
+          ${[1, 2, 3].map((n) => b `<span class="step ${this._step >= n ? "done" : ""}"></span>`)}
+        </div>
+        ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
+        ${this._step === 1
+            ? this._renderStep1()
+            : this._step === 2
+                ? this._renderStep2()
+                : this._renderStep3()}
+        <div slot="footer" class="dialog-footer">
+          <div class="dialog-footer-row">
+            <div class="dialog-footer-lead">
+              ${this._step > 1
+            ? b `<button type="button" class="btn-outline" ?disabled=${this._busy} @click=${() => (this._step -= 1)}>
+                    ${t(this.hass, "config_panel.cycle_back")}
+                  </button>`
+            : b `<button type="button" class="btn-outline" ?disabled=${this._busy} @click=${() => this._close()}>
+                    ${t(this.hass, "config_panel.zones_cancel")}
+                  </button>`}
+            </div>
+            <div class="dialog-footer-actions">
+              ${this._step < 3
+            ? b `<button type="button" class="btn" ?disabled=${this._busy || !this._canNext()} @click=${() => (this._step += 1)}>
+                    ${t(this.hass, "config_panel.cycle_next")}
+                  </button>`
+            : b `
+                    <button
+                      type="button"
+                      class="btn"
+                      ?disabled=${this._busy || this._zoneIds.length === 0}
+                      @click=${() => this._create()}
+                    >
+                      ${this._cycleId
+                ? t(this.hass, "config_panel.cycle_save")
+                : t(this.hass, "config_panel.cycle_create")}
+                    </button>
+                  `}
+            </div>
+          </div>
+        </div>
+      </ha-dialog>
+    `;
+    }
+}
+__decorate([
+    r()
+], CycleWizard.prototype, "_step", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_optionId", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_times", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_anchor", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_weekDays", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_zoneIds", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_enabled", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_label", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_cycleId", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_busy", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_msg", void 0);
+defineCustomElementOnce("si-cycle-wizard", CycleWizard);
+
+const WEEK_PARITIES = ["every", "odd", "even"];
+const WEEKDAY_ORDER = [0, 1, 2, 3, 4, 5, 6];
+class ViewSchedule extends i {
+    constructor() {
+        super(...arguments);
+        this._busy = false;
+        this._expanded = new Set();
+        this._slotEditDraft = null;
+        this._addZonePick = "";
+        this._cleanupProposals = null;
+        this._consumedEditSlotKey = null;
+    }
+    static { this.properties = {
+        hass: { attribute: false },
+        entryId: { type: String },
+        installation: { type: Object },
+        runState: { type: Object },
+        onSaved: { attribute: false },
+    }; }
+    static { this.styles = [
+        sharedStyles,
+        formLayoutStyles,
+        i$3 `
+      .card-header .header-actions .btn,
+      .card-header .header-actions .btn-outline {
+        margin-top: 0;
+        align-self: center;
+      }
+      .quick-add {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+        padding: 2px 0 8px;
+        margin-bottom: 6px;
+      }
+      .quick-add .chip {
+        scroll-snap-align: start;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      .member-line {
+        display: flex;
+        align-items: center;
+        gap: 8px 12px;
+        flex-wrap: wrap;
+        padding: 8px 0;
+        border-top: 1px solid var(--divider-color);
+        font-size: 0.85rem;
+      }
+      .member-line:first-of-type {
+        border-top: none;
+      }
+      .detach-line {
+        margin-top: 10px;
+        font-size: 0.82rem;
+        color: var(--secondary-text-color);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .zones {
+        list-style: none;
+        padding: 0;
+        margin: 10px 0;
+      }
+      .zones li {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--divider-color);
+      }
+      .zones li.phase-sep {
+        display: block;
+        margin: 12px 0 4px;
+        padding: 0;
+        border-bottom: none;
+      }
+      .zones li.phase-sep span {
+        font-size: 0.72rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        color: var(--secondary-text-color);
+      }
+      .zone-actions {
+        display: flex;
+        gap: 6px;
+        margin-left: auto;
+      }
+      .zone-actions .btn-outline {
+        margin-top: 0;
+        padding: 5px 10px;
+        font-size: 0.8rem;
+      }
+      .weekday-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .weekday-presets {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 4px 0 10px;
+      }
+      .chip.day {
+        min-width: 44px;
+        min-height: 40px;
+        text-align: center;
+        justify-content: center;
+      }
+      .drawer-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding-top: 12px;
+      }
+      .drawer-actions .btn-outline {
+        width: 100%;
+        min-height: 46px;
+        margin-top: 0;
+      }
+    `,
+    ]; }
+    // ---- data ---------------------------------------------------------------
+    _slots() {
+        const s = this.installation?.schedule_slots;
+        if (!Array.isArray(s))
+            return [];
+        return s.map((raw) => {
+            const o = raw;
+            const wds = normalizeWeekdays(o.weekdays);
+            const rid = o.cycle_id ? String(o.cycle_id) : null;
+            return {
+                slot_id: String(o.slot_id ?? ""),
+                weekdays: wds.length ? wds : normalizeWeekdays([o.weekday ?? 0]),
+                time_local: String(o.time_local ?? "06:00"),
+                enabled: Boolean(o.enabled ?? true),
+                zone_ids_ordered: Array.isArray(o.zone_ids_ordered) ? [...o.zone_ids_ordered] : [],
+                name: String(o.name ?? "").trim(),
+                week_parity: o.week_parity === "odd" || o.week_parity === "even" ? o.week_parity : "every",
+                cycle_id: rid,
+                cycle_kind: String(o.cycle_kind ?? "custom"),
+                cycle_meta: o.cycle_meta ?? null,
+            };
+        });
+    }
+    /**
+     * Split slots into real cycles (>=2 linked members) and single slots.
+     * A cycle only exists when the cadence needed >=2 slots (every 2/3 days).
+     * Anything else — incl. a stray 1-member cycle from old data — is a single slot.
+     */
+    _groupsAndCustom() {
+        const index = new Map();
+        const order = [];
+        const single = [];
+        for (const s of this._slots()) {
+            if (!s.cycle_id) {
+                single.push(s);
+                continue;
+            }
+            let g = index.get(s.cycle_id);
+            if (!g) {
+                g = {
+                    cycle_id: s.cycle_id,
+                    members: [],
+                    label: String(s.cycle_meta?.label ?? s.name ?? ""),
+                    kind: s.cycle_kind,
+                    meta: s.cycle_meta,
+                };
+                index.set(s.cycle_id, g);
+                order.push(g);
+            }
+            g.members.push(s);
+        }
+        // Demote 1-member "cycles" to plain single slots, preserving overall order.
+        const groups = [];
+        for (const g of order) {
+            if (g.members.length >= 2)
+                groups.push(g);
+            else
+                single.push(...g.members);
+        }
+        return { groups, custom: single };
+    }
+    _cloneSlot(s) {
+        return { ...s, weekdays: [...s.weekdays], zone_ids_ordered: [...s.zone_ids_ordered] };
+    }
+    _zonesMap() {
+        return this.installation?.zones;
+    }
+    _zoneName(zid) {
+        const z = this._zonesMap()?.[zid];
+        return z ? String(z.name ?? zid) : zid;
+    }
+    _mode() {
+        return String(this.installation?.mode ?? "normal");
+    }
+    _maxParallel() {
+        const n = Number(this.installation?.max_parallel_zones ?? 2);
+        return Number.isFinite(n) && n >= 1 ? n : 2;
+    }
+    _zonesPhaseInput() {
+        const zones = this._zonesMap();
+        const out = {};
+        if (!zones)
+            return out;
+        for (const [id, z] of Object.entries(zones)) {
+            out[id] = { enabled: Boolean(z?.enabled ?? true), exclusive: Boolean(z?.exclusive ?? false) };
+        }
+        return out;
+    }
+    _estimateMin(zoneIds) {
+        const zones = this._zonesMap();
+        if (!zones)
+            return 0;
+        const phases = computePhases(zoneIds, this._zonesPhaseInput(), this._maxParallel(), true);
+        let total = Math.max(0, Number(this.installation?.pre_start_delay_sec ?? 10)) / 60;
+        for (const phase of phases) {
+            let phaseMax = 0;
+            for (const zid of phase) {
+                const z = zones[zid];
+                if (z && Boolean(z.enabled ?? true))
+                    phaseMax = Math.max(phaseMax, durationForMode(z, this._mode()));
+            }
+            total += phaseMax;
+        }
+        return Math.round(total);
+    }
+    _phaseCount(zoneIds) {
+        return computePhases(zoneIds, this._zonesPhaseInput(), this._maxParallel(), true).length;
+    }
+    _nextFire(members) {
+        const now = new Date();
+        for (let i = 0; i < 21; i++) {
+            const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+            const wd = mondayBasedWeekday(day);
+            for (const m of members) {
+                if (!m.enabled)
+                    continue;
+                if (!m.weekdays.includes(wd))
+                    continue;
+                if (!weekParityMatches(day, m.week_parity))
+                    continue;
+                const [h, mi] = m.time_local.split(":").map(Number);
+                const cand = new Date(day.getFullYear(), day.getMonth(), day.getDate(), h || 0, mi || 0);
+                if (cand > now)
+                    return cand;
+            }
+        }
+        return null;
+    }
+    // ---- api helpers --------------------------------------------------------
+    async _call(body) {
+        this._busy = true;
+        this._msg = undefined;
+        this.requestUpdate();
+        try {
+            const res = await saveSlot(this.hass, this.entryId, body);
+            if (!res.success) {
+                this._msg = formatApiError(res.error, this.hass);
+                return false;
+            }
+            this.onSaved?.();
+            return true;
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+            return false;
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    _runtimeBusy() {
+        const s = String((this.runState ?? {}).run_state ?? "idle");
+        return ["preparing", "running", "stopping"].includes(s);
+    }
+    async _runSlotNow(slotId) {
+        if (this._runtimeBusy())
+            return;
+        this._busy = true;
+        this._msg = undefined;
+        this.requestUpdate();
+        try {
+            const res = (await runSlotNow(this.hass, this.entryId, slotId));
+            if (!res.success) {
+                const map = {
+                    busy: "config_panel.schedule_err_busy",
+                    empty_slot: "config_panel.schedule_err_empty_slot",
+                    no_runnable_zones: "config_panel.schedule_err_no_runnable",
+                    unknown_slot: "config_panel.schedule_err_unknown_slot",
+                };
+                const err = res.error ?? "run_failed";
+                this._msg = map[err] ? t(this.hass, map[err]) : String(err);
+            }
+            else {
+                this.onSaved?.();
+            }
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    async _toggleGroupEnabled(g, enabled) {
+        if (this._busy)
+            return;
+        this._busy = true;
+        this._msg = undefined;
+        try {
+            for (const m of g.members) {
+                const res = await saveSlot(this.hass, this.entryId, {
+                    action: "update",
+                    slot_id: m.slot_id,
+                    enabled,
+                });
+                if (!res.success) {
+                    this._msg = formatApiError(res.error, this.hass);
+                    break;
+                }
+            }
+            this.onSaved?.();
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    async _toggleSlotEnabled(slot, enabled) {
+        if (this._busy)
+            return;
+        await this._call({ action: "update", slot_id: slot.slot_id, enabled });
+    }
+    async _detachCycle(g) {
+        if (!confirm(t(this.hass, "config_panel.cycle_detach_confirm")))
+            return;
+        this._busy = true;
+        this._msg = undefined;
+        try {
+            for (const m of g.members) {
+                const res = await saveSlot(this.hass, this.entryId, {
+                    action: "update",
+                    slot_id: m.slot_id,
+                    cycle_id: null,
+                    cycle_kind: "custom",
+                });
+                if (!res.success) {
+                    this._msg = formatApiError(res.error, this.hass);
+                    break;
+                }
+            }
+            this.onSaved?.();
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    async _deleteCycle(g) {
+        if (!confirm(t(this.hass, "config_panel.cycle_delete_confirm")))
+            return;
+        this._busy = true;
+        this._msg = undefined;
+        try {
+            const res = await deleteCycle(this.hass, this.entryId, g.cycle_id);
+            if (!res.success)
+                this._msg = formatApiError(res.error, this.hass);
+            else
+                this.onSaved?.();
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    // ---- wizard -------------------------------------------------------------
+    _openWizardNew() {
+        this._msg = undefined;
+        this._wizard?.start({ step: 1 });
+    }
+    _openWizardEdit(g) {
+        this._msg = undefined;
+        const slots = (this.installation?.schedule_slots).filter((s) => String(s.cycle_id ?? "") === g.cycle_id);
+        this._wizard?.start({ seedFromSlots: slots, step: 1 });
+    }
+    // ---- cleanup ------------------------------------------------------------
+    /** Detect ungrouped slots with matching time+zones that form a known cadence. */
+    _analyzeCleanup() {
+        const { custom } = this._groupsAndCustom();
+        const buckets = new Map();
+        for (const s of custom) {
+            const key = `${s.time_local}||${s.zone_ids_ordered.join(",")}`;
+            if (!buckets.has(key))
+                buckets.set(key, []);
+            buckets.get(key).push(s);
+        }
+        const proposals = [];
+        for (const list of buckets.values()) {
+            if (list.length < 2)
+                continue;
+            const parities = new Set(list.map((s) => s.week_parity));
+            const time = list[0].time_local;
+            const zoneIds = list[0].zone_ids_ordered;
+            const memberIds = list.map((s) => s.slot_id);
+            if (parities.size === 1 && parities.has("every")) {
+                // Merge weekday union into a single every-week cycle.
+                const union = normalizeWeekdays(list.flatMap((s) => s.weekdays));
+                const optionId = union.length === 7 ? "daily" : union.length === 1 ? "weekly" : "n_per_week";
+                const meta = { times: [time] };
+                if (optionId === "weekly")
+                    meta.anchor_weekday = union[0];
+                else if (optionId === "n_per_week")
+                    meta.week_days = union;
+                proposals.push({ optionId, meta, zoneIds, memberIds, label: list[0].name });
+            }
+            else if (list.length === 2 &&
+                parities.has("odd") &&
+                parities.has("even")) {
+                // Complementary parity pair → every-2-days.
+                proposals.push({
+                    optionId: "every_2_days",
+                    meta: { times: [time], n: 2, anchor_weekday: normalizeWeekdays(list[0].weekdays)[0] ?? 0 },
+                    zoneIds,
+                    memberIds,
+                    label: list[0].name,
+                });
+            }
+        }
+        return proposals;
+    }
+    _openCleanup() {
+        const proposals = this._analyzeCleanup();
+        this._cleanupProposals = proposals;
+    }
+    async _applyCleanup() {
+        const proposals = this._cleanupProposals ?? [];
+        if (!proposals.length) {
+            this._cleanupProposals = null;
+            return;
+        }
+        this._busy = true;
+        this._msg = undefined;
+        try {
+            for (const p of proposals) {
+                const opt = p.optionId;
+                const kind = opt === "every_2_days" ? "every_n_days" : opt === "every_3_days" ? "every_n_days" : opt;
+                const res = await upsertCycle(this.hass, this.entryId, {
+                    cycle_id: null,
+                    cycle_kind: kind,
+                    cycle_meta: p.meta,
+                    zone_ids_ordered: p.zoneIds,
+                    enabled: true,
+                });
+                if (!res.success) {
+                    this._msg = formatApiError(res.error, this.hass);
+                    break;
+                }
+                for (const sid of p.memberIds) {
+                    await saveSlot(this.hass, this.entryId, { action: "delete", slot_id: sid });
+                }
+            }
+            this._cleanupProposals = null;
+            this.onSaved?.();
+        }
+        catch (e) {
+            this._msg = formatApiError(e, this.hass);
+        }
+        finally {
+            this._busy = false;
+            this.requestUpdate();
+        }
+    }
+    // ---- single-slot editor (custom slots & cycle members) -----------------
+    _parityLabel(parity) {
+        if (parity === "odd")
+            return t(this.hass, "config_panel.week_parity_odd");
+        if (parity === "even")
+            return t(this.hass, "config_panel.week_parity_even");
+        return t(this.hass, "config_panel.week_parity_every");
+    }
+    _cycleBadge(kind, meta) {
+        switch (kind) {
+            case "daily":
+                return t(this.hass, "config_panel.cycle_kind_daily");
+            case "twice_daily":
+                return t(this.hass, "config_panel.cycle_kind_twice_daily");
+            case "weekly":
+                return t(this.hass, "config_panel.cycle_kind_weekly");
+            case "biweekly":
+                return t(this.hass, "config_panel.cycle_kind_biweekly");
+            case "n_per_week":
+                return t(this.hass, "config_panel.cycle_kind_n_per_week");
+            case "every_n_days":
+                return meta?.n === 3
+                    ? t(this.hass, "config_panel.cycle_kind_every_3_days")
+                    : t(this.hass, "config_panel.cycle_kind_every_2_days");
+            default:
+                return t(this.hass, "config_panel.cycle_badge_custom");
+        }
+    }
+    _toggleWeekday(current, day) {
+        return current.includes(day)
+            ? current.filter((d) => d !== day)
+            : normalizeWeekdays([...current, day]);
+    }
+    _renderWeekdayPicker(selected, onChange) {
+        const presets = [
+            { label: t(this.hass, "config_panel.schedule_preset_daily"), days: [0, 1, 2, 3, 4, 5, 6] },
+            { label: t(this.hass, "config_panel.schedule_preset_workdays"), days: [0, 1, 2, 3, 4] },
+            { label: t(this.hass, "config_panel.schedule_preset_weekend"), days: [5, 6] },
+        ];
+        const same = (a, b) => a.length === b.length && a.every((v, i) => v === b[i]);
+        return b `
+      <div class="weekday-presets">
+        ${presets.map((p) => b `<button
+            type="button"
+            class="chip ${same(normalizeWeekdays(selected), normalizeWeekdays(p.days)) ? "selected" : ""}"
+            ?disabled=${this._busy}
+            @click=${() => onChange(normalizeWeekdays(p.days))}
+          >
+            ${p.label}
+          </button>`)}
+      </div>
+      <div class="weekday-chips" role="group">
+        ${WEEKDAY_ORDER.map((i) => b `<button
+            type="button"
+            class="chip day ${selected.includes(i) ? "selected" : ""}"
+            aria-pressed=${selected.includes(i) ? "true" : "false"}
+            title=${weekdayLong(this.hass, i)}
+            ?disabled=${this._busy}
+            @click=${() => onChange(this._toggleWeekday(selected, i))}
+          >
+            ${weekdayShort(this.hass, i)}
+          </button>`)}
+      </div>
+    `;
+    }
+    _closeEditDialog() {
+        this._slotEditDraft = null;
+    }
+    async _saveSlotDraft() {
+        const d = this._slotEditDraft;
+        if (!d)
+            return;
+        if (d.weekdays.length === 0) {
+            this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
+            return;
+        }
+        const ok = await this._call({
+            action: "update",
+            slot_id: d.slot_id,
+            weekdays: d.weekdays,
+            time_local: d.time_local,
+            enabled: d.enabled,
+            zone_ids_ordered: d.zone_ids_ordered,
+            name: d.name.trim(),
+            week_parity: d.week_parity,
+        });
+        if (ok)
+            this._closeEditDialog();
+    }
+    async _deleteSlotDraft() {
+        const d = this._slotEditDraft;
+        if (!d)
+            return;
+        if (!confirm(t(this.hass, "config_panel.schedule_confirm_delete_slot")))
+            return;
+        if (await this._call({ action: "delete", slot_id: d.slot_id }))
+            this._closeEditDialog();
+    }
+    async _splitSlotDraft() {
+        const d = this._slotEditDraft;
+        if (!d || d.weekdays.length <= 1)
+            return;
+        if (!confirm(t(this.hass, "config_panel.schedule_confirm_split")))
+            return;
+        if (await this._call({ action: "split", slot_id: d.slot_id }))
+            this._closeEditDialog();
+    }
+    _consumeEditSlotQueryFromUrl() {
+        const slotId = new URLSearchParams(window.location.search).get("editSlot");
+        if (!slotId) {
+            this._consumedEditSlotKey = null;
+            return;
+        }
+        if (!this.entryId)
+            return;
+        const key = `${this.entryId}:${slotId}`;
+        if (this._consumedEditSlotKey === key)
+            return;
+        const slot = this._slots().find((s) => s.slot_id === slotId);
+        const known = Array.isArray(this.installation?.schedule_slots);
+        if (slot) {
+            this._consumedEditSlotKey = key;
+            this._msg = undefined;
+            this._addZonePick = "";
+            // Expand the parent cycle too, per spec §6.
+            if (slot.cycle_id)
+                this._expanded = new Set([...this._expanded, slot.cycle_id]);
+            this._slotEditDraft = this._cloneSlot(slot);
+            stripEditSlotQueryFromUrl();
+            return;
+        }
+        if (known) {
+            this._consumedEditSlotKey = key;
+            stripEditSlotQueryFromUrl();
+        }
+    }
+    updated(changed) {
+        super.updated(changed);
+        this._consumeEditSlotQueryFromUrl();
+    }
+    // ---- rows ---------------------------------------------------------------
+    _toggleExpand(id) {
+        const next = new Set(this._expanded);
+        if (next.has(id))
+            next.delete(id);
+        else
+            next.add(id);
+        this._expanded = next;
+    }
+    _renderMemberLine(m) {
+        return b `
+      <div class="member-line">
+        ${m.week_parity !== "every"
+            ? b `<span class="badge badge-primary badge-dot">${this._parityLabel(m.week_parity)}</span>`
+            : A}
+        <span>${weekdaysSummary(this.hass, m.weekdays)}</span>
+        <span class="muted">${formatTimeLocalForDisplay(this.hass, m.time_local)}</span>
+        <span class="muted"
+          >${m.zone_ids_ordered.length === 1
+            ? t(this.hass, "config_panel.schedule_zones_in_order_one")
+            : t(this.hass, "config_panel.schedule_zones_in_order_many", {
+                n: m.zone_ids_ordered.length,
+            })}</span
+        >
+        <button
+          type="button"
+          class="iconbtn"
+          style="margin-left:auto;width:34px;height:34px"
+          aria-label=${t(this.hass, "config_panel.schedule_edit")}
+          @click=${() => {
+            this._addZonePick = "";
+            this._slotEditDraft = this._cloneSlot(m);
+        }}
+        >
+          <ha-icon icon="mdi:pencil"></ha-icon>
+        </button>
+      </div>
+    `;
+    }
+    _renderCycleRow(g) {
+        const allEnabled = g.members.every((m) => m.enabled);
+        const anyEnabled = g.members.some((m) => m.enabled);
+        const expanded = this._expanded.has(g.cycle_id);
+        const zoneIds = g.members[0]?.zone_ids_ordered ?? [];
+        const est = this._estimateMin(zoneIds);
+        const phases = this._phaseCount(zoneIds);
+        const times = [...new Set(g.members.map((m) => m.time_local))].sort();
+        const next = this._nextFire(g.members);
+        const label = g.label || this._cycleBadge(g.kind, g.meta);
+        const accent = allEnabled ? "" : anyEnabled ? "warn" : "inactive";
+        // Merge member weekdays into slot specs for the 14-day strip.
+        const specs = g.members.map((m) => ({
+            weekdays: m.weekdays,
+            time_local: m.time_local,
+            week_parity: m.week_parity,
+        }));
+        const today = new Date();
+        const strip = previewStrip(specs, today, today, 14);
+        return b `
+      <div class="compact-row ${accent}">
+        <div class="compact-row-header">
+          <ha-switch
+            .disabled=${this._busy}
+            .checked=${allEnabled}
+            @change=${(e) => this._toggleGroupEnabled(g, Boolean(e.target.checked))}
+          ></ha-switch>
+          <div class="compact-row-main">
+            <div class="compact-row-title">
+              <span class="ellipsis">${label}</span>
+              <span class="badge badge-primary">${this._cycleBadge(g.kind, g.meta)}</span>
+              ${!anyEnabled
+            ? b `<span class="badge">${t(this.hass, "config_panel.cycle_paused_n", {
+                n: g.members.length,
+            })}</span>`
+            : !allEnabled
+                ? b `<span class="badge badge-warn badge-dot">${t(this.hass, "config_panel.cycle_partly_enabled")}</span>`
+                : A}
+            </div>
+            <div class="meta-line">
+              <span class="meta"
+                ><ha-icon icon="mdi:clock-outline"></ha-icon>${times
+            .map((tl) => formatTimeLocalForDisplay(this.hass, tl))
+            .join(", ")}</span
+              >
+              <span class="meta"
+                ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: zoneIds.length, p: phases, m: est })}</span
+              >
+              ${next
+            ? b `<span class="meta"
+                    ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(this.hass, mondayBasedWeekday(next))}
+                    ${formatTimeLocalForDisplay(this.hass, `${next.getHours()}:${String(next.getMinutes()).padStart(2, "0")}`)}</span
+                  >`
+            : A}
+              <span class="meta"
+                ><ha-icon icon="mdi:format-list-bulleted"></ha-icon>${t(this.hass, "config_panel.cycle_slots_n", { n: g.members.length })}</span
+              >
+            </div>
+          </div>
+          <div class="icon-group" role="group">
+            <button
+              type="button"
+              title=${t(this.hass, "config_panel.schedule_run_slot_now")}
+              aria-label=${t(this.hass, "config_panel.schedule_run_slot_now")}
+              ?disabled=${this._busy || this._runtimeBusy() || !anyEnabled || zoneIds.length === 0}
+              @click=${() => {
+            const m = g.members.find((x) => x.enabled) ?? g.members[0];
+            this._runSlotNow(m.slot_id);
+        }}
+            >
+              <ha-icon icon="mdi:play"></ha-icon>
+            </button>
+            <button
+              type="button"
+              title=${t(this.hass, "config_panel.cycle_edit_title")}
+              aria-label=${t(this.hass, "config_panel.cycle_edit_title")}
+              @click=${() => this._openWizardEdit(g)}
+            >
+              <ha-icon icon="mdi:pencil"></ha-icon>
+            </button>
+            <button
+              type="button"
+              class=${expanded ? "selected" : ""}
+              aria-expanded=${expanded ? "true" : "false"}
+              aria-label=${t(this.hass, "config_panel.cycle_expand")}
+              @click=${() => this._toggleExpand(g.cycle_id)}
+            >
+              <ha-icon icon=${expanded ? "mdi:chevron-up" : "mdi:chevron-down"}></ha-icon>
+            </button>
+          </div>
+        </div>
+        ${expanded
+            ? b `<div class="compact-row-detail">
+              <div class="day-strip" style="margin-top:10px">
+                ${strip.map((d) => b `<div class="day-cell ${d.run ? "run" : ""} ${d.isToday ? "today" : ""}">
+                    <span class="dc-dow">${weekdayShort(this.hass, mondayBasedWeekday(d.date))}</span>
+                    <span class="dc-dom">${d.date.getDate()}</span>
+                  </div>`)}
+              </div>
+              ${g.members.map((m) => this._renderMemberLine(m))}
+              <div class="detach-line">
+                <span>${t(this.hass, "config_panel.cycle_detach_hint")}</span>
+                <button type="button" class="btn-outline" style="margin-top:0" ?disabled=${this._busy} @click=${() => this._detachCycle(g)}>
+                  ${t(this.hass, "config_panel.cycle_detach")}
+                </button>
+                <button type="button" class="btn-danger" style="margin-top:0" ?disabled=${this._busy} @click=${() => this._deleteCycle(g)}>
+                  ${t(this.hass, "config_panel.cycle_delete")}
+                </button>
+              </div>
+            </div>`
+            : A}
+      </div>
+    `;
+    }
+    _renderCustomRow(s) {
+        const est = this._estimateMin(s.zone_ids_ordered);
+        const phases = this._phaseCount(s.zone_ids_ordered);
+        const accent = s.enabled ? "" : "inactive";
+        const expanded = this._expanded.has(s.slot_id);
+        const next = this._nextFire([s]);
+        const today = new Date();
+        const strip = previewStrip([{ weekdays: s.weekdays, time_local: s.time_local, week_parity: s.week_parity }], today, today, 14);
+        return b `
+      <div class="compact-row ${accent}">
+        <div class="compact-row-header">
+          <ha-switch
+            .disabled=${this._busy}
+            .checked=${s.enabled}
+            @change=${(e) => this._toggleSlotEnabled(s, Boolean(e.target.checked))}
+          ></ha-switch>
+          <div class="compact-row-main">
+            <div class="compact-row-title">
+              <span class="ellipsis"
+                >${s.name ? s.name + " · " : ""}${weekdaysSummary(this.hass, s.weekdays)}
+                ${formatTimeLocalForDisplay(this.hass, s.time_local)}</span
+              >
+              ${s.week_parity !== "every"
+            ? b `<span class="badge badge-primary badge-dot">${this._parityLabel(s.week_parity)}</span>`
+            : A}
+            </div>
+            <div class="meta-line">
+              <span class="meta"
+                ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: s.zone_ids_ordered.length, p: phases, m: est })}</span
+              >
+              ${next
+            ? b `<span class="meta"
+                    ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(this.hass, mondayBasedWeekday(next))}
+                    ${formatTimeLocalForDisplay(this.hass, `${next.getHours()}:${String(next.getMinutes()).padStart(2, "0")}`)}</span
+                  >`
+            : A}
+            </div>
+          </div>
+          <div class="icon-group" role="group">
+            <button
+              type="button"
+              title=${t(this.hass, "config_panel.schedule_run_slot_now")}
+              aria-label=${t(this.hass, "config_panel.schedule_run_slot_now")}
+              ?disabled=${this._busy || this._runtimeBusy() || !s.enabled || s.zone_ids_ordered.length === 0}
+              @click=${() => this._runSlotNow(s.slot_id)}
+            >
+              <ha-icon icon="mdi:play"></ha-icon>
+            </button>
+            <button
+              type="button"
+              title=${t(this.hass, "config_panel.schedule_edit")}
+              aria-label=${t(this.hass, "config_panel.schedule_edit")}
+              @click=${() => {
+            this._addZonePick = "";
+            this._slotEditDraft = this._cloneSlot(s);
+        }}
+            >
+              <ha-icon icon="mdi:pencil"></ha-icon>
+            </button>
+            <button
+              type="button"
+              class=${expanded ? "selected" : ""}
+              aria-expanded=${expanded ? "true" : "false"}
+              aria-label=${t(this.hass, "config_panel.cycle_expand")}
+              @click=${() => this._toggleExpand(s.slot_id)}
+            >
+              <ha-icon icon=${expanded ? "mdi:chevron-up" : "mdi:chevron-down"}></ha-icon>
+            </button>
+          </div>
+        </div>
+        ${expanded
+            ? b `<div class="compact-row-detail">
+              <div class="day-strip" style="margin-top:10px">
+                ${strip.map((d) => b `<div class="day-cell ${d.run ? "run" : ""} ${d.isToday ? "today" : ""}">
+                    <span class="dc-dow">${weekdayShort(this.hass, mondayBasedWeekday(d.date))}</span>
+                    <span class="dc-dom">${d.date.getDate()}</span>
+                  </div>`)}
+              </div>
+              ${this._renderMemberLine(s)}
+            </div>`
+            : A}
+      </div>
+    `;
+    }
+    _addZoneOptionsForDraft(draft) {
+        const zones = this._zonesMap();
+        if (!zones)
+            return [];
+        return Object.keys(zones).filter((id) => !draft.zone_ids_ordered.includes(id));
+    }
+    _renderEditDialog(draft) {
+        const zones = this._zonesMap();
+        const addZoneOpts = this._addZoneOptionsForDraft(draft);
+        return b `
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_name_optional_title")}</span>
+        <div class="field-row">
+          <ha-input
+            .value=${draft.name}
+            @input=${(e) => {
+            draft.name = e.target.value;
+        }}
+          ></ha-input>
+        </div>
+      </div>
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_weekdays_title")}</span>
+        ${this._renderWeekdayPicker(draft.weekdays, (n) => {
+            draft.weekdays = n;
+            this.requestUpdate();
+        })}
+      </div>
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_week_parity_title")}</span>
+        <select
+          class="field-select"
+          @change=${(e) => {
+            draft.week_parity = e.target.value;
+            this.requestUpdate();
+        }}
+        >
+          ${WEEK_PARITIES.map((p) => b `<option value=${p} ?selected=${draft.week_parity === p}>${this._parityLabel(p)}</option>`)}
+        </select>
+      </div>
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_start_time_title")}</span>
+        <div class="field-row">
+          <input
+            type="time"
+            .value=${draft.time_local}
+            @input=${(e) => {
+            draft.time_local = e.target.value;
+        }}
+          />
+        </div>
+      </div>
+      <div class="field-block">
+        <div class="switch-row">
+          <ha-switch
+            .disabled=${this._busy}
+            .checked=${draft.enabled}
+            @change=${(e) => {
+            draft.enabled = Boolean(e.target.checked);
+            this.requestUpdate();
+        }}
+          ></ha-switch>
+          <span class="switch-row-label">${t(this.hass, "config_panel.schedule_slot_enabled")}</span>
+        </div>
+      </div>
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_run_order_title")}</span>
+        <ul class="zones">
+          ${(() => {
+            const pmap = phaseIndexByZoneId(draft.zone_ids_ordered, this._zonesPhaseInput(), this._maxParallel());
+            return draft.zone_ids_ordered.map((zid, idx) => {
+                const pnum = pmap.get(zid);
+                const prevP = idx > 0 ? pmap.get(draft.zone_ids_ordered[idx - 1]) : undefined;
+                const showPhase = pnum !== undefined && pnum !== prevP;
+                return b `
+                ${showPhase
+                    ? b `<li class="phase-sep"><span>${t(this.hass, "config_panel.schedule_phase_n", { n: pnum ?? 0 })}</span></li>`
+                    : A}
+                <li>
+                  <span>${idx + 1}. ${this._zoneName(zid)}</span>
+                  <span class="zone-actions">
+                    <button type="button" class="btn-outline" @click=${() => {
+                    if (idx > 0) {
+                        const a = draft.zone_ids_ordered;
+                        [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]];
+                        this.requestUpdate();
+                    }
+                }}>${t(this.hass, "config_panel.schedule_up")}</button>
+                    <button type="button" class="btn-outline" @click=${() => {
+                    const a = draft.zone_ids_ordered;
+                    if (idx < a.length - 1) {
+                        [a[idx + 1], a[idx]] = [a[idx], a[idx + 1]];
+                        this.requestUpdate();
+                    }
+                }}>${t(this.hass, "config_panel.schedule_down")}</button>
+                    <button type="button" class="btn-outline" @click=${() => {
+                    draft.zone_ids_ordered = draft.zone_ids_ordered.filter((x) => x !== zid);
+                    this.requestUpdate();
+                }}>${t(this.hass, "config_panel.schedule_remove")}</button>
+                  </span>
+                </li>
+              `;
+            });
+        })()}
+        </ul>
+        ${addZoneOpts.length
+            ? b `<div class="action-row">
+              <select class="field-select" .value=${this._addZonePick} @change=${(e) => {
+                this._addZonePick = e.target.value;
+            }}>
+                <option value="">${t(this.hass, "config_panel.schedule_choose_zone")}</option>
+                ${addZoneOpts.map((id) => b `<option value=${id}>${this._zoneName(id)}</option>`)}
+              </select>
+              <button type="button" class="btn-outline" ?disabled=${!this._addZonePick} @click=${() => {
+                if (this._addZonePick && !draft.zone_ids_ordered.includes(this._addZonePick)) {
+                    draft.zone_ids_ordered = [...draft.zone_ids_ordered, this._addZonePick];
+                    this._addZonePick = "";
+                    this.requestUpdate();
+                }
+            }}>${t(this.hass, "config_panel.schedule_add_to_list")}</button>
+            </div>`
+            : zones && Object.keys(zones).length > 0
+                ? b `<p class="hint">${t(this.hass, "config_panel.schedule_all_zones_in_slot")}</p>`
+                : b `<p class="hint">${t(this.hass, "config_panel.schedule_create_zones_first")}</p>`}
+      </div>
+    `;
+    }
+    render() {
+        const { groups, custom } = this._groupsAndCustom();
+        const draft = this._slotEditDraft;
+        const hasAny = groups.length > 0 || custom.length > 0;
+        const cleanupCandidates = this._analyzeCleanup().length;
+        return b `
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>
+          ${t(this.hass, "config_panel.cycle_card_title")}
+          <div class="header-actions">
+            ${cleanupCandidates > 0
+            ? b `<button type="button" class="btn-outline hide-narrow" @click=${() => this._openCleanup()}>
+                  ${t(this.hass, "config_panel.cycle_cleanup")}
+                </button>`
+            : A}
+            <button type="button" class="btn hide-narrow" @click=${() => this._openWizardNew()}>
+              ${t(this.hass, "config_panel.cycle_new")}
+            </button>
+          </div>
+        </div>
+        <div class="card-content">
+          ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
+
+          ${!hasAny
+            ? b `<div class="empty-state">
+                <ha-icon icon="mdi:calendar-clock"></ha-icon>
+                <p>${t(this.hass, "config_panel.schedule_empty")}</p>
+                <button type="button" class="btn" @click=${() => this._openWizardNew()}>
+                  ${t(this.hass, "config_panel.cycle_new")}
+                </button>
+              </div>`
+            : b `
+                ${groups.map((g) => this._renderCycleRow(g))}
+                ${custom.map((s) => this._renderCustomRow(s))}
+              `}
+        </div>
+      </ha-card>
+
+      <button
+        type="button"
+        class="fab"
+        aria-label=${t(this.hass, "config_panel.cycle_new")}
+        title=${t(this.hass, "config_panel.cycle_new")}
+        @click=${() => this._openWizardNew()}
+      >
+        <ha-icon icon="mdi:plus"></ha-icon>
+      </button>
+
+      <si-cycle-wizard
+        .hass=${this.hass}
+        .entryId=${this.entryId}
+        .installation=${this.installation}
+        .onSaved=${(rid) => {
+            if (rid)
+                this._expanded = new Set([...this._expanded, rid]);
+            this.onSaved?.();
+        }}
+      ></si-cycle-wizard>
+
+      <ha-dialog
+        .open=${draft !== null}
+        header-title=${draft ? t(this.hass, "config_panel.schedule_edit") : ""}
+        @closed=${() => this._closeEditDialog()}
+      >
+        ${draft ? this._renderEditDialog(draft) : A}
+        <div slot="footer" class="dialog-footer">
+          <div class="dialog-footer-row">
+            <div class="dialog-footer-lead">
+              ${draft
+            ? b `
+                    <button type="button" class="btn-danger" ?disabled=${this._busy} @click=${() => this._deleteSlotDraft()}>
+                      ${t(this.hass, "config_panel.schedule_delete_slot")}
+                    </button>
+                    ${draft.weekdays.length > 1
+                ? b `<button type="button" class="btn-outline" ?disabled=${this._busy} @click=${() => this._splitSlotDraft()}>
+                          ${t(this.hass, "config_panel.schedule_split_slot")}
+                        </button>`
+                : A}
+                  `
+            : A}
+            </div>
+            <div class="dialog-footer-actions">
+              <button type="button" class="btn-outline" @click=${() => this._closeEditDialog()} ?disabled=${this._busy}>
+                ${t(this.hass, "config_panel.zones_cancel")}
+              </button>
+              <button type="button" class="btn" ?disabled=${this._busy || !draft} @click=${() => this._saveSlotDraft()}>
+                ${this._busy ? t(this.hass, "config_panel.schedule_saving") : t(this.hass, "config_panel.schedule_save_slot")}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ha-dialog>
+
+      <ha-dialog
+        .open=${this._cleanupProposals !== null}
+        header-title=${t(this.hass, "config_panel.cycle_cleanup")}
+        @closed=${() => (this._cleanupProposals = null)}
+      >
+        <p class="hint">${t(this.hass, "config_panel.cycle_cleanup_desc")}</p>
+        ${(this._cleanupProposals ?? []).map((p) => b `<div class="compact-row" style="margin-top:8px">
+            <div class="compact-row-header">
+              <div class="compact-row-main">
+                <div class="compact-row-title">
+                  <span>${p.label || this._cycleBadge(p.optionId === "every_2_days" ? "every_n_days" : p.optionId, p.meta)}</span>
+                  <span class="badge badge-primary">${t(this.hass, "config_panel.cycle_cleanup_merge_n", {
+            n: p.memberIds.length,
+        })}</span>
+                </div>
+              </div>
+            </div>
+          </div>`)}
+        ${(this._cleanupProposals ?? []).length === 0
+            ? b `<p class="muted">${t(this.hass, "config_panel.cycle_cleanup_none")}</p>`
+            : A}
+        <div slot="footer" class="dialog-footer">
+          <div class="dialog-footer-row">
+            <div class="dialog-footer-lead"></div>
+            <div class="dialog-footer-actions">
+              <button type="button" class="btn-outline" @click=${() => (this._cleanupProposals = null)} ?disabled=${this._busy}>
+                ${t(this.hass, "config_panel.zones_cancel")}
+              </button>
+              <button
+                type="button"
+                class="btn"
+                ?disabled=${this._busy || (this._cleanupProposals ?? []).length === 0}
+                @click=${() => this._applyCleanup()}
+              >
+                ${t(this.hass, "config_panel.cycle_cleanup_confirm")}
+              </button>
+            </div>
+          </div>
+        </div>
+      </ha-dialog>
+    `;
+    }
+}
+__decorate([
+    r()
+], ViewSchedule.prototype, "_busy", void 0);
+__decorate([
+    r()
+], ViewSchedule.prototype, "_msg", void 0);
+__decorate([
+    r()
+], ViewSchedule.prototype, "_expanded", void 0);
+__decorate([
+    r()
+], ViewSchedule.prototype, "_slotEditDraft", void 0);
+__decorate([
+    r()
+], ViewSchedule.prototype, "_addZonePick", void 0);
+__decorate([
+    r()
+], ViewSchedule.prototype, "_cleanupProposals", void 0);
+__decorate([
+    e("si-cycle-wizard")
+], ViewSchedule.prototype, "_wizard", void 0);
+defineCustomElementOnce("si-view-schedule", ViewSchedule);
+
+/** Entity IDs for allowed output domains (same rule set as the backend). */
+function entityIdsForDomains(hass, domains) {
+    return Object.keys(hass.states)
+        .filter((eid) => domains.includes(eid.split(".", 1)[0]))
+        .sort((a, b) => a.localeCompare(b));
+}
+/** One shared `<datalist>` per form (by stable `listId`). */
+function renderEntityDatalist(hass, listId, domains) {
+    const ids = entityIdsForDomains(hass, domains);
+    return b `
+    <datalist id=${listId}>
+      ${ids.map((id) => b `<option value=${id}></option>`)}
+    </datalist>
+  `;
+}
+/**
+ * Browser autocomplete for entity_id — works inside panel_custom scoped registries where
+ * `ha-entity-picker` is not registered.
+ */
+function renderNativeEntityField(hass, listId, label, value, onValue) {
+    return b `
+    <div class="native-entity-field">
+      <label class="native-entity-label">${label}</label>
+      <input
+        type="text"
+        class="entity-id-input"
+        list=${listId}
+        .value=${value}
+        placeholder=${t(hass, "config_panel.entity_placeholder_example")}
+        spellcheck="false"
+        autocomplete="off"
+        @input=${(e) => onValue(e.target.value)}
+      />
+    </div>
+  `;
+}
+
+class ViewSettings extends i {
+    constructor() {
+        super(...arguments);
+        this._busy = false;
+        this._dirty = false;
+        this._isDefault = false;
+        this._defaultConfirmOpen = false;
+        this._showRaw = false;
+        this._defaultConfirmOtherName = "";
+        this._name = "";
+        this._mode = "normal";
+        this._maxParallel = 2;
+        this._preStart = [];
+        this._preStartDelaySec = 10;
+        this._beforeUnload = (e) => {
+            if (this._dirty) {
+                e.preventDefault();
+                e.returnValue = "";
+            }
+        };
+    }
+    static { this.properties = {
+        hass: { attribute: false },
+        entryId: { type: String },
+        installation: { type: Object },
         runState: { type: Object },
         outputEntityDomains: { type: Array },
         onSaved: { attribute: false },
     }; }
     static { this.styles = [
+        sharedStyles,
         formLayoutStyles,
         i$3 `
-      ha-card {
-        margin-bottom: 16px;
-      }
-      .card-content {
-        padding: 0 8px 16px;
-      }
-      .error {
-        color: var(--error-color);
-        margin-bottom: 8px;
-      }
-      button.save {
-        padding: 10px 20px;
-        border-radius: 4px;
-        border: none;
-        background: var(--primary-color);
-        color: var(--text-primary-color);
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      button.save:disabled {
-        opacity: 0.5;
-        cursor: default;
-      }
-      .schedule-overview-inner {
-        margin-top: 4px;
-      }
-      .schedule-hero {
+      .save-bar {
+        position: sticky;
+        bottom: 0;
         display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        padding: 18px 18px 20px;
-        border-radius: 12px;
-        border: 1px solid var(--divider-color);
-        background: linear-gradient(
-          145deg,
-          rgba(var(--rgb-primary-color, 33, 150, 243), 0.12) 0%,
-          transparent 55%
-        );
-        margin-bottom: 16px;
-      }
-      .schedule-hero-icon {
-        flex-shrink: 0;
-        --mdc-icon-size: 36px;
-        color: var(--primary-color);
-        opacity: 0.9;
-        margin-top: 2px;
-      }
-      .schedule-hero-text {
-        flex: 1;
-        min-width: 0;
-      }
-      .schedule-hero-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--secondary-text-color);
-        margin: 0 0 6px;
-      }
-      .schedule-next-big {
-        font-size: 1.35rem;
-        font-weight: 600;
-        margin: 0;
-        line-height: 1.25;
-        letter-spacing: -0.02em;
-        color: var(--primary-text-color);
-      }
-      .schedule-slot-pills {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 10px;
-      }
-      .schedule-slot-pill {
-        display: flex;
-        align-items: flex-start;
+        align-items: center;
         gap: 12px;
-        padding: 12px 14px;
-        border-radius: 10px;
-        border: 1px solid var(--divider-color);
-        background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
-        line-height: 1.45;
-        font-size: 0.9375rem;
-      }
-      .schedule-slot-pill ha-icon {
-        flex-shrink: 0;
-        --mdc-icon-size: 22px;
-        color: var(--primary-color);
-        opacity: 0.85;
-        margin-top: 1px;
-      }
-      .schedule-slot-pill-main {
-        flex: 1;
-        min-width: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-      }
-      .schedule-slot-name {
-        font-weight: 600;
-        font-size: 0.8125rem;
-        color: var(--primary-color);
-      }
-      .schedule-slot-time {
-        font-weight: 600;
-        color: var(--primary-text-color);
-      }
-      .schedule-slot-zones {
-        display: block;
-        margin-top: 4px;
-        font-size: 0.875rem;
-        color: var(--secondary-text-color);
-      }
-      .plan-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 12px 20px;
-        margin-bottom: 16px;
-      }
-      .plan-row ha-switch {
-        margin-right: 8px;
-      }
-      .plan-label {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 1rem;
-      }
-      .muted-box {
-        font-size: 0.875rem;
-        color: var(--secondary-text-color);
-        line-height: 1.45;
-        margin: 0 0 12px;
-      }
-      .run-hero {
-        display: flex;
-        align-items: flex-start;
-        gap: 16px;
-        padding: 18px 18px 20px;
-        border-radius: 12px;
-        border: 1px solid var(--divider-color);
-        background: linear-gradient(
-          145deg,
-          rgba(var(--rgb-primary-color, 33, 150, 243), 0.1) 0%,
-          transparent 50%
-        );
-        margin-bottom: 14px;
-      }
-      .run-hero-icon {
-        flex-shrink: 0;
-        --mdc-icon-size: 38px;
-        color: var(--primary-color);
-        opacity: 0.92;
-        margin-top: 2px;
-      }
-      .run-hero-body {
-        flex: 1;
-        min-width: 0;
-      }
-      .run-hero-label {
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--secondary-text-color);
-        margin: 0 0 6px;
-      }
-      .run-hero-state {
-        font-size: 1.35rem;
-        font-weight: 600;
-        margin: 0 0 10px;
-        line-height: 1.25;
-        letter-spacing: -0.02em;
-        color: var(--primary-text-color);
-      }
-      .run-detail-pills {
-        list-style: none;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-      }
-      .run-detail-pill {
-        display: flex;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 10px 12px;
-        border-radius: 10px;
-        border: 1px solid var(--divider-color);
-        background: var(--secondary-background-color, rgba(0, 0, 0, 0.03));
-        font-size: 0.9rem;
-        line-height: 1.45;
-      }
-      .run-detail-pill ha-icon {
-        flex-shrink: 0;
-        --mdc-icon-size: 20px;
-        color: var(--primary-color);
-        opacity: 0.85;
-        margin-top: 2px;
-      }
-      .run-detail-pill strong {
-        font-weight: 600;
-        color: var(--primary-text-color);
-      }
-      button.ctrl {
-        padding: 10px 16px;
-        border-radius: 4px;
-        border: 1px solid var(--divider-color);
+        padding: 12px 16px;
+        margin: 8px -4px 0;
         background: var(--card-background-color);
-        color: var(--primary-text-color);
-        cursor: pointer;
-        font-size: 0.95rem;
+        border-top: 1px solid var(--divider-color);
+        border-radius: 0 0 12px 12px;
+        box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.08);
+        z-index: 3;
       }
-      button.ctrl.danger {
-        border-color: var(--error-color);
-        color: var(--error-color);
+      .save-bar .dirty-note {
+        color: var(--warning-color, #b85c00);
+        font-size: 0.85rem;
       }
-      button.ctrl:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
+      .save-bar .btn {
+        margin-left: auto;
+      }
+      pre.raw {
+        overflow: auto;
+        font-size: 12px;
+        margin: 8px 0 0;
+        white-space: pre-wrap;
+        max-height: 320px;
+      }
+      .field-block {
+        margin-bottom: 22px;
       }
     `,
     ]; }
     willUpdate(changed) {
-        if (changed.has("installation") && this.installation) {
-            const inst = this.installation;
-            this._name = String(inst.name ?? "");
-            this._mode = String(inst.mode ?? "normal");
-            this._maxParallel = Number(inst.max_parallel_zones ?? 2);
-            this._planEnabled = Boolean(inst.enabled ?? true);
-            this._isDefault = Boolean(inst.is_default ?? false);
-            const ps = Array.isArray(inst.pre_start_switches)
-                ? inst.pre_start_switches.filter(Boolean)
-                : [];
-            this._preStart = ps.length ? [...ps] : [""];
-            const d = Number(inst.pre_start_delay_sec ?? 10);
-            this._preStartDelaySec = Number.isFinite(d)
-                ? Math.max(1, Math.min(3600, Math.round(d)))
-                : 10;
+        if (changed.has("installation") && this.installation && !this._dirty) {
+            this._loadFromInstallation();
         }
     }
-    _pauseIsActive() {
-        const raw = this.installation?.pause_until;
-        if (!raw || typeof raw !== "string")
-            return false;
-        const t = Date.parse(raw);
-        return !Number.isNaN(t) && t > Date.now();
+    _loadFromInstallation() {
+        const inst = this.installation ?? {};
+        this._name = String(inst.name ?? "");
+        this._mode = String(inst.mode ?? "normal");
+        this._maxParallel = Number(inst.max_parallel_zones ?? 2);
+        this._isDefault = Boolean(inst.is_default ?? false);
+        const ps = Array.isArray(inst.pre_start_switches)
+            ? inst.pre_start_switches.filter(Boolean)
+            : [];
+        this._preStart = ps.length ? [...ps] : [""];
+        const d = Number(inst.pre_start_delay_sec ?? 10);
+        this._preStartDelaySec = Number.isFinite(d) ? Math.max(1, Math.min(3600, Math.round(d))) : 10;
+        this._dirty = false;
     }
-    _fmtWhen(iso) {
-        if (!iso)
-            return t(this.hass, "config_panel.general_none_scheduled");
-        try {
-            const d = new Date(iso);
-            return formatDateTimeForDisplay(this.hass, d);
+    connectedCallback() {
+        super.connectedCallback();
+        window.addEventListener("beforeunload", this._beforeUnload);
+    }
+    disconnectedCallback() {
+        super.disconnectedCallback();
+        window.removeEventListener("beforeunload", this._beforeUnload);
+    }
+    _markDirty() {
+        if (!this._dirty) {
+            this._dirty = true;
         }
-        catch {
-            return String(iso);
-        }
     }
-    _wd(i) {
-        return weekdayLong(this.hass, i);
-    }
-    _fmtPauseUntil() {
-        const raw = this.installation?.pause_until;
-        if (!raw || typeof raw !== "string")
-            return "";
-        return this._fmtWhen(raw);
-    }
-    _closeDefaultConfirm() {
-        this._defaultConfirmOpen = false;
-        this._defaultConfirmOtherName = "";
-    }
-    _confirmDefaultChange() {
-        this._isDefault = true;
-        this._closeDefaultConfirm();
-    }
-    async _onDefaultToggle(checked) {
-        if (!checked) {
-            this._isDefault = false;
-            return;
-        }
-        try {
-            const entries = await listSimpleIrrigationEntries(this.hass);
-            for (const e of entries) {
-                if (e.entry_id === this.entryId) {
-                    continue;
-                }
-                const st = await fetchPanelState(this.hass, e.entry_id);
-                const inst = st.installation;
-                if (Boolean(inst.is_default ?? false)) {
-                    this._defaultConfirmOtherName = String(inst.name ?? e.title);
-                    this._defaultConfirmOpen = true;
-                    return;
-                }
-            }
-            this._isDefault = true;
-        }
-        catch (e) {
-            this._msg = formatApiError(e, this.hass);
-        }
+    _entityListId() {
+        return `si-ent-s-${this.entryId}`;
     }
     async _save() {
         this._busy = true;
@@ -1118,6 +4744,7 @@ class ViewGeneral extends i {
                 this._msg = formatApiError(res.error, this.hass);
             }
             else {
+                this._dirty = false;
                 this.onSaved?.();
             }
         }
@@ -1129,386 +4756,97 @@ class ViewGeneral extends i {
             this.requestUpdate();
         }
     }
-    async _setPlanEnabled(enabled) {
-        this._busy = true;
-        this._msg = undefined;
-        this.requestUpdate();
+    _closeDefaultConfirm() {
+        this._defaultConfirmOpen = false;
+        this._defaultConfirmOtherName = "";
+    }
+    async _onDefaultToggle(checked) {
+        this._markDirty();
+        if (!checked) {
+            this._isDefault = false;
+            return;
+        }
         try {
-            const res = await saveGlobal(this.hass, this.entryId, { enabled });
-            if (!res.success) {
-                this._msg = formatApiError(res.error, this.hass);
+            const entries = await listSimpleIrrigationEntries(this.hass);
+            for (const e of entries) {
+                if (e.entry_id === this.entryId)
+                    continue;
+                const st = await fetchPanelState(this.hass, e.entry_id);
+                const inst = st.installation;
+                if (Boolean(inst.is_default ?? false)) {
+                    this._defaultConfirmOtherName = String(inst.name ?? e.title);
+                    this._defaultConfirmOpen = true;
+                    return;
+                }
             }
-            else {
-                this._planEnabled = enabled;
-                this.onSaved?.();
-            }
+            this._isDefault = true;
         }
         catch (e) {
             this._msg = formatApiError(e, this.hass);
         }
-        finally {
-            this._busy = false;
-            this.requestUpdate();
-        }
     }
-    async _clearPause() {
-        this._busy = true;
-        this._msg = undefined;
-        this.requestUpdate();
-        try {
-            const res = await saveGlobal(this.hass, this.entryId, { pause_until: null });
-            if (!res.success) {
-                this._msg = formatApiError(res.error, this.hass);
-            }
-            else {
-                this.onSaved?.();
-            }
-        }
-        catch (e) {
-            this._msg = formatApiError(e, this.hass);
-        }
-        finally {
-            this._busy = false;
-            this.requestUpdate();
-        }
-    }
-    async _skipToday() {
-        this._busy = true;
-        this._msg = undefined;
-        this.requestUpdate();
-        try {
-            const res = await skipIrrigationToday(this.hass, this.entryId);
-            if (!res.success) {
-                this._msg = formatApiError(res.error, this.hass);
-            }
-            else {
-                this.onSaved?.();
-            }
-        }
-        catch (e) {
-            this._msg = formatApiError(e, this.hass);
-        }
-        finally {
-            this._busy = false;
-            this.requestUpdate();
-        }
-    }
-    _generalEntityListId() {
-        return `si-ent-g-${this.entryId}`;
-    }
-    _zoneName(zoneId) {
-        const zones = this.installation?.zones;
-        const z = zones?.[zoneId];
-        return z ? String(z.name ?? zoneId) : zoneId;
-    }
-    _runStateBusy(rs) {
-        const s = String(rs.run_state ?? "idle");
-        return ["preparing", "running", "stopping"].includes(s);
-    }
-    _formatUpcomingPhases(rs) {
-        const up = rs.upcoming_phases;
-        if (!Array.isArray(up) || up.length === 0)
-            return "";
-        const parts = [];
-        for (const grp of up) {
-            if (!Array.isArray(grp) || grp.length === 0)
-                continue;
-            parts.push(grp.map((id) => this._zoneName(String(id))).join(", "));
-        }
-        return parts.join(" → ");
-    }
-    async _panelControlAction(action) {
-        this._runCtrlBusy = true;
-        this._msg = undefined;
-        this.requestUpdate();
-        try {
-            const res = await panelControl(this.hass, this.entryId, action);
-            if (!res.success) {
-                const err = res.error ?? "request_failed";
-                this._msg =
-                    err === "not_running" && action === "skip_phase"
-                        ? t(this.hass, "config_panel.errors_not_running_skip")
-                        : String(err);
-            }
-            else {
-                this.onSaved?.();
-            }
-        }
-        catch (e) {
-            this._msg = formatApiError(e, this.hass);
-        }
-        finally {
-            this._runCtrlBusy = false;
-            this.requestUpdate();
-        }
+    _openIntegrationPage() {
+        // Removal of an installation is the standard HA config-entry flow.
+        window.open("/config/integrations/integration/simple_irrigation", "_blank", "noopener");
     }
     render() {
         const domains = this.outputEntityDomains ?? ["switch", "input_boolean", "group", "valve"];
-        const sn = this.scheduleNext ?? { fire_at: null, slots: [] };
-        const nextGlobal = sn.fire_at || this.runState?.next_run_global || null;
-        const pauseOn = this._pauseIsActive();
-        const rs = (this.runState ?? {});
-        const runBusy = this._runStateBusy(rs);
-        const runStateStr = String(rs.run_state ?? "idle");
-        const activeIds = Array.isArray(rs.active_zone_ids)
-            ? rs.active_zone_ids
-            : [];
-        const lastErr = rs.last_error ? String(rs.last_error) : "";
-        const showStop = ["preparing", "running", "stopping"].includes(runStateStr);
-        const upcomingLen = Array.isArray(rs.upcoming_phases) ? rs.upcoming_phases.length : 0;
-        const showSkip = showStop &&
-            runStateStr !== "stopping" &&
-            (runStateStr === "preparing" || upcomingLen > 0);
-        const showClearErr = Boolean(lastErr);
-        const nextZonesLine = this._formatUpcomingPhases(rs);
         return b `
-      ${renderEntityDatalist(this.hass, this._generalEntityListId(), domains)}
-      <ha-card .header=${t(this.hass, "config_panel.general_card_current_run")}>
-        <div class="card-content">
-          <div class="run-hero">
-            <ha-icon class="run-hero-icon" icon="mdi:sprinkler-variant"></ha-icon>
-            <div class="run-hero-body">
-              <p class="run-hero-label">${t(this.hass, "config_panel.general_label_irrigation_state")}</p>
-              <p class="run-hero-state">
-                ${runBusy
-            ? runStateStr === "preparing"
-                ? t(this.hass, "config_panel.general_state_preparing")
-                : runStateStr === "stopping"
-                    ? t(this.hass, "config_panel.general_state_stopping")
-                    : t(this.hass, "config_panel.general_state_running")
-            : runStateStr === "error"
-                ? t(this.hass, "config_panel.general_state_error_idle")
-                : t(this.hass, "config_panel.general_state_idle")}
-              </p>
-              ${runBusy && runStateStr === "preparing"
-            ? b `<p class="muted-box" style="margin:0">
-                    ${t(this.hass, "config_panel.general_preparing_hint")}
-                  </p>`
-            : A}
-            </div>
-          </div>
-          ${activeIds.length || nextZonesLine || lastErr
-            ? b `
-                <ul class="run-detail-pills">
-                  ${activeIds.length
-                ? b `
-                        <li class="run-detail-pill">
-                          <ha-icon icon="mdi:water"></ha-icon>
-                          <span
-                            ><strong>${t(this.hass, "config_panel.general_active_zones")}</strong>
-                            ${activeIds.map((id) => this._zoneName(id)).join(", ")}</span
-                          >
-                        </li>
-                      `
-                : A}
-                  ${nextZonesLine
-                ? b `
-                        <li class="run-detail-pill">
-                          <ha-icon icon="mdi:playlist-play"></ha-icon>
-                          <span
-                            ><strong>${t(this.hass, "config_panel.general_next_zones")}</strong>
-                            ${nextZonesLine}</span
-                          >
-                        </li>
-                      `
-                : A}
-                  ${lastErr
-                ? b `
-                        <li class="run-detail-pill">
-                          <ha-icon icon="mdi:alert-circle-outline"></ha-icon>
-                          <span
-                            ><strong>${t(this.hass, "config_panel.general_last_error")}</strong>
-                            ${lastErr}</span
-                          >
-                        </li>
-                      `
-                : A}
-                </ul>
-              `
-            : A}
-          ${showStop
-            ? b `<p class="muted-box" style="margin-top:0">
-                ${t(this.hass, "config_panel.general_scheduled_pause_hint")}
-              </p>`
-            : A}
-          ${showStop || showSkip || showClearErr
-            ? b `<div class="action-row">
-                ${showStop
-                ? b `
-                      <button
-                        type="button"
-                        class="ctrl danger"
-                        ?disabled=${this._runCtrlBusy || !runBusy}
-                        @click=${() => this._panelControlAction("stop")}
-                      >
-                        ${t(this.hass, "config_panel.general_stop_irrigation")}
-                      </button>
-                    `
-                : A}
-                ${showSkip
-                ? b `
-                      <button
-                        type="button"
-                        class="ctrl"
-                        ?disabled=${this._runCtrlBusy || !runBusy || runStateStr === "stopping"}
-                        @click=${() => this._panelControlAction("skip_phase")}
-                      >
-                        ${t(this.hass, "config_panel.general_skip_phase")}
-                      </button>
-                    `
-                : A}
-                ${showClearErr
-                ? b `
-                      <button
-                        type="button"
-                        class="ctrl"
-                        ?disabled=${this._runCtrlBusy}
-                        @click=${() => this._panelControlAction("clear_error")}
-                      >
-                        ${t(this.hass, "config_panel.general_clear_error")}
-                      </button>
-                    `
-                : A}
-              </div>`
-            : A}
+      ${renderEntityDatalist(this.hass, this._entityListId(), domains)}
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:cog-outline"></ha-icon>
+          ${t(this.hass, "config_panel.general_card_settings")}
         </div>
-      </ha-card>
-
-      <ha-card .header=${t(this.hass, "config_panel.general_card_schedule_overview")}>
-        <div class="card-content">
-          ${!this._planEnabled
-            ? b `<p class="muted-box">${t(this.hass, "config_panel.general_plan_off_hint")}</p>`
-            : A}
-          <div class="schedule-overview-inner">
-            <div class="schedule-hero">
-              <ha-icon class="schedule-hero-icon" icon="mdi:calendar-clock"></ha-icon>
-              <div class="schedule-hero-text">
-                <p class="schedule-hero-label">${t(this.hass, "config_panel.general_next_scheduled_run")}</p>
-                <p class="schedule-next-big">${this._fmtWhen(nextGlobal)}</p>
-              </div>
-            </div>
-            ${sn.slots?.length
-            ? b `
-                  <ul class="schedule-slot-pills">
-                    ${sn.slots.map((s) => b `
-                        <li class="schedule-slot-pill">
-                          <ha-icon icon="mdi:playlist-play"></ha-icon>
-                          <div class="schedule-slot-pill-main">
-                            ${s.name?.trim()
-                ? b `<span class="schedule-slot-name">${s.name.trim()}</span>`
-                : A}
-                            <span class="schedule-slot-time"
-                              >${this._wd(s.weekday)} ${formatTimeLocalForDisplay(this.hass, s.time_local)}${s.week_parity === "odd" || s.week_parity === "even"
-                ? ` · ${t(this.hass, s.week_parity === "odd"
-                    ? "config_panel.week_parity_odd"
-                    : "config_panel.week_parity_even")}`
-                : ""}</span
-                            >
-                            ${s.zone_names?.length
-                ? b `<span class="schedule-slot-zones"
-                                  >${s.zone_names.join(", ")}</span
-                                >`
-                : A}
-                          </div>
-                        </li>
-                      `)}
-                  </ul>
-                `
-            : b `<p class="muted-box">${t(this.hass, "config_panel.general_no_slots")}</p>`}
-          </div>
-        </div>
-      </ha-card>
-
-      <ha-card .header=${t(this.hass, "config_panel.general_card_plan_control")}>
         <div class="card-content">
           ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
-          <div class="plan-row">
-            <label class="plan-label">
-              <ha-switch
-                .disabled=${this._busy}
-                .checked=${this._planEnabled}
-                @change=${(e) => {
-            const tgt = e.target;
-            void this._setPlanEnabled(Boolean(tgt.checked));
-        }}
-              ></ha-switch>
-              ${t(this.hass, "config_panel.general_enable_plan")}
-            </label>
-          </div>
-          ${pauseOn
-            ? b `<p class="muted-box">
-                ${t(this.hass, "config_panel.general_pause_active_hint", {
-                when: this._fmtPauseUntil(),
-            })}
-              </p>`
-            : A}
-          <div class="action-row">
-            <button
-              type="button"
-              class="btn-outline"
-              ?disabled=${this._busy || !this._planEnabled}
-              @click=${() => this._skipToday()}
-            >
-              ${t(this.hass, "config_panel.general_skip_today")}
-            </button>
-            <button
-              type="button"
-              class="btn-outline"
-              ?disabled=${this._busy || !pauseOn}
-              @click=${() => this._clearPause()}
-            >
-              ${t(this.hass, "config_panel.general_clear_pause")}
-            </button>
-          </div>
-        </div>
-      </ha-card>
 
-      <ha-card .header=${t(this.hass, "config_panel.general_card_settings")}>
-        <div class="card-content">
+          <div class="section-title">${t(this.hass, "config_panel.settings_section_general")}</div>
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_installation_name")}</span>
-            <p class="field-desc">${t(this.hass, "config_panel.general_installation_name_desc")}</p>
             <div class="field-row">
               <ha-input
                 .label=${t(this.hass, "config_panel.general_field_name")}
                 .value=${this._name}
                 @input=${(e) => {
             this._name = e.target.value;
+            this._markDirty();
         }}
               ></ha-input>
             </div>
+            <p class="hint">${t(this.hass, "config_panel.settings_name_hint")}</p>
           </div>
+
+          <div class="section-title">${t(this.hass, "config_panel.settings_section_pump")}</div>
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_pre_start_title")}</span>
-            <p class="field-desc">${t(this.hass, "config_panel.general_pre_start_desc")}</p>
             <div class="field-row">
               <div class="entity-picker-rows">
                 ${this._preStart.map((eid, i) => b `
                     <div class="entity-picker-row">
-                      ${renderNativeEntityField(this.hass, this._generalEntityListId(), i === 0
+                      ${renderNativeEntityField(this.hass, this._entityListId(), i === 0
             ? t(this.hass, "config_panel.general_pre_start_output_n")
             : t(this.hass, "config_panel.general_pre_start_output_i", { n: i + 1 }), eid, (v) => {
             const next = [...this._preStart];
             next[i] = v;
             this._preStart = next;
+            this._markDirty();
             this.requestUpdate();
         })}
                       ${this._preStart.length > 1
-            ? b `
-                            <button
-                              type="button"
-                              class="row-remove"
-                              @click=${() => {
+            ? b `<button
+                            type="button"
+                            class="row-remove"
+                            @click=${() => {
                 this._preStart.splice(i, 1);
-                if (this._preStart.length === 0) {
+                if (this._preStart.length === 0)
                     this._preStart = [""];
-                }
+                this._markDirty();
                 this.requestUpdate();
             }}
-                            >
-                              ${t(this.hass, "config_panel.general_remove")}
-                            </button>
-                          `
+                          >
+                            ${t(this.hass, "config_panel.general_remove")}
+                          </button>`
             : A}
                     </div>
                   `)}
@@ -1524,10 +4862,16 @@ class ViewGeneral extends i {
                 </button>
               </div>
             </div>
+            <details class="inline-help">
+              <summary>
+                <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+                ${t(this.hass, "config_panel.general_pre_start_title")}
+              </summary>
+              <p>${t(this.hass, "config_panel.general_pre_start_desc")}</p>
+            </details>
           </div>
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_pre_start_delay_title")}</span>
-            <p class="field-desc">${t(this.hass, "config_panel.general_pre_start_delay_desc")}</p>
             <div class="field-row">
               <ha-input
                 type="number"
@@ -1537,35 +4881,32 @@ class ViewGeneral extends i {
                 max="3600"
                 @input=${(e) => {
             this._preStartDelaySec = Math.max(1, Math.min(3600, parseInt(e.target.value, 10) || 1));
+            this._markDirty();
         }}
               ></ha-input>
             </div>
+            <p class="hint">${t(this.hass, "config_panel.settings_pre_start_delay_hint")}</p>
           </div>
+
+          <div class="section-title">${t(this.hass, "config_panel.settings_section_watering")}</div>
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_watering_mode")}</span>
-            <p class="field-desc">${t(this.hass, "config_panel.general_watering_mode_desc")}</p>
             <div class="field-row">
               <select
                 class="field-select"
                 @change=${(e) => {
             this._mode = e.target.value;
+            this._markDirty();
         }}
               >
-                <option value="eco" ?selected=${this._mode === "eco"}>
-                  ${t(this.hass, "config_panel.general_mode_eco")}
-                </option>
-                <option value="normal" ?selected=${this._mode === "normal"}>
-                  ${t(this.hass, "config_panel.general_mode_normal")}
-                </option>
-                <option value="extra" ?selected=${this._mode === "extra"}>
-                  ${t(this.hass, "config_panel.general_mode_extra")}
-                </option>
+                ${["eco", "normal", "extra"].map((m) => b `<option value=${m} ?selected=${this._mode === m}>
+                      ${t(this.hass, `config_panel.general_mode_${m}`)}
+                    </option>`)}
               </select>
             </div>
           </div>
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_max_parallel")}</span>
-            <p class="field-desc">${t(this.hass, "config_panel.general_max_parallel_desc")}</p>
             <div class="field-row">
               <ha-input
                 type="number"
@@ -1575,34 +4916,68 @@ class ViewGeneral extends i {
                 max="16"
                 @input=${(e) => {
             this._maxParallel = Math.max(1, Math.min(16, parseInt(e.target.value, 10) || 1));
+            this._markDirty();
         }}
               ></ha-input>
             </div>
+            <p class="hint">${t(this.hass, "config_panel.settings_max_parallel_hint")}</p>
           </div>
+
+          <div class="section-title">${t(this.hass, "config_panel.general_default_section")}</div>
           <div class="field-block">
-            <span class="field-title">${t(this.hass, "config_panel.general_default_section")}</span>
-            <p class="field-desc">${t(this.hass, "config_panel.general_default_toggle_desc")}</p>
-            <div class="field-row switch-row">
-              <label class="plan-label">
-                <ha-switch
-                  .disabled=${this._busy}
-                  .checked=${this._isDefault}
-                  @change=${(e) => {
+            <div class="switch-row">
+              <ha-switch
+                .disabled=${this._busy}
+                .checked=${this._isDefault}
+                @change=${(e) => {
             const tgt = e.target;
             void this._onDefaultToggle(Boolean(tgt.checked));
         }}
-                ></ha-switch>
-                ${t(this.hass, "config_panel.general_default_toggle_label")}
-              </label>
+              ></ha-switch>
+              <span class="switch-row-label">${t(this.hass, "config_panel.general_default_toggle_label")}</span>
             </div>
+            <p class="hint">${t(this.hass, "config_panel.settings_default_hint")}</p>
           </div>
-          <div class="action-row">
-            <button type="button" class="save" @click=${() => this._save()} ?disabled=${this._busy}>
-              ${this._busy
-            ? t(this.hass, "config_panel.general_saving")
-            : t(this.hass, "config_panel.general_save")}
-            </button>
-          </div>
+
+          <div class="section-title">${t(this.hass, "config_panel.settings_section_automations")}</div>
+          <details class="inline-help">
+            <summary>
+              <ha-icon class="inline-help-icon" icon="mdi:robot-outline"></ha-icon>
+              ${t(this.hass, "config_panel.settings_automations_summary")}
+            </summary>
+            <div class="help-body">
+              <p style="border:0;padding:0;margin:0 0 8px;background:none">
+                ${t(this.hass, "config_panel.settings_automations_body")}
+              </p>
+              <div><code>config_entry_id</code>: <code>${this.entryId}</code></div>
+            </div>
+          </details>
+          <details class="inline-help" @toggle=${(e) => {
+            this._showRaw = e.target.open;
+        }}>
+            <summary>
+              <ha-icon class="inline-help-icon" icon="mdi:code-json"></ha-icon>
+              ${t(this.hass, "config_panel.settings_diagnostics_summary")}
+            </summary>
+            ${this._showRaw
+            ? b `<pre class="raw">${JSON.stringify(this.runState ?? {}, null, 2)}</pre>`
+            : A}
+          </details>
+
+          <div class="section-title">${t(this.hass, "config_panel.settings_manage_title")}</div>
+          <p class="hint">${t(this.hass, "config_panel.settings_manage_desc")}</p>
+          <button type="button" class="btn-outline" @click=${() => this._openIntegrationPage()}>
+            ${t(this.hass, "config_panel.settings_open_integration")}
+          </button>
+        </div>
+
+        <div class="save-bar">
+          ${this._dirty
+            ? b `<span class="dirty-note">${t(this.hass, "config_panel.settings_unsaved")}</span>`
+            : b `<span class="muted">${t(this.hass, "config_panel.settings_all_saved")}</span>`}
+          <button type="button" class="btn" ?disabled=${this._busy || !this._dirty} @click=${() => this._save()}>
+            ${this._busy ? t(this.hass, "config_panel.general_saving") : t(this.hass, "config_panel.general_save")}
+          </button>
         </div>
       </ha-card>
 
@@ -1621,14 +4996,18 @@ class ViewGeneral extends i {
           <div class="dialog-footer-row">
             <div class="dialog-footer-lead"></div>
             <div class="dialog-footer-actions">
-              <button
-                type="button"
-                class="btn-outline"
-                @click=${() => this._closeDefaultConfirm()}
-              >
+              <button type="button" class="btn-outline" @click=${() => this._closeDefaultConfirm()}>
                 ${t(this.hass, "config_panel.general_default_confirm_cancel")}
               </button>
-              <button type="button" class="primary" @click=${() => this._confirmDefaultChange()}>
+              <button
+                type="button"
+                class="btn"
+                @click=${() => {
+            this._isDefault = true;
+            this._markDirty();
+            this._closeDefaultConfirm();
+        }}
+              >
                 ${t(this.hass, "config_panel.general_default_confirm_ok")}
               </button>
             </div>
@@ -1640,1307 +5019,40 @@ class ViewGeneral extends i {
 }
 __decorate([
     r()
-], ViewGeneral.prototype, "_runCtrlBusy", void 0);
+], ViewSettings.prototype, "_busy", void 0);
 __decorate([
     r()
-], ViewGeneral.prototype, "_isDefault", void 0);
+], ViewSettings.prototype, "_msg", void 0);
 __decorate([
     r()
-], ViewGeneral.prototype, "_defaultConfirmOpen", void 0);
-defineCustomElementOnce("si-view-general", ViewGeneral);
-
-/** Mirrors `grouping.compute_phases` for schedule slot preview in the panel. */
-function computePhases(orderedZoneIds, zonesById, maxParallelZones, skipDisabled = true) {
-    const mp = Math.max(1, maxParallelZones);
-    const phases = [];
-    let current = [];
-    for (const zid of orderedZoneIds) {
-        const zone = zonesById[zid];
-        if (!zone)
-            continue;
-        if (skipDisabled && !zone.enabled)
-            continue;
-        if (zone.exclusive) {
-            if (current.length) {
-                phases.push(current);
-                current = [];
-            }
-            phases.push([zid]);
-            continue;
-        }
-        if (!current.length) {
-            current = [zid];
-            continue;
-        }
-        if (current.length >= mp) {
-            phases.push(current);
-            current = [zid];
-            continue;
-        }
-        current.push(zid);
-    }
-    if (current.length)
-        phases.push(current);
-    return phases;
-}
-/** First occurrence of each zone id → 1-based phase index (same as `phase_index_per_zone`). */
-function phaseIndexByZoneId(orderedZoneIds, zonesById, maxParallelZones) {
-    const phases = computePhases(orderedZoneIds, zonesById, maxParallelZones, true);
-    const m = new Map();
-    for (let i = 0; i < phases.length; i++) {
-        const n = i + 1;
-        for (const zid of phases[i]) {
-            if (!m.has(zid))
-                m.set(zid, n);
-        }
-    }
-    return m;
-}
-
-const WEEK_PARITIES = ["every", "odd", "even"];
-class ViewSchedule extends i {
-    constructor() {
-        super(...arguments);
-        this._busy = false;
-        this._newWeekday = 0;
-        this._newTime = "06:00";
-        this._newEnabled = true;
-        this._newSlotName = "";
-        this._newWeekParity = "every";
-        this._slotEditDraft = null;
-        this._addSlotDialogOpen = false;
-        this._addZonePick = "";
-        /** Cleared when URL has no `editSlot` query; avoids reopening the same deep link repeatedly. */
-        this._consumedEditSlotKey = null;
-    }
-    static { this.properties = {
-        hass: { attribute: false },
-        entryId: { type: String },
-        installation: { type: Object },
-        runState: { type: Object },
-        onSaved: { attribute: false },
-    }; }
-    static { this.styles = [
-        formLayoutStyles,
-        i$3 `
-      ha-card {
-        margin-bottom: 16px;
-      }
-      .card-content {
-        padding: 0 8px 16px;
-      }
-      .error {
-        color: var(--error-color);
-        margin: 8px 0;
-      }
-      .intro {
-        font-size: 0.875rem;
-        color: var(--secondary-text-color);
-        line-height: 1.45;
-        margin: 0 0 16px;
-      }
-      .slot-row-wrap {
-        display: flex;
-        align-items: stretch;
-        margin-bottom: 12px;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid var(--divider-color);
-        background: var(--secondary-background-color, rgba(0, 0, 0, 0.02));
-      }
-      .slot-row-accent {
-        width: 8px;
-        flex-shrink: 0;
-        background: var(--primary-color);
-        transition: background 0.15s ease;
-      }
-      .slot-row-accent.inactive {
-        background: var(--disabled-text-color, rgba(158, 158, 158, 0.45));
-      }
-      .slot-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px 12px;
-        flex: 1;
-        min-width: 0;
-        padding: 14px 16px;
-      }
-      .slot-row-toggle {
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-      }
-      .slot-row-toggle ha-switch {
-        --switch-padding: 4px;
-      }
-      .slot-row-summary {
-        flex: 1;
-        min-width: 160px;
-      }
-      .slot-row-title {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin: 0 0 4px;
-      }
-      .slot-row-title .slot-name {
-        font-weight: 700;
-      }
-      .slot-row-meta {
-        font-size: 0.875rem;
-        color: var(--secondary-text-color);
-        margin: 0;
-      }
-      .slot-row-actions {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-      }
-      /* Override form-layout-styles .btn-outline (align-self + margin-top) so row actions line up */
-      .slot-row-actions button {
-        align-self: center;
-        margin-top: 0;
-      }
-      .toolbar {
-        margin-bottom: 16px;
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px;
-      }
-      button {
-        padding: 10px 16px;
-        border-radius: 4px;
-        border: 1px solid var(--divider-color);
-        background: var(--card-background-color);
-        color: var(--primary-text-color);
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      button.primary {
-        background: var(--primary-color);
-        color: var(--text-primary-color);
-        border: none;
-      }
-      button.danger {
-        border-color: var(--error-color);
-        color: var(--error-color);
-      }
-      .zones {
-        list-style: none;
-        padding: 0;
-        margin: 12px 0;
-      }
-      .zones li {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 8px;
-        margin-bottom: 10px;
-        padding: 8px 0;
-        border-bottom: 1px solid var(--divider-color);
-      }
-      .zones li:last-child {
-        border-bottom: none;
-      }
-      .zones li.phase-sep {
-        display: block;
-        margin: 14px 0 6px;
-        padding: 0;
-        border-bottom: none;
-      }
-      .zones li.phase-sep span {
-        font-size: 0.75rem;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.04em;
-        color: var(--secondary-text-color);
-      }
-      .zones li.phase-sep:first-child {
-        margin-top: 0;
-      }
-      .zone-actions button {
-        padding: 6px 12px;
-        font-size: 0.875rem;
-      }
-      .zone-actions .btn-outline {
-        padding: 6px 12px;
-        font-size: 0.875rem;
-        margin-top: 0;
-      }
-      .toolbar .btn-outline {
-        margin-top: 0;
-      }
-    `,
-    ]; }
-    _wd(i) {
-        return weekdayLong(this.hass, i);
-    }
-    _parityLabel(parity) {
-        if (parity === "odd")
-            return t(this.hass, "config_panel.week_parity_odd");
-        if (parity === "even")
-            return t(this.hass, "config_panel.week_parity_even");
-        return t(this.hass, "config_panel.week_parity_every");
-    }
-    _fmtSlotTime(timeLocal) {
-        return formatTimeLocalForDisplay(this.hass, timeLocal);
-    }
-    _slots() {
-        const s = this.installation?.schedule_slots;
-        if (!Array.isArray(s))
-            return [];
-        return s.map((raw) => {
-            const o = raw;
-            return {
-                slot_id: String(o.slot_id ?? ""),
-                weekday: Number(o.weekday ?? 0),
-                time_local: String(o.time_local ?? "06:00"),
-                enabled: Boolean(o.enabled ?? true),
-                zone_ids_ordered: Array.isArray(o.zone_ids_ordered)
-                    ? [...o.zone_ids_ordered]
-                    : [],
-                name: String(o.name ?? "").trim(),
-                week_parity: o.week_parity === "odd" || o.week_parity === "even" ? o.week_parity : "every",
-            };
-        });
-    }
-    _cloneSlot(s) {
-        return {
-            ...s,
-            zone_ids_ordered: [...s.zone_ids_ordered],
-        };
-    }
-    _zoneName(zid) {
-        const zones = this.installation?.zones;
-        const z = zones?.[zid];
-        return z ? String(z.name ?? zid) : zid;
-    }
-    async _call(body) {
-        this._busy = true;
-        this._msg = undefined;
-        try {
-            const res = await saveSlot(this.hass, this.entryId, body);
-            if (!res.success) {
-                this._msg = formatApiError(res.error, this.hass);
-                return false;
-            }
-            this.onSaved?.();
-            return true;
-        }
-        catch (e) {
-            this._msg = formatApiError(e, this.hass);
-            return false;
-        }
-        finally {
-            this._busy = false;
-        }
-    }
-    _runtimeBusy() {
-        const rs = this.runState ?? {};
-        const s = String(rs.run_state ?? "idle");
-        return ["preparing", "running", "stopping"].includes(s);
-    }
-    async _runSlotNow(slotId) {
-        if (this._runtimeBusy())
-            return;
-        this._busy = true;
-        this._msg = undefined;
-        this.requestUpdate();
-        try {
-            const res = (await runSlotNow(this.hass, this.entryId, slotId));
-            if (!res.success) {
-                const err = res.error ?? "run_failed";
-                this._msg =
-                    err === "busy"
-                        ? t(this.hass, "config_panel.schedule_err_busy")
-                        : err === "empty_slot"
-                            ? t(this.hass, "config_panel.schedule_err_empty_slot")
-                            : err === "no_runnable_zones"
-                                ? t(this.hass, "config_panel.schedule_err_no_runnable")
-                                : err === "unknown_slot"
-                                    ? t(this.hass, "config_panel.schedule_err_unknown_slot")
-                                    : String(err);
-            }
-            else {
-                this.onSaved?.();
-            }
-        }
-        catch (e) {
-            this._msg = formatApiError(e, this.hass);
-        }
-        finally {
-            this._busy = false;
-            this.requestUpdate();
-        }
-    }
-    _closeEditDialog() {
-        this._slotEditDraft = null;
-    }
-    _consumeEditSlotQueryFromUrl() {
-        const slotId = new URLSearchParams(window.location.search).get("editSlot");
-        if (!slotId) {
-            this._consumedEditSlotKey = null;
-            return;
-        }
-        if (!this.entryId)
-            return;
-        const key = `${this.entryId}:${slotId}`;
-        if (this._consumedEditSlotKey === key)
-            return;
-        const slot = this._slots().find((s) => s.slot_id === slotId);
-        const scheduleKnown = Array.isArray(this.installation?.schedule_slots);
-        if (slot) {
-            this._consumedEditSlotKey = key;
-            this._msg = undefined;
-            this._addZonePick = "";
-            this._slotEditDraft = this._cloneSlot(slot);
-            stripEditSlotQueryFromUrl();
-            return;
-        }
-        if (scheduleKnown) {
-            this._consumedEditSlotKey = key;
-            stripEditSlotQueryFromUrl();
-        }
-    }
-    _resetNewSlotForm() {
-        this._newWeekday = 0;
-        this._newTime = "06:00";
-        this._newEnabled = true;
-        this._newSlotName = "";
-        this._newWeekParity = "every";
-    }
-    _closeAddSlotDialog() {
-        this._addSlotDialogOpen = false;
-        this._resetNewSlotForm();
-    }
-    _zonesMap() {
-        return this.installation?.zones;
-    }
-    _maxParallelZones() {
-        const n = Number(this.installation?.max_parallel_zones ?? 2);
-        return Number.isFinite(n) && n >= 1 ? n : 2;
-    }
-    _zonesPhaseInput() {
-        const zones = this.installation?.zones;
-        if (!zones)
-            return {};
-        const out = {};
-        for (const [id, z] of Object.entries(zones)) {
-            out[id] = {
-                enabled: Boolean(z?.enabled ?? true),
-                exclusive: Boolean(z?.exclusive ?? false),
-            };
-        }
-        return out;
-    }
-    _addZoneOptionsForDraft(draft) {
-        const zones = this._zonesMap();
-        if (!zones)
-            return [];
-        return Object.keys(zones).filter((id) => !draft.zone_ids_ordered.includes(id));
-    }
-    async _saveSlotDraft() {
-        const d = this._slotEditDraft;
-        if (!d)
-            return;
-        const ok = await this._call({
-            action: "update",
-            slot_id: d.slot_id,
-            weekday: d.weekday,
-            time_local: d.time_local,
-            enabled: d.enabled,
-            zone_ids_ordered: d.zone_ids_ordered,
-            name: d.name.trim(),
-            week_parity: d.week_parity,
-        });
-        if (ok) {
-            this._closeEditDialog();
-        }
-    }
-    async _deleteSlotDraft() {
-        const d = this._slotEditDraft;
-        if (!d)
-            return;
-        if (!confirm(t(this.hass, "config_panel.schedule_confirm_delete_slot")))
-            return;
-        const ok = await this._call({ action: "delete", slot_id: d.slot_id });
-        if (ok) {
-            this._closeEditDialog();
-        }
-    }
-    async _toggleSlotEnabled(slot, enabled) {
-        if (this._busy)
-            return;
-        const ok = await this._call({
-            action: "update",
-            slot_id: slot.slot_id,
-            weekday: slot.weekday,
-            time_local: slot.time_local,
-            enabled,
-            zone_ids_ordered: slot.zone_ids_ordered,
-            name: slot.name.trim(),
-            week_parity: slot.week_parity,
-        });
-        if (!ok) {
-            this.requestUpdate();
-        }
-    }
-    updated(changed) {
-        super.updated(changed);
-        this._consumeEditSlotQueryFromUrl();
-    }
-    render() {
-        const slots = this._slots();
-        const zones = this._zonesMap();
-        const draft = this._slotEditDraft;
-        const addZoneOpts = draft ? this._addZoneOptionsForDraft(draft) : [];
-        const editSlotTitle = draft != null
-            ? t(this.hass, "config_panel.schedule_edit_dialog_title", {
-                summary: draft.name.trim()
-                    ? `${draft.name.trim()} · ${this._wd(draft.weekday)} ${this._fmtSlotTime(draft.time_local)}`
-                    : `${this._wd(draft.weekday)} ${this._fmtSlotTime(draft.time_local)}`,
-            })
-            : "";
-        return b `
-      <ha-card .header=${t(this.hass, "config_panel.schedule_card_title")}>
-        <div class="card-content">
-          ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
-          <p class="intro">${t(this.hass, "config_panel.schedule_intro")}</p>
-          <div class="toolbar">
-            <button
-              type="button"
-              class="btn-outline"
-              @click=${() => {
-            this._msg = undefined;
-            this._addSlotDialogOpen = true;
-        }}
-            >
-              ${t(this.hass, "config_panel.schedule_add_slot")}
-            </button>
-          </div>
-          ${slots.map((slot) => {
-            const n = slot.zone_ids_ordered.length;
-            return b `
-              <div class="slot-row-wrap">
-                <div
-                  class="slot-row-accent ${slot.enabled ? "" : "inactive"}"
-                  aria-hidden="true"
-                ></div>
-                <div class="slot-row">
-                  <div class="slot-row-toggle">
-                    <ha-switch
-                      .disabled=${this._busy}
-                      .checked=${slot.enabled}
-                      @change=${(e) => {
-                const tgt = e.target;
-                void this._toggleSlotEnabled(slot, Boolean(tgt.checked));
-            }}
-                    ></ha-switch>
-                  </div>
-                  <div class="slot-row-summary">
-                    <p class="slot-row-title">
-                      ${slot.name
-                ? b `<span class="slot-name">${slot.name}</span> · ${this._wd(slot.weekday)}
-                          ${this._fmtSlotTime(slot.time_local)}`
-                : b `${this._wd(slot.weekday)} ${this._fmtSlotTime(slot.time_local)}`}
-                    </p>
-                    <p class="slot-row-meta">
-                      ${(() => {
-                const parts = [];
-                if (!slot.enabled) {
-                    parts.push(t(this.hass, "config_panel.zones_detail_disabled"));
-                }
-                if (slot.week_parity !== "every") {
-                    parts.push(this._parityLabel(slot.week_parity));
-                }
-                parts.push(n === 1
-                    ? t(this.hass, "config_panel.schedule_zones_in_order_one")
-                    : t(this.hass, "config_panel.schedule_zones_in_order_many", { n }));
-                return parts.join(" · ");
-            })()}
-                    </p>
-                  </div>
-                  <div class="slot-row-actions">
-                    <button
-                      type="button"
-                      class="btn-outline"
-                      ?disabled=${this._busy ||
-                this._runtimeBusy() ||
-                !slot.enabled ||
-                slot.zone_ids_ordered.length === 0}
-                      @click=${() => this._runSlotNow(slot.slot_id)}
-                    >
-                      ${t(this.hass, "config_panel.schedule_run_slot_now")}
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-outline"
-                      @click=${() => {
-                this._msg = undefined;
-                this._addZonePick = "";
-                this._slotEditDraft = this._cloneSlot(slot);
-            }}
-                    >
-                      ${t(this.hass, "config_panel.schedule_edit")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `;
-        })}
-        </div>
-      </ha-card>
-
-      <ha-dialog
-        .open=${this._addSlotDialogOpen}
-        header-title=${t(this.hass, "config_panel.schedule_dialog_new_title")}
-        @closed=${() => this._closeAddSlotDialog()}
-      >
-        <p class="field-desc">${t(this.hass, "config_panel.schedule_dialog_new_hint")}</p>
-        <div class="field-block">
-          <span class="field-title">${t(this.hass, "config_panel.schedule_name_optional_title")}</span>
-          <p class="field-desc">${t(this.hass, "config_panel.schedule_name_optional_desc")}</p>
-          <div class="field-row">
-            <ha-input
-              .label=${t(this.hass, "config_panel.schedule_slot_name")}
-              .value=${this._newSlotName}
-              @input=${(e) => {
-            this._newSlotName = e.target.value;
-        }}
-            ></ha-input>
-          </div>
-        </div>
-        <div class="field-block">
-          <span class="field-title">${t(this.hass, "config_panel.schedule_weekday_title")}</span>
-          <p class="field-desc">${t(this.hass, "config_panel.schedule_weekday_desc")}</p>
-          <select
-            class="field-select"
-            @change=${(e) => {
-            this._newWeekday = parseInt(e.target.value, 10);
-        }}
-          >
-            ${[0, 1, 2, 3, 4, 5, 6].map((i) => b `<option value=${i} ?selected=${this._newWeekday === i}>
-                  ${this._wd(i)}
-                </option>`)}
-          </select>
-        </div>
-        <div class="field-block">
-          <span class="field-title">${t(this.hass, "config_panel.schedule_week_parity_title")}</span>
-          <p class="field-desc">${t(this.hass, "config_panel.schedule_week_parity_desc")}</p>
-          <select
-            class="field-select"
-            @change=${(e) => {
-            this._newWeekParity = e.target.value;
-        }}
-          >
-            ${WEEK_PARITIES.map((p) => b `<option value=${p} ?selected=${this._newWeekParity === p}>
-                  ${this._parityLabel(p)}
-                </option>`)}
-          </select>
-        </div>
-        <div class="field-block">
-          <span class="field-title">${t(this.hass, "config_panel.schedule_local_time_title")}</span>
-          <p class="field-desc">${t(this.hass, "config_panel.schedule_local_time_desc")}</p>
-          <div class="field-row">
-            <ha-input
-              .label=${t(this.hass, "config_panel.schedule_time_hhmm")}
-              .value=${this._newTime}
-              @input=${(e) => {
-            this._newTime = e.target.value;
-        }}
-            ></ha-input>
-          </div>
-        </div>
-        <div class="field-block">
-          <div class="switch-rows">
-            <div class="switch-row">
-              <ha-switch
-                .disabled=${this._busy}
-                .checked=${this._newEnabled}
-                @change=${(e) => {
-            const tgt = e.target;
-            this._newEnabled = Boolean(tgt.checked);
-        }}
-              ></ha-switch>
-              <span class="switch-row-label"
-                >${t(this.hass, "config_panel.schedule_slot_enabled")}</span
-              >
-            </div>
-          </div>
-        </div>
-        <div slot="footer" class="dialog-footer">
-          <div class="dialog-footer-row">
-            <div class="dialog-footer-lead"></div>
-            <div class="dialog-footer-actions">
-              <button
-                type="button"
-                class="btn-outline"
-                @click=${() => this._closeAddSlotDialog()}
-                ?disabled=${this._busy}
-              >
-                ${t(this.hass, "config_panel.zones_cancel")}
-              </button>
-              <button
-                type="button"
-                class="primary"
-                ?disabled=${this._busy}
-                @click=${async () => {
-            const ok = await this._call({
-                action: "add",
-                weekday: this._newWeekday,
-                time_local: this._newTime,
-                enabled: this._newEnabled,
-                name: this._newSlotName.trim(),
-                week_parity: this._newWeekParity,
-            });
-            if (ok) {
-                this._closeAddSlotDialog();
-            }
-        }}
-              >
-                ${this._busy
-            ? t(this.hass, "config_panel.schedule_adding")
-            : t(this.hass, "config_panel.schedule_add_slot_btn")}
-              </button>
-            </div>
-          </div>
-        </div>
-      </ha-dialog>
-
-      <ha-dialog
-        .open=${draft !== null}
-        header-title=${editSlotTitle}
-        @closed=${() => this._closeEditDialog()}
-      >
-        ${draft
-            ? b `
-              <div class="field-block">
-                <span class="field-title">${t(this.hass, "config_panel.schedule_name_optional_title")}</span>
-                <div class="field-row">
-                  <ha-input
-                    .label=${t(this.hass, "config_panel.schedule_slot_name")}
-                    .value=${draft.name}
-                    @input=${(e) => {
-                draft.name = e.target.value;
-            }}
-                  ></ha-input>
-                </div>
-              </div>
-              <div class="field-block">
-                <span class="field-title">${t(this.hass, "config_panel.schedule_weekday_title")}</span>
-                <select
-                  class="field-select"
-                  .value=${String(draft.weekday)}
-                  @change=${(e) => {
-                draft.weekday = parseInt(e.target.value, 10);
-                this.requestUpdate();
-            }}
-                >
-                  ${[0, 1, 2, 3, 4, 5, 6].map((i) => b `<option value=${i} ?selected=${draft.weekday === i}>
-                        ${this._wd(i)}
-                      </option>`)}
-                </select>
-              </div>
-              <div class="field-block">
-                <span class="field-title">${t(this.hass, "config_panel.schedule_week_parity_title")}</span>
-                <p class="field-desc">${t(this.hass, "config_panel.schedule_week_parity_desc")}</p>
-                <select
-                  class="field-select"
-                  .value=${draft.week_parity}
-                  @change=${(e) => {
-                draft.week_parity = e.target.value;
-                this.requestUpdate();
-            }}
-                >
-                  ${WEEK_PARITIES.map((p) => b `<option value=${p} ?selected=${draft.week_parity === p}>
-                        ${this._parityLabel(p)}
-                      </option>`)}
-                </select>
-              </div>
-              <div class="field-block">
-                <span class="field-title">${t(this.hass, "config_panel.schedule_start_time_title")}</span>
-                <div class="field-row">
-                  <ha-input
-                    .label=${t(this.hass, "config_panel.schedule_time_hhmm")}
-                    .value=${draft.time_local}
-                    @input=${(e) => {
-                draft.time_local = e.target.value;
-            }}
-                  ></ha-input>
-                </div>
-              </div>
-              <div class="field-block">
-                <div class="switch-rows">
-                  <div class="switch-row">
-                    <ha-switch
-                      .disabled=${this._busy}
-                      .checked=${draft.enabled}
-                      @change=${(e) => {
-                const tgt = e.target;
-                draft.enabled = Boolean(tgt.checked);
-                this.requestUpdate();
-            }}
-                    ></ha-switch>
-                    <span class="switch-row-label"
-                      >${t(this.hass, "config_panel.schedule_slot_enabled")}</span
-                    >
-                  </div>
-                </div>
-              </div>
-              <div class="field-block" style="margin-top:8px">
-                <span class="field-title">${t(this.hass, "config_panel.schedule_run_order_title")}</span>
-                <p class="field-desc">${t(this.hass, "config_panel.schedule_run_order_desc")}</p>
-                <ul class="zones">
-                  ${(() => {
-                const pmap = phaseIndexByZoneId(draft.zone_ids_ordered, this._zonesPhaseInput(), this._maxParallelZones());
-                return draft.zone_ids_ordered.map((zid, idx) => {
-                    const pnum = pmap.get(zid);
-                    const prevZid = idx > 0 ? draft.zone_ids_ordered[idx - 1] : undefined;
-                    const prevP = prevZid !== undefined ? pmap.get(prevZid) : undefined;
-                    const showPhase = pnum !== undefined && pnum !== prevP;
-                    return b `
-                        ${showPhase
-                        ? b `<li class="phase-sep"><span>${t(this.hass, "config_panel.schedule_phase_n", { n: pnum ?? 0 })}</span></li>`
-                        : A}
-                        <li>
-                        <span>${idx + 1}. ${this._zoneName(zid)}</span>
-                        <span class="zone-actions">
-                          <button
-                            type="button"
-                            class="btn-outline"
-                            @click=${() => {
-                        if (idx > 0) {
-                            const a = draft.zone_ids_ordered;
-                            [a[idx - 1], a[idx]] = [a[idx], a[idx - 1]];
-                            this.requestUpdate();
-                        }
-                    }}
-                          >
-                            ${t(this.hass, "config_panel.schedule_up")}
-                          </button>
-                          <button
-                            type="button"
-                            class="btn-outline"
-                            @click=${() => {
-                        const a = draft.zone_ids_ordered;
-                        if (idx < a.length - 1) {
-                            [a[idx + 1], a[idx]] = [a[idx], a[idx + 1]];
-                            this.requestUpdate();
-                        }
-                    }}
-                          >
-                            ${t(this.hass, "config_panel.schedule_down")}
-                          </button>
-                          <button
-                            type="button"
-                            class="btn-outline"
-                            @click=${() => {
-                        draft.zone_ids_ordered = draft.zone_ids_ordered.filter((x) => x !== zid);
-                        this.requestUpdate();
-                    }}
-                          >
-                            ${t(this.hass, "config_panel.schedule_remove")}
-                          </button>
-                        </span>
-                      </li>
-                    `;
-                });
-            })()}
-                </ul>
-                ${addZoneOpts.length
-                ? b `
-                      <div class="field-block" style="margin-top:12px">
-                        <span class="field-title">${t(this.hass, "config_panel.schedule_add_zone_title")}</span>
-                        <select
-                          class="field-select"
-                          .value=${this._addZonePick}
-                          @change=${(e) => {
-                    this._addZonePick = e.target.value;
-                }}
-                        >
-                          <option value="">${t(this.hass, "config_panel.schedule_choose_zone")}</option>
-                          ${addZoneOpts.map((id) => b `<option value=${id}>${this._zoneName(id)}</option>`)}
-                        </select>
-                        <div class="action-row" style="margin-top:10px">
-                          <button
-                            type="button"
-                            class="btn-outline"
-                            ?disabled=${!this._addZonePick}
-                            @click=${() => {
-                    if (this._addZonePick &&
-                        !draft.zone_ids_ordered.includes(this._addZonePick)) {
-                        draft.zone_ids_ordered = [
-                            ...draft.zone_ids_ordered,
-                            this._addZonePick,
-                        ];
-                        this._addZonePick = "";
-                        this.requestUpdate();
-                    }
-                }}
-                          >
-                            ${t(this.hass, "config_panel.schedule_add_to_list")}
-                          </button>
-                        </div>
-                      </div>
-                    `
-                : zones && Object.keys(zones).length > 0
-                    ? b `<p class="field-desc">${t(this.hass, "config_panel.schedule_all_zones_in_slot")}</p>`
-                    : b `<p class="field-desc">${t(this.hass, "config_panel.schedule_create_zones_first")}</p>`}
-              </div>
-            `
-            : A}
-        <div slot="footer" class="dialog-footer">
-          <div class="dialog-footer-row">
-            <div class="dialog-footer-lead">
-              ${draft
-            ? b `
-                    <button
-                      type="button"
-                      class="danger"
-                      ?disabled=${this._busy}
-                      @click=${() => this._deleteSlotDraft()}
-                    >
-                      ${t(this.hass, "config_panel.schedule_delete_slot")}
-                    </button>
-                  `
-            : A}
-            </div>
-            <div class="dialog-footer-actions">
-              <button
-                type="button"
-                class="btn-outline"
-                @click=${() => this._closeEditDialog()}
-                ?disabled=${this._busy}
-              >
-                ${t(this.hass, "config_panel.zones_cancel")}
-              </button>
-              <button
-                type="button"
-                class="primary"
-                ?disabled=${this._busy || !draft}
-                @click=${() => this._saveSlotDraft()}
-              >
-                ${this._busy
-            ? t(this.hass, "config_panel.schedule_saving")
-            : t(this.hass, "config_panel.schedule_save_slot")}
-              </button>
-            </div>
-          </div>
-        </div>
-      </ha-dialog>
-    `;
-    }
-}
+], ViewSettings.prototype, "_dirty", void 0);
 __decorate([
     r()
-], ViewSchedule.prototype, "_busy", void 0);
+], ViewSettings.prototype, "_isDefault", void 0);
 __decorate([
     r()
-], ViewSchedule.prototype, "_msg", void 0);
+], ViewSettings.prototype, "_defaultConfirmOpen", void 0);
 __decorate([
     r()
-], ViewSchedule.prototype, "_slotEditDraft", void 0);
-__decorate([
-    r()
-], ViewSchedule.prototype, "_addSlotDialogOpen", void 0);
-__decorate([
-    r()
-], ViewSchedule.prototype, "_addZonePick", void 0);
-defineCustomElementOnce("si-view-schedule", ViewSchedule);
-
-const BUSY_STATES = new Set(["preparing", "running", "stopping"]);
-class ViewStatus extends i {
-    constructor() {
-        super(...arguments);
-        this._showRaw = false;
-    }
-    static { this.properties = {
-        hass: { attribute: false },
-        runState: { type: Object },
-        installation: { type: Object },
-    }; }
-    static { this.styles = i$3 `
-    ha-card {
-      margin-bottom: 16px;
-    }
-    .muted {
-      font-size: 0.875rem;
-      color: var(--secondary-text-color);
-      line-height: 1.45;
-      margin: 0 0 12px;
-    }
-    .summary {
-      margin: 0 0 12px;
-      line-height: 1.5;
-    }
-    .summary strong {
-      font-weight: 600;
-    }
-    ul.inline {
-      margin: 8px 0 0;
-      padding-left: 1.25rem;
-    }
-    pre {
-      overflow: auto;
-      font-size: 12px;
-      margin: 0;
-      white-space: pre-wrap;
-    }
-    button.toggle-raw {
-      margin-top: 12px;
-      padding: 8px 14px;
-      border-radius: 4px;
-      border: 1px solid var(--divider-color);
-      background: var(--card-background-color);
-      color: var(--primary-text-color);
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-  `; }
-    _zoneName(zoneId) {
-        const zones = this.installation?.zones;
-        const z = zones?.[zoneId];
-        return z ? String(z.name ?? zoneId) : zoneId;
-    }
-    _zoneList(ids) {
-        return ids.map((id) => this._zoneName(id)).join(", ");
-    }
-    render() {
-        const rs = this.runState ?? {};
-        const stateStr = String(rs.run_state ?? "idle");
-        const busy = BUSY_STATES.has(stateStr);
-        const manual = Boolean(rs.manual_run);
-        const active = Array.isArray(rs.active_zone_ids)
-            ? rs.active_zone_ids
-            : [];
-        const queued = Array.isArray(rs.queued_zone_ids)
-            ? rs.queued_zone_ids
-            : [];
-        const lastErr = rs.last_error ? String(rs.last_error) : "";
-        return b `
-      <ha-card .header=${t(this.hass, "config_panel.status_card_title")}>
-        <div class="card-content">
-          <p class="muted">${t(this.hass, "config_panel.status_intro")}</p>
-          <div class="summary">
-            <p>
-              <strong>${t(this.hass, "config_panel.status_state_label")}</strong>
-              ${busy
-            ? t(this.hass, "config_panel.status_state_run_in_progress")
-            : stateStr === "error"
-                ? t(this.hass, "config_panel.status_state_error")
-                : t(this.hass, "config_panel.status_state_idle")}
-            </p>
-            ${busy && manual
-            ? b `<p>
-                  <strong>${t(this.hass, "config_panel.status_manual_label")}</strong>
-                  ${t(this.hass, "config_panel.status_manual_text")}
-                </p>`
-            : busy && !manual
-                ? b `<p>
-                    <strong>${t(this.hass, "config_panel.status_scheduled_label")}</strong>
-                    ${t(this.hass, "config_panel.status_scheduled_text")}
-                  </p>`
-                : b `<p class="muted">${t(this.hass, "config_panel.status_idle_hint")}</p>`}
-            ${active.length
-            ? b `<p>
-                  <strong>${t(this.hass, "config_panel.status_active_zones")}</strong>
-                  ${this._zoneList(active)}
-                </p>`
-            : A}
-            ${queued.length
-            ? b `<p>
-                  <strong>${t(this.hass, "config_panel.status_queued_zones")}</strong>
-                  ${this._zoneList(queued)}
-                </p>`
-            : A}
-            ${lastErr
-            ? b `<p>
-                  <strong>${t(this.hass, "config_panel.status_last_error")}</strong>
-                  ${lastErr}
-                </p>`
-            : A}
-            <p class="muted" style="margin-top:12px">
-              ${t(this.hass, "config_panel.status_error_clear_hint")}
-            </p>
-          </div>
-          <button
-            type="button"
-            class="toggle-raw"
-            @click=${() => {
-            this._showRaw = !this._showRaw;
-        }}
-          >
-            ${this._showRaw
-            ? t(this.hass, "config_panel.status_hide_raw")
-            : t(this.hass, "config_panel.status_show_raw")}
-          </button>
-          ${this._showRaw
-            ? b `<pre>${JSON.stringify(this.runState, null, 2)}</pre>`
-            : A}
-        </div>
-      </ha-card>
-    `;
-    }
-}
-__decorate([
-    r()
-], ViewStatus.prototype, "_showRaw", void 0);
-defineCustomElementOnce("si-view-status", ViewStatus);
-
-/** Weekly timetable entries from schedule slots (local wall clock, Mon=0 … Sun=6). */
-function normalizeWeekParity(raw) {
-    return raw === "odd" || raw === "even" ? raw : "every";
-}
-/** ISO-8601 week number (same numbering as Python's isocalendar). */
-function isoWeekNumber(d) {
-    const date = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-    const dayNum = (date.getUTCDay() + 6) % 7; // Mon=0
-    date.setUTCDate(date.getUTCDate() - dayNum + 3); // Thursday decides the ISO week
-    const firstThursday = new Date(Date.UTC(date.getUTCFullYear(), 0, 4));
-    const firstDayNum = (firstThursday.getUTCDay() + 6) % 7;
-    firstThursday.setUTCDate(firstThursday.getUTCDate() - firstDayNum + 3);
-    return 1 + Math.round((date.getTime() - firstThursday.getTime()) / (7 * 24 * 3600 * 1000));
-}
-function weekParityOfWeekNumber(week) {
-    return week % 2 === 1 ? "odd" : "even";
-}
-function parseTimeLocalToMinutes(timeLocal) {
-    const m = /^(\d{1,2}):(\d{2})$/.exec(timeLocal.trim());
-    if (!m)
-        return 0;
-    const h = Math.min(23, Math.max(0, parseInt(m[1], 10)));
-    const min = Math.min(59, Math.max(0, parseInt(m[2], 10)));
-    return h * 60 + min;
-}
-function durationForMode(zone, mode) {
-    if (!zone)
-        return 0;
-    if (mode === "eco")
-        return Math.max(0, Number(zone.duration_eco_min ?? 0));
-    if (mode === "extra")
-        return Math.max(0, Number(zone.duration_extra_min ?? 0));
-    return Math.max(0, Number(zone.duration_normal_min ?? 0));
-}
-/** Bucket by wall-clock hour of segment start ([0,8), [8,16), [16,24)). */
-function bucketFromStartMin(startMin) {
-    const h = Math.floor(Math.max(0, startMin) / 60);
-    if (h < 8)
-        return 0;
-    if (h < 16)
-        return 1;
-    return 2;
-}
-/**
- * Weekday column order: values are internal indices 0=Monday … 6=Sunday.
- */
-function weekdayIndicesForDisplay(firstWeekday, language) {
-    const monFirst = [0, 1, 2, 3, 4, 5, 6];
-    const sunFirst = [6, 0, 1, 2, 3, 4, 5];
-    const fw = (firstWeekday || "monday").toLowerCase();
-    if (fw === "sunday")
-        return sunFirst;
-    if (fw === "monday")
-        return monFirst;
-    if (fw === "language" && language) {
-        try {
-            const loc = new Intl.Locale(language.replace(/_/g, "-"));
-            const fd = loc.weekInfo?.firstDay;
-            if (fd === 7)
-                return sunFirst;
-            return monFirst;
-        }
-        catch {
-            return monFirst;
-        }
-    }
-    return monFirst;
-}
-function zonesPhaseInputFromInstallation(zones) {
-    const out = {};
-    if (!zones)
-        return out;
-    for (const [id, z] of Object.entries(zones)) {
-        out[id] = {
-            enabled: Boolean(z.enabled ?? true),
-            exclusive: Boolean(z.exclusive),
-        };
-    }
-    return out;
-}
-/**
- * Phase grouping includes disabled zones (they render gray) but phase advance
- * uses max duration among enabled zones only (matches runtime).
- */
-function buildTimetableEntries(installation) {
-    const planEnabled = Boolean(installation?.enabled ?? true);
-    const preStartSec = Math.max(0, Number(installation?.pre_start_delay_sec ?? 10));
-    const mode = String(installation?.mode ?? "normal");
-    const maxParallel = Math.max(1, Number(installation?.max_parallel_zones ?? 2));
-    const zones = installation?.zones;
-    const slots = installation?.schedule_slots;
-    const zonesById = zonesPhaseInputFromInstallation(zones);
-    const entries = [];
-    if (!slots?.length || !zones) {
-        return entries;
-    }
-    for (const slot of slots) {
-        const slotId = String(slot.slot_id ?? "");
-        const slotEnabled = Boolean(slot.enabled ?? true);
-        const weekday = Math.max(0, Math.min(6, Number(slot.weekday ?? 0)));
-        const timeLocal = String(slot.time_local ?? "00:00");
-        const weekParity = normalizeWeekParity(slot.week_parity);
-        const ordered = Array.isArray(slot.zone_ids_ordered)
-            ? slot.zone_ids_ordered
-            : [];
-        const slotStartMin = parseTimeLocalToMinutes(timeLocal);
-        let cursor = slotStartMin + preStartSec / 60;
-        const phases = computePhases(ordered, zonesById, maxParallel, false);
-        for (const phase of phases) {
-            const phaseStart = cursor;
-            let phaseLenMin = 0;
-            for (const zid of phase) {
-                const z = zones[zid];
-                if (!z)
-                    continue;
-                if (Boolean(z.enabled ?? true)) {
-                    const d = durationForMode(z, mode);
-                    phaseLenMin = Math.max(phaseLenMin, d);
-                }
-            }
-            for (const zid of phase) {
-                const z = zones[zid];
-                if (!z)
-                    continue;
-                const zoneEnabled = Boolean(z.enabled ?? true);
-                const dur = durationForMode(z, mode);
-                const startMin = phaseStart;
-                const endMin = phaseStart + dur;
-                entries.push({
-                    zoneId: zid,
-                    weekday,
-                    startMin,
-                    endMin,
-                    bucket: bucketFromStartMin(startMin),
-                    enabled: planEnabled && slotEnabled && zoneEnabled,
-                    mode,
-                    slotId,
-                    weekParity,
-                });
-            }
-            cursor = phaseStart + phaseLenMin;
-        }
-    }
-    return entries;
-}
-function zoneRowOrder(installation) {
-    const zones = installation?.zones;
-    if (!zones)
-        return [];
-    return Object.keys(zones);
-}
-function zoneDisplayName(installation, zoneId) {
-    const zones = installation?.zones;
-    const z = zones?.[zoneId];
-    const name = z?.name != null ? String(z.name) : "";
-    return name.trim() || zoneId.slice(0, 8);
-}
-/** HH:MM for profile time formatting (minutes may be fractional from pre-start seconds). */
-function minutesToTimeLocal(totalMin) {
-    const t = Math.max(0, totalMin);
-    const m = Math.floor(t);
-    const h = Math.min(23, Math.floor(m / 60));
-    const mm = m % 60;
-    return `${h}:${String(mm).padStart(2, "0")}`;
-}
-/** Rounded duration in minutes for UI labels. */
-function entryDurationMinutesRounded(entry) {
-    return Math.max(0, Math.round(entry.endMin - entry.startMin));
-}
-const BUCKET_KEYS = [0, 1, 2];
-/** Horizontal stacking when multiple entries share the same zone, weekday, and bucket. */
-function assignEntryLanes(entries) {
-    const byCell = new Map();
-    for (const e of entries) {
-        const k = `${e.weekday}:${e.zoneId}:${e.bucket}`;
-        if (!byCell.has(k))
-            byCell.set(k, []);
-        byCell.get(k).push(e);
-    }
-    const out = new Map();
-    for (const list of byCell.values()) {
-        list.sort((a, b) => a.startMin - b.startMin || a.endMin - b.endMin);
-        const ends = [];
-        for (const e of list) {
-            let lane = 0;
-            while (lane < ends.length && ends[lane] > e.startMin + 1e-3) {
-                lane++;
-            }
-            if (lane === ends.length) {
-                ends.push(e.endMin);
-            }
-            else {
-                ends[lane] = Math.max(ends[lane], e.endMin);
-            }
-            out.set(e, { lane, maxLanes: 0 });
-        }
-        const maxLanes = Math.max(1, ends.length);
-        for (const e of list) {
-            out.get(e).maxLanes = maxLanes;
-        }
-    }
-    return out;
-}
-const TIMETABLE_BUCKET_INDICES = BUCKET_KEYS;
-/**
- * How many schedule slots include `zone_id` in `zone_ids_ordered` (distinct slots;
- * each slot counts at most once per zone).
- */
-function slotInclusionCountPerZone(installation) {
-    const slots = installation?.schedule_slots;
-    const counts = {};
-    if (!Array.isArray(slots))
-        return counts;
-    for (const slot of slots) {
-        const ordered = Array.isArray(slot.zone_ids_ordered)
-            ? slot.zone_ids_ordered
-            : [];
-        const seen = new Set();
-        for (const zid of ordered) {
-            if (seen.has(zid))
-                continue;
-            seen.add(zid);
-            counts[zid] = (counts[zid] ?? 0) + 1;
-        }
-    }
-    return counts;
-}
+], ViewSettings.prototype, "_showRaw", void 0);
+defineCustomElementOnce("si-view-settings", ViewSettings);
 
 class ViewTimetable extends i {
     constructor() {
         super(...arguments);
         /** Selected week view; null = follow the current calendar week. */
         this._weekView = null;
+        /** Selected weekday for the mobile day view; null = today. */
+        this._selectedDay = null;
     }
     static { this.properties = {
         hass: { attribute: false },
         entryId: { type: String },
         installation: { type: Object },
     }; }
-    static { this.styles = i$3 `
-    ha-card {
-      margin-bottom: 16px;
-    }
-    .card-content {
-      padding: 0 8px 16px;
-    }
-    .intro {
-      font-size: 0.875rem;
-      color: var(--secondary-text-color);
-      line-height: 1.45;
-      margin: 0 0 12px;
-    }
+    static { this.styles = [
+        sharedStyles,
+        i$3 `
     .table-wrap {
       overflow-x: auto;
       -webkit-overflow-scrolling: touch;
@@ -3264,7 +5376,99 @@ class ViewTimetable extends i {
         height: 16px;
       }
     }
-  `; }
+    /* Sticky header row + first (zone) column on horizontal scroll. */
+    .tt-table thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+    }
+    .tt-zone-name {
+      position: sticky;
+      left: 0;
+      z-index: 1;
+    }
+    .tt-foot-total {
+      text-align: center;
+      font-weight: 600;
+      font-size: 0.72rem;
+      color: var(--secondary-text-color);
+      background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    }
+    .tt-foot-label {
+      text-align: right;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--secondary-text-color);
+      background: var(--secondary-background-color, rgba(0, 0, 0, 0.04));
+    }
+    /* Mobile day view */
+    .day-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin: 4px 0 14px;
+    }
+    .day-pill {
+      flex: 1 1 auto;
+      min-width: 40px;
+      border: 1px solid var(--divider-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--primary-text-color);
+      font: inherit;
+      font-size: 0.8rem;
+      padding: 8px 4px;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+    }
+    .day-pill.selected {
+      background: var(--primary-color);
+      color: var(--text-primary-color, #fff);
+      border-color: var(--primary-color);
+    }
+    .day-pill .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: var(--primary-color);
+    }
+    .day-pill.selected .dot {
+      background: var(--text-primary-color, #fff);
+    }
+    .day-run {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border: 1px solid var(--divider-color);
+      border-left: 3px solid var(--primary-color);
+      border-radius: 8px;
+      margin-bottom: 8px;
+      cursor: pointer;
+    }
+    .day-run.disabled {
+      border-left-color: var(--disabled-text-color, #6d7476);
+      opacity: 0.75;
+    }
+    .day-run-main {
+      flex: 1;
+      min-width: 0;
+    }
+    .day-run-time {
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+    .day-total {
+      font-size: 0.8rem;
+      color: var(--secondary-text-color);
+      margin: 6px 0 0;
+    }
+  `,
+    ]; }
     _parityLabel(parity) {
         if (parity === "odd")
             return t(this.hass, "config_panel.week_parity_odd");
@@ -3348,20 +5552,32 @@ class ViewTimetable extends i {
         const colOrder = weekdayIndicesForDisplay(this.hass?.locale?.first_weekday, this.hass?.locale?.language ?? this.hass?.language);
         if (!zones || zoneIds.length === 0) {
             return b `
-        <ha-card .header=${t(this.hass, "config_panel.timetable_card_title")}>
+        <ha-card>
+          <div class="card-header">
+            <ha-icon icon="mdi:calendar-week"></ha-icon>
+            ${t(this.hass, "config_panel.timetable_card_title")}
+          </div>
           <div class="card-content">
-            <p class="intro">${t(this.hass, "config_panel.timetable_intro")}</p>
-            <p class="empty">${t(this.hass, "config_panel.timetable_empty_no_zones")}</p>
+            <div class="empty-state">
+              <ha-icon icon="mdi:calendar-week"></ha-icon>
+              <p>${t(this.hass, "config_panel.timetable_empty_no_zones")}</p>
+            </div>
           </div>
         </ha-card>
       `;
         }
         if (!slots?.length) {
             return b `
-        <ha-card .header=${t(this.hass, "config_panel.timetable_card_title")}>
+        <ha-card>
+          <div class="card-header">
+            <ha-icon icon="mdi:calendar-week"></ha-icon>
+            ${t(this.hass, "config_panel.timetable_card_title")}
+          </div>
           <div class="card-content">
-            <p class="intro">${t(this.hass, "config_panel.timetable_intro")}</p>
-            <p class="empty">${t(this.hass, "config_panel.timetable_empty_no_slots")}</p>
+            <div class="empty-state">
+              <ha-icon icon="mdi:calendar-blank-outline"></ha-icon>
+              <p>${t(this.hass, "config_panel.timetable_empty_no_slots")}</p>
+            </div>
           </div>
         </ha-card>
       `;
@@ -3373,10 +5589,32 @@ class ViewTimetable extends i {
                 byCell.set(k, []);
             byCell.get(k).push(e);
         }
+        // Per-weekday totals (sum of visible-entry durations) for the footer row.
+        const dayTotals = new Map();
+        for (const e of entries) {
+            dayTotals.set(e.weekday, (dayTotals.get(e.weekday) ?? 0) + (e.endMin - e.startMin));
+        }
+        // Mobile day view: runs on the selected weekday, chronological.
+        const todayWd = (new Date().getDay() + 6) % 7;
+        const selDay = this._selectedDay ?? todayWd;
+        const dayEntries = entries
+            .filter((e) => e.weekday === selDay)
+            .sort((a, b) => a.startMin - b.startMin);
+        const dayTotal = Math.round(dayEntries.reduce((s, e) => s + (e.endMin - e.startMin), 0));
         return b `
-      <ha-card .header=${t(this.hass, "config_panel.timetable_card_title")}>
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:calendar-week"></ha-icon>
+          ${t(this.hass, "config_panel.timetable_card_title")}
+        </div>
         <div class="card-content">
-          <p class="intro">${t(this.hass, "config_panel.timetable_intro")}</p>
+          <details class="inline-help">
+            <summary>
+              <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+              ${t(this.hass, "config_panel.timetable_help_summary")}
+            </summary>
+            <p>${t(this.hass, "config_panel.timetable_intro")}</p>
+          </details>
           ${viewParity
             ? b `
                 <div
@@ -3408,7 +5646,52 @@ class ViewTimetable extends i {
                 </div>
               `
             : A}
-          <div class="table-wrap">
+          <div class="only-narrow">
+            <div class="day-pills" role="group" aria-label=${t(this.hass, "config_panel.timetable_col_zone")}>
+              ${colOrder.map((wd) => {
+            const has = (dayTotals.get(wd) ?? 0) > 0;
+            return b `<button
+                  type="button"
+                  class="day-pill ${wd === selDay ? "selected" : ""}"
+                  aria-pressed=${wd === selDay ? "true" : "false"}
+                  @click=${() => (this._selectedDay = wd)}
+                >
+                  <span>${weekdayLong(this.hass, wd)}</span>
+                  ${has ? b `<span class="dot" aria-hidden="true"></span>` : A}
+                </button>`;
+        })}
+            </div>
+            ${dayEntries.length
+            ? b `
+                  ${dayEntries.map((e) => {
+                const start = formatSlotTimeForProfile(this.hass, minutesToTimeLocal(e.startMin));
+                const end = formatSlotTimeForProfile(this.hass, minutesToTimeLocal(e.endMin));
+                return b `
+                      <div
+                        class="day-run ${e.enabled ? "" : "disabled"}"
+                        role="button"
+                        tabindex="0"
+                        @click=${() => this._openSlotEditor(e.slotId)}
+                        @keydown=${(ev) => this._blockKeydown(ev, e.slotId)}
+                      >
+                        <ha-icon icon=${this._bucketIcon(e.bucket)} style="color:var(--secondary-text-color)"></ha-icon>
+                        <div class="day-run-main">
+                          <span class="day-run-time">${start} – ${end}</span>
+                          <div class="meta-line">
+                            <span class="meta ellipsis">${zoneDisplayName(inst, e.zoneId)}</span>
+                            <span class="meta">${t(this.hass, "config_panel.timetable_duration_min", {
+                    n: entryDurationMinutesRounded(e),
+                })}</span>
+                          </div>
+                        </div>
+                      </div>
+                    `;
+            })}
+                  <p class="day-total">${t(this.hass, "config_panel.timetable_day_total", { n: dayTotal })}</p>
+                `
+            : b `<p class="muted" style="padding:8px 0">${t(this.hass, "config_panel.timetable_day_empty")}</p>`}
+          </div>
+          <div class="table-wrap hide-narrow">
             <table class="tt-table">
               <thead>
                 <tr>
@@ -3487,6 +5770,19 @@ class ViewTimetable extends i {
             });
         })}
               </tbody>
+              <tfoot>
+                <tr>
+                  <th class="tt-foot-label" scope="row" colspan="2">
+                    ${t(this.hass, "config_panel.timetable_totals_label")}
+                  </th>
+                  ${colOrder.map((wd) => {
+            const total = Math.round(dayTotals.get(wd) ?? 0);
+            return b `<td class="tt-foot-total">
+                      ${total > 0 ? t(this.hass, "config_panel.timetable_duration_min", { n: total }) : "—"}
+                    </td>`;
+        })}
+                </tr>
+              </tfoot>
             </table>
           </div>
           <div class="foot">
@@ -3524,9 +5820,11 @@ class ViewTimetable extends i {
 __decorate([
     r()
 ], ViewTimetable.prototype, "_weekView", void 0);
+__decorate([
+    r()
+], ViewTimetable.prototype, "_selectedDay", void 0);
 defineCustomElementOnce("si-view-timetable", ViewTimetable);
 
-// Default domains if not provided by backend
 const defaultDomains = ["switch", "input_boolean", "group", "valve"];
 class ViewZones extends i {
     constructor() {
@@ -3534,16 +5832,9 @@ class ViewZones extends i {
         this._busy = false;
         this._addDialogOpen = false;
         this._editDraft = null;
-        this._new = {
-            zone_id: "",
-            name: "",
-            switch_entity_ids: [""],
-            enabled: true,
-            duration_eco_min: 10,
-            duration_normal_min: 15,
-            duration_extra_min: 20,
-            exclusive: false,
-        };
+        this._filter = "all";
+        this._expanded = new Set();
+        this._new = this._blankZone();
     }
     static { this.properties = {
         hass: { attribute: false },
@@ -3554,150 +5845,35 @@ class ViewZones extends i {
         onSaved: { attribute: false },
     }; }
     static { this.styles = [
+        sharedStyles,
         formLayoutStyles,
         i$3 `
-      ha-card {
-        margin-bottom: 16px;
-      }
-      .card-content {
-        padding: 0 8px 16px;
-      }
-      .error {
-        color: var(--error-color);
-        margin: 8px 0;
-      }
-      .intro {
-        font-size: 0.875rem;
-        color: var(--secondary-text-color);
-        line-height: 1.45;
-        margin: 0 0 16px;
-      }
-      .toolbar {
-        margin-bottom: 16px;
-      }
-      .zone-list-row-wrap {
+      .drawer-actions {
         display: flex;
-        align-items: stretch;
-        margin-bottom: 12px;
-        border-radius: 8px;
-        overflow: hidden;
-        border: 1px solid var(--divider-color);
-        background: var(--secondary-background-color, rgba(0, 0, 0, 0.02));
-      }
-      .zone-list-row-accent {
-        width: 8px;
-        flex-shrink: 0;
-        background: var(--primary-color);
-        transition: background 0.15s ease;
-      }
-      .zone-list-row-accent.inactive {
-        background: var(--disabled-text-color, rgba(158, 158, 158, 0.45));
-      }
-      .zone-list-row {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
-        gap: 10px 16px;
-        flex: 1;
-        min-width: 0;
-        padding: 14px 16px;
-      }
-      .zone-list-row-toggle {
-        display: flex;
-        align-items: center;
-        flex-shrink: 0;
-      }
-      .zone-list-row-toggle ha-switch {
-        --switch-padding: 4px;
-      }
-      .zone-list-main {
-        flex: 1;
-        min-width: 160px;
-      }
-      .zone-list-name {
-        font-size: 1.1rem;
-        font-weight: 600;
-        margin: 0 0 4px;
-      }
-      .zone-list-detail {
-        font-size: 0.875rem;
-        color: var(--secondary-text-color);
-        margin: 0;
-        line-height: 1.4;
-      }
-      .zone-list-actions {
-        display: flex;
-        flex-wrap: wrap;
-        align-items: center;
+        flex-direction: column;
         gap: 8px;
+        padding-top: 12px;
       }
-      .zone-list-actions .btn-outline {
+      .drawer-actions .btn-outline {
+        width: 100%;
+        min-height: 46px;
         margin-top: 0;
       }
-      .zone-list-actions button {
+      .out-line {
+        margin: 8px 0 0;
+        font-size: 0.8rem;
+        color: var(--secondary-text-color);
+      }
+      /* Local reset: form-layout adds align-self/margin to .btn-outline. */
+      .card-header .header-actions .btn-outline,
+      .card-header .header-actions .btn {
+        margin-top: 0;
         align-self: center;
-        margin-top: 0;
-      }
-      button {
-        padding: 10px 18px;
-        border-radius: 4px;
-        border: 1px solid var(--divider-color);
-        background: var(--card-background-color);
-        color: var(--primary-text-color);
-        cursor: pointer;
-        font-size: 1rem;
-      }
-      button.danger {
-        border-color: var(--error-color);
-        color: var(--error-color);
-      }
-      button.primary {
-        background: var(--primary-color);
-        color: var(--text-primary-color);
-        border: none;
-      }
-      button.primary:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
       }
     `,
     ]; }
-    _cloneZone(z) {
+    _blankZone() {
         return {
-            ...z,
-            switch_entity_ids: [...z.switch_entity_ids],
-        };
-    }
-    _zonesFromInstallation() {
-        const z = this.installation?.zones;
-        if (!z)
-            return [];
-        return Object.entries(z).map(([zone_id, o]) => {
-            const raw = o.switch_entity_ids;
-            let switch_entity_ids = [];
-            if (Array.isArray(raw)) {
-                switch_entity_ids = raw.map((x) => String(x)).filter(Boolean);
-            }
-            else if (o.switch_entity_id) {
-                switch_entity_ids = [String(o.switch_entity_id)];
-            }
-            if (switch_entity_ids.length === 0) {
-                switch_entity_ids = [""];
-            }
-            return {
-                zone_id,
-                name: String(o.name ?? ""),
-                switch_entity_ids,
-                enabled: Boolean(o.enabled ?? true),
-                duration_eco_min: Number(o.duration_eco_min ?? 10),
-                duration_normal_min: Number(o.duration_normal_min ?? 15),
-                duration_extra_min: Number(o.duration_extra_min ?? 20),
-                exclusive: Boolean(o.exclusive ?? false),
-            };
-        });
-    }
-    _resetNewZone() {
-        this._new = {
             zone_id: "",
             name: "",
             switch_entity_ids: [""],
@@ -3708,15 +5884,69 @@ class ViewZones extends i {
             exclusive: false,
         };
     }
+    _cloneZone(z) {
+        return { ...z, switch_entity_ids: [...z.switch_entity_ids] };
+    }
+    _zonesFromInstallation() {
+        const z = this.installation?.zones;
+        if (!z)
+            return [];
+        return Object.entries(z).map(([zone_id, o]) => {
+            const raw = o.switch_entity_ids;
+            let ids = [];
+            if (Array.isArray(raw))
+                ids = raw.map((x) => String(x)).filter(Boolean);
+            else if (o.switch_entity_id)
+                ids = [String(o.switch_entity_id)];
+            if (ids.length === 0)
+                ids = [""];
+            return {
+                zone_id,
+                name: String(o.name ?? ""),
+                switch_entity_ids: ids,
+                enabled: Boolean(o.enabled ?? true),
+                duration_eco_min: Number(o.duration_eco_min ?? 10),
+                duration_normal_min: Number(o.duration_normal_min ?? 15),
+                duration_extra_min: Number(o.duration_extra_min ?? 20),
+                exclusive: Boolean(o.exclusive ?? false),
+            };
+        });
+    }
+    /** A zone has an "issue" when an output entity is missing or unavailable. */
+    _zoneIssue(z) {
+        const outs = z.switch_entity_ids.filter(Boolean);
+        if (outs.length === 0)
+            return true;
+        for (const eid of outs) {
+            const st = this.hass.states[eid];
+            if (!st || st.state === "unavailable" || st.state === "unknown")
+                return true;
+        }
+        return false;
+    }
+    _mode() {
+        return String(this.installation?.mode ?? "normal");
+    }
     _closeAddDialog() {
         this._addDialogOpen = false;
-        this._resetNewZone();
+        this._new = this._blankZone();
     }
     _closeEditDialog() {
         this._editDraft = null;
     }
-    _canSaveZone(zone) {
-        return Boolean(zone.name.trim() && zone.switch_entity_ids.some((id) => id.trim()));
+    _canSaveZone(z) {
+        return Boolean(z.name.trim() && z.switch_entity_ids.some((id) => id.trim()));
+    }
+    _entityListId() {
+        return `si-ent-z-${this.entryId}`;
+    }
+    _toggleExpand(id) {
+        const next = new Set(this._expanded);
+        if (next.has(id))
+            next.delete(id);
+        else
+            next.add(id);
+        this._expanded = next;
     }
     async _runZoneNow(zoneId) {
         this._busy = true;
@@ -3726,18 +5956,14 @@ class ViewZones extends i {
             const res = (await runZoneNow(this.hass, this.entryId, zoneId));
             if (!res.success) {
                 const err = res.error ?? "run_failed";
-                this._msg =
-                    err === "busy"
-                        ? t(this.hass, "config_panel.zones_err_busy")
-                        : err === "zone_already_queued"
-                            ? t(this.hass, "config_panel.zones_err_zone_already_queued")
-                            : err === "unknown_zone"
-                                ? t(this.hass, "config_panel.zones_err_unknown_zone")
-                                : err === "zone_disabled"
-                                    ? t(this.hass, "config_panel.zones_err_zone_disabled")
-                                    : err === "zone_no_outputs"
-                                        ? t(this.hass, "config_panel.zones_err_zone_no_outputs")
-                                        : String(err);
+                const map = {
+                    busy: "config_panel.zones_err_busy",
+                    zone_already_queued: "config_panel.zones_err_zone_already_queued",
+                    unknown_zone: "config_panel.zones_err_unknown_zone",
+                    zone_disabled: "config_panel.zones_err_zone_disabled",
+                    zone_no_outputs: "config_panel.zones_err_zone_no_outputs",
+                };
+                this._msg = map[err] ? t(this.hass, map[err]) : String(err);
             }
             else {
                 this.onSaved?.();
@@ -3750,48 +5976,16 @@ class ViewZones extends i {
             this._busy = false;
             this.requestUpdate();
         }
-    }
-    _zonesEntityListId() {
-        return `si-ent-z-${this.entryId}`;
     }
     async _toggleZoneEnabled(z, enabled) {
         if (this._busy)
             return;
-        this._busy = true;
-        this._msg = undefined;
-        try {
-            const body = {
-                action: "update",
-                zone_id: z.zone_id,
-                zone: {
-                    name: z.name,
-                    switch_entity_ids: z.switch_entity_ids.filter(Boolean),
-                    enabled,
-                    duration_eco_min: z.duration_eco_min,
-                    duration_normal_min: z.duration_normal_min,
-                    duration_extra_min: z.duration_extra_min,
-                    exclusive: z.exclusive,
-                },
-            };
-            const res = await saveZone(this.hass, this.entryId, body);
-            if (!res.success) {
-                this._msg = formatApiError(res.error, this.hass);
-            }
-            else {
-                this.onSaved?.();
-            }
-        }
-        catch (e) {
-            this._msg = formatApiError(e, this.hass);
-        }
-        finally {
-            this._busy = false;
-            this.requestUpdate();
-        }
+        await this._saveZone("update", z.zone_id, { ...z, enabled }, { keepDialogs: true });
     }
-    async _saveZone(action, zoneId, zone) {
+    async _saveZone(action, zoneId, zone, opts) {
         this._busy = true;
         this._msg = undefined;
+        this.requestUpdate();
         try {
             const body = { action };
             if (zoneId)
@@ -3812,11 +6006,11 @@ class ViewZones extends i {
                 this._msg = formatApiError(res.error, this.hass);
             }
             else {
-                if (action === "update" || action === "delete") {
-                    this._closeEditDialog();
-                }
-                if (action === "add") {
-                    this._closeAddDialog();
+                if (!opts?.keepDialogs) {
+                    if (action === "add")
+                        this._closeAddDialog();
+                    if (action === "update" || action === "delete")
+                        this._closeEditDialog();
                 }
                 this.onSaved?.();
             }
@@ -3826,13 +6020,25 @@ class ViewZones extends i {
         }
         finally {
             this._busy = false;
+            this.requestUpdate();
         }
     }
     _renderZoneFields(z) {
+        const modeInput = (key, labelKey) => b `
+      <ha-input
+        type="number"
+        .label=${t(this.hass, labelKey)}
+        .value=${String(z[key])}
+        min="0"
+        max="240"
+        @input=${(e) => {
+            z[key] = parseInt(e.target.value, 10) || 0;
+        }}
+      ></ha-input>
+    `;
         return b `
+      <div class="section-title">${t(this.hass, "config_panel.zones_field_name_title")}</div>
       <div class="field-block">
-        <span class="field-title">${t(this.hass, "config_panel.zones_field_name_title")}</span>
-        <p class="field-desc">${t(this.hass, "config_panel.zones_field_name_desc")}</p>
         <div class="field-row">
           <ha-input
             .label=${t(this.hass, "config_panel.zones_field_zone_name")}
@@ -3846,12 +6052,11 @@ class ViewZones extends i {
       </div>
       <div class="field-block">
         <span class="field-title">${t(this.hass, "config_panel.zones_outputs_title")}</span>
-        <p class="field-desc">${t(this.hass, "config_panel.zones_outputs_desc")}</p>
         <div class="field-row">
           <div class="entity-picker-rows">
             ${z.switch_entity_ids.map((eid, i) => b `
                 <div class="entity-picker-row">
-                  ${renderNativeEntityField(this.hass, this._zonesEntityListId(), i === 0
+                  ${renderNativeEntityField(this.hass, this._entityListId(), i === 0
             ? t(this.hass, "config_panel.zones_output_first")
             : t(this.hass, "config_panel.zones_output_n", { n: i + 1 }), eid, (v) => {
             const next = [...z.switch_entity_ids];
@@ -3860,21 +6065,18 @@ class ViewZones extends i {
             this.requestUpdate();
         })}
                   ${z.switch_entity_ids.length > 1
-            ? b `
-                        <button
-                          type="button"
-                          class="row-remove"
-                          @click=${() => {
+            ? b `<button
+                        type="button"
+                        class="row-remove"
+                        @click=${() => {
                 z.switch_entity_ids.splice(i, 1);
-                if (z.switch_entity_ids.length === 0) {
+                if (z.switch_entity_ids.length === 0)
                     z.switch_entity_ids = [""];
-                }
                 this.requestUpdate();
             }}
-                        >
-                          ${t(this.hass, "config_panel.general_remove")}
-                        </button>
-                      `
+                      >
+                        ${t(this.hass, "config_panel.general_remove")}
+                      </button>`
             : A}
                 </div>
               `)}
@@ -3890,54 +6092,34 @@ class ViewZones extends i {
             </button>
           </div>
         </div>
+        <details class="inline-help">
+          <summary>
+            <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+            ${t(this.hass, "config_panel.zones_outputs_title")}
+          </summary>
+          <p>${t(this.hass, "config_panel.zones_outputs_desc")}</p>
+        </details>
       </div>
+
+      <div class="section-title">${t(this.hass, "config_panel.zones_runtime_title")}</div>
       <div class="field-block">
-        <span class="field-title">${t(this.hass, "config_panel.zones_runtime_title")}</span>
-        <p class="field-desc">${t(this.hass, "config_panel.zones_runtime_desc")}</p>
         <div class="duration-row">
-          <ha-input
-            type="number"
-            .label=${t(this.hass, "config_panel.zones_duration_eco")}
-            .value=${String(z.duration_eco_min)}
-            min="0"
-            max="240"
-            @input=${(e) => {
-            z.duration_eco_min = parseInt(e.target.value, 10) || 0;
-        }}
-          ></ha-input>
-          <ha-input
-            type="number"
-            .label=${t(this.hass, "config_panel.zones_duration_normal")}
-            .value=${String(z.duration_normal_min)}
-            min="0"
-            max="240"
-            @input=${(e) => {
-            z.duration_normal_min = parseInt(e.target.value, 10) || 0;
-        }}
-          ></ha-input>
-          <ha-input
-            type="number"
-            .label=${t(this.hass, "config_panel.zones_duration_extra")}
-            .value=${String(z.duration_extra_min)}
-            min="0"
-            max="240"
-            @input=${(e) => {
-            z.duration_extra_min = parseInt(e.target.value, 10) || 0;
-        }}
-          ></ha-input>
+          ${modeInput("duration_eco_min", "config_panel.zones_duration_eco")}
+          ${modeInput("duration_normal_min", "config_panel.zones_duration_normal")}
+          ${modeInput("duration_extra_min", "config_panel.zones_duration_extra")}
         </div>
+        <p class="hint">${t(this.hass, "config_panel.zones_runtime_desc")}</p>
       </div>
+
+      <div class="section-title">${t(this.hass, "config_panel.zones_behavior_title")}</div>
       <div class="field-block">
-        <span class="field-title">${t(this.hass, "config_panel.zones_behavior_title")}</span>
-        <p class="field-desc">${t(this.hass, "config_panel.zones_behavior_desc")}</p>
         <div class="switch-rows">
           <div class="switch-row">
             <ha-switch
               .disabled=${this._busy}
               .checked=${z.enabled}
               @change=${(e) => {
-            const tgt = e.target;
-            z.enabled = Boolean(tgt.checked);
+            z.enabled = Boolean(e.target.checked);
             this.requestUpdate();
         }}
             ></ha-switch>
@@ -3948,118 +6130,236 @@ class ViewZones extends i {
               .disabled=${this._busy}
               .checked=${z.exclusive}
               @change=${(e) => {
-            const tgt = e.target;
-            z.exclusive = Boolean(tgt.checked);
+            z.exclusive = Boolean(e.target.checked);
             this.requestUpdate();
         }}
             ></ha-switch>
             <span class="switch-row-label">${t(this.hass, "config_panel.zones_exclusive")}</span>
           </div>
         </div>
+        <p class="hint">${t(this.hass, "config_panel.zones_behavior_desc")}</p>
+      </div>
+    `;
+    }
+    _renderRow(z, slotsPerZone) {
+        const outs = z.switch_entity_ids.filter(Boolean);
+        const issue = this._zoneIssue(z);
+        const runDisabled = this._busy || !z.enabled || outs.length === 0;
+        const mode = this._mode();
+        const slotN = slotsPerZone[z.zone_id] ?? 0;
+        const accentClass = !z.enabled ? "inactive" : issue ? "warn" : "";
+        const expanded = this._expanded.has(z.zone_id);
+        const firstOut = outs[0] ?? "";
+        const runBtn = b `
+      <button
+        type="button"
+        class="iconbtn"
+        title=${t(this.hass, "config_panel.zones_run_zone_now")}
+        aria-label=${t(this.hass, "config_panel.zones_run_zone_now")}
+        ?disabled=${runDisabled}
+        @click=${() => this._runZoneNow(z.zone_id)}
+      >
+        <ha-icon icon="mdi:play"></ha-icon>
+      </button>
+    `;
+        const editBtn = b `
+      <button
+        type="button"
+        class="iconbtn"
+        title=${t(this.hass, "config_panel.zones_edit")}
+        aria-label=${t(this.hass, "config_panel.zones_edit")}
+        @click=${() => {
+            this._msg = undefined;
+            this._editDraft = this._cloneZone(z);
+        }}
+      >
+        <ha-icon icon="mdi:pencil"></ha-icon>
+      </button>
+    `;
+        return b `
+      <div class="compact-row ${accentClass}">
+        <div class="compact-row-header">
+          <ha-switch
+            .disabled=${this._busy}
+            .checked=${z.enabled}
+            @change=${(e) => this._toggleZoneEnabled(z, Boolean(e.target.checked))}
+          ></ha-switch>
+          <div class="compact-row-main">
+            <div class="compact-row-title">
+              <span class="ellipsis">${z.name || z.zone_id.slice(0, 8)}</span>
+              ${!z.enabled
+            ? b `<span class="badge">${t(this.hass, "config_panel.zones_detail_disabled")}</span>`
+            : A}
+              ${z.exclusive
+            ? b `<span class="badge badge-primary badge-dot">${t(this.hass, "config_panel.zones_detail_exclusive")}</span>`
+            : A}
+              ${issue
+            ? b `<span class="preflight-badge would_skip"
+                    ><ha-icon icon="mdi:alert-outline"></ha-icon>${t(this.hass, "config_panel.zones_issue_output_unavailable")}</span
+                  >`
+            : A}
+            </div>
+            <div class="meta-line">
+              <span class="meta">
+                <ha-icon icon="mdi:timer-outline"></ha-icon>
+                ${["eco", "normal", "extra"].map((m, i) => {
+            const val = m === "eco"
+                ? z.duration_eco_min
+                : m === "extra"
+                    ? z.duration_extra_min
+                    : z.duration_normal_min;
+            const sep = i > 0 ? " / " : "";
+            return mode === m
+                ? b `${sep}<strong>${val}</strong>`
+                : b `${sep}${val}`;
+        })}
+                ${" "}${t(this.hass, "config_panel.zones_min_suffix")}
+              </span>
+              ${slotN > 0
+            ? b `<span class="meta"
+                    ><ha-icon icon="mdi:format-list-bulleted"></ha-icon>${slotN === 1
+                ? t(this.hass, "config_panel.zones_in_cycles_one")
+                : t(this.hass, "config_panel.zones_in_cycles_many", { n: slotN })}</span
+                  >`
+            : A}
+              ${firstOut
+            ? b `<span class="meta ellipsis"
+                    ><ha-icon icon="mdi:toggle-switch-outline"></ha-icon>${firstOut}</span
+                  >`
+            : A}
+            </div>
+          </div>
+          <div class="icon-group hide-narrow" role="group">
+            ${runBtn}${editBtn}
+          </div>
+          <button
+            type="button"
+            class="iconbtn only-narrow"
+            aria-expanded=${expanded ? "true" : "false"}
+            aria-label=${t(this.hass, "config_panel.zones_edit")}
+            @click=${() => this._toggleExpand(z.zone_id)}
+          >
+            <ha-icon icon=${expanded ? "mdi:chevron-up" : "mdi:chevron-down"}></ha-icon>
+          </button>
+        </div>
+        ${expanded
+            ? b `<div class="compact-row-detail only-narrow">
+              ${firstOut ? b `<p class="out-line">${outs.join(", ")}</p>` : A}
+              <div class="drawer-actions">
+                <button type="button" class="btn-outline" ?disabled=${runDisabled} @click=${() => this._runZoneNow(z.zone_id)}>
+                  ${t(this.hass, "config_panel.zones_run_zone_now")}
+                </button>
+                <button
+                  type="button"
+                  class="btn-outline"
+                  @click=${() => {
+                this._msg = undefined;
+                this._editDraft = this._cloneZone(z);
+            }}
+                >
+                  ${t(this.hass, "config_panel.zones_edit")}
+                </button>
+              </div>
+            </div>`
+            : A}
       </div>
     `;
     }
     render() {
-        const zones = this._zonesFromInstallation();
-        const edit = this._editDraft;
+        const all = this._zonesFromInstallation();
+        const issuesCount = all.filter((z) => this._zoneIssue(z)).length;
+        const filtered = all.filter((z) => {
+            if (this._filter === "enabled")
+                return z.enabled;
+            if (this._filter === "issues")
+                return this._zoneIssue(z);
+            return true;
+        });
         const slotsPerZone = slotInclusionCountPerZone(this.installation ?? {});
+        const edit = this._editDraft;
         return b `
-      ${renderEntityDatalist(this.hass, this._zonesEntityListId(), this.outputEntityDomains ?? defaultDomains)}
-      <ha-card .header=${t(this.hass, "config_panel.zones_card_title")}>
-        <div class="card-content">
-          ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
-          <p class="intro">${t(this.hass, "config_panel.zones_intro")}</p>
-          <p class="intro">${t(this.hass, "config_panel.zones_intro_automation")}</p>
-          <div class="field-block toolbar">
-            <button
-              type="button"
-              class="btn-outline"
-              @click=${() => {
-            this._addDialogOpen = true;
-        }}
-            >
+      ${renderEntityDatalist(this.hass, this._entityListId(), this.outputEntityDomains ?? defaultDomains)}
+      <ha-card>
+        <div class="card-header">
+          <ha-icon icon="mdi:vector-square"></ha-icon>
+          ${t(this.hass, "config_panel.zones_card_title")}
+          <div class="header-actions">
+            <div class="segmented" role="group" aria-label=${t(this.hass, "config_panel.zones_filter_all")}>
+              <button
+                type="button"
+                class=${this._filter === "all" ? "selected" : ""}
+                @click=${() => (this._filter = "all")}
+              >
+                ${t(this.hass, "config_panel.zones_filter_all")}
+              </button>
+              <button
+                type="button"
+                class=${this._filter === "enabled" ? "selected" : ""}
+                @click=${() => (this._filter = "enabled")}
+              >
+                ${t(this.hass, "config_panel.zones_filter_enabled")}
+              </button>
+              <button
+                type="button"
+                class=${this._filter === "issues" ? "selected" : ""}
+                @click=${() => (this._filter = "issues")}
+              >
+                ${t(this.hass, "config_panel.zones_filter_issues")}
+                ${issuesCount > 0 ? b `<span class="count">${issuesCount}</span>` : A}
+              </button>
+            </div>
+            <button type="button" class="btn hide-narrow" @click=${() => (this._addDialogOpen = true)}>
               ${t(this.hass, "config_panel.zones_add_zone")}
             </button>
           </div>
-          ${zones.map((z) => {
-            const outs = z.switch_entity_ids.filter(Boolean).length;
-            const runDisabled = this._busy || !z.enabled || outs === 0;
-            return b `
-              <div class="zone-list-row-wrap">
-                <div
-                  class="zone-list-row-accent ${z.enabled ? "" : "inactive"}"
-                  aria-hidden="true"
-                ></div>
-                <div class="zone-list-row">
-                  <div class="zone-list-row-toggle">
-                    <ha-switch
-                      .disabled=${this._busy}
-                      .checked=${z.enabled}
-                      @change=${(e) => {
-                const tgt = e.target;
-                void this._toggleZoneEnabled(z, Boolean(tgt.checked));
-            }}
-                    ></ha-switch>
-                  </div>
-                  <div class="zone-list-main">
-                    <p class="zone-list-name">${z.name || z.zone_id.slice(0, 8)}</p>
-                    <p class="zone-list-detail">
-                      ${(() => {
-                const parts = [];
-                if (!z.enabled) {
-                    parts.push(t(this.hass, "config_panel.zones_detail_disabled"));
-                }
-                if (z.exclusive) {
-                    parts.push(t(this.hass, "config_panel.zones_detail_exclusive"));
-                }
-                parts.push(t(this.hass, "config_panel.zones_detail_durations", {
-                    eco: z.duration_eco_min,
-                    normal: z.duration_normal_min,
-                    extra: z.duration_extra_min,
-                }));
-                const slotN = slotsPerZone[z.zone_id] ?? 0;
-                if (slotN === 1) {
-                    parts.push(t(this.hass, "config_panel.zones_detail_added_slots_one"));
-                }
-                else if (slotN > 1) {
-                    parts.push(t(this.hass, "config_panel.zones_detail_added_slots_many", { n: slotN }));
-                }
-                if (outs === 1) {
-                    parts.push(t(this.hass, "config_panel.zones_detail_outputs_one"));
-                }
-                else if (outs > 1) {
-                    parts.push(t(this.hass, "config_panel.zones_detail_outputs_many", { n: outs }));
-                }
-                return parts.join(" · ");
-            })()}
-                    </p>
-                  </div>
-                  <div class="zone-list-actions">
-                    <button
-                      type="button"
-                      class="btn-outline"
-                      ?disabled=${runDisabled}
-                      @click=${() => this._runZoneNow(z.zone_id)}
-                    >
-                      ${t(this.hass, "config_panel.zones_run_zone_now")}
-                    </button>
-                    <button
-                      type="button"
-                      class="btn-outline"
-                      @click=${() => {
-                this._msg = undefined;
-                this._editDraft = this._cloneZone(z);
-            }}
-                    >
-                      ${t(this.hass, "config_panel.zones_edit")}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            `;
-        })}
+        </div>
+        <div class="card-content">
+          ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
+          <details class="inline-help">
+            <summary>
+              <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+              ${t(this.hass, "config_panel.zones_help_summary")}
+            </summary>
+            <p>${t(this.hass, "config_panel.zones_intro")}</p>
+          </details>
+
+          ${all.length === 0
+            ? b `<div class="empty-state">
+                <ha-icon icon="mdi:vector-square"></ha-icon>
+                <p>${t(this.hass, "config_panel.zones_empty")}</p>
+                <button type="button" class="btn" @click=${() => (this._addDialogOpen = true)}>
+                  ${t(this.hass, "config_panel.zones_add_zone")}
+                </button>
+              </div>`
+            : filtered.length === 0
+                ? b `<div class="empty-state">
+                  <ha-icon icon="mdi:filter-variant-remove"></ha-icon>
+                  <p>${t(this.hass, "config_panel.zones_empty_filtered")}</p>
+                  <button type="button" class="btn-outline" @click=${() => (this._filter = "all")}>
+                    ${t(this.hass, "config_panel.zones_filter_all")}
+                  </button>
+                </div>`
+                : filtered.map((z) => this._renderRow(z, slotsPerZone))}
+
+          <details class="inline-help" style="margin-top:14px">
+            <summary>
+              <ha-icon class="inline-help-icon" icon="mdi:robot-outline"></ha-icon>
+              ${t(this.hass, "config_panel.settings_automations_summary")}
+            </summary>
+            <p>${t(this.hass, "config_panel.zones_intro_automation")}</p>
+          </details>
         </div>
       </ha-card>
+
+      <button
+        type="button"
+        class="fab"
+        aria-label=${t(this.hass, "config_panel.zones_add_zone")}
+        title=${t(this.hass, "config_panel.zones_add_zone")}
+        @click=${() => (this._addDialogOpen = true)}
+      >
+        <ha-icon icon="mdi:plus"></ha-icon>
+      </button>
 
       <ha-dialog
         .open=${this._addDialogOpen}
@@ -4076,13 +6376,11 @@ class ViewZones extends i {
               </button>
               <button
                 type="button"
-                class="primary"
+                class="btn"
                 ?disabled=${this._busy || !this._canSaveZone(this._new)}
                 @click=${() => this._saveZone("add", undefined, { ...this._new, zone_id: "" })}
               >
-                ${this._busy
-            ? t(this.hass, "config_panel.zones_adding")
-            : t(this.hass, "config_panel.zones_add_zone_btn")}
+                ${this._busy ? t(this.hass, "config_panel.zones_adding") : t(this.hass, "config_panel.zones_add_zone_btn")}
               </button>
             </div>
           </div>
@@ -4092,9 +6390,7 @@ class ViewZones extends i {
       <ha-dialog
         .open=${edit !== null}
         header-title=${edit
-            ? t(this.hass, "config_panel.zones_dialog_edit_title", {
-                name: edit.name || edit.zone_id.slice(0, 8),
-            })
+            ? t(this.hass, "config_panel.zones_dialog_edit_title", { name: edit.name || edit.zone_id.slice(0, 8) })
             : ""}
         @closed=${() => this._closeEditDialog()}
       >
@@ -4103,36 +6399,27 @@ class ViewZones extends i {
           <div class="dialog-footer-row">
             <div class="dialog-footer-lead">
               ${edit
-            ? b `
-                    <button
-                      type="button"
-                      class="danger"
-                      ?disabled=${this._busy}
-                      @click=${() => {
-                if (!edit)
-                    return;
-                if (confirm(t(this.hass, "config_panel.zones_confirm_delete"))) {
+            ? b `<button
+                    type="button"
+                    class="btn-danger"
+                    ?disabled=${this._busy}
+                    @click=${() => {
+                if (edit && confirm(t(this.hass, "config_panel.zones_confirm_delete"))) {
                     void this._saveZone("delete", edit.zone_id);
                 }
             }}
-                    >
-                      ${t(this.hass, "config_panel.zones_delete_zone")}
-                    </button>
-                  `
+                  >
+                    ${t(this.hass, "config_panel.zones_delete_zone")}
+                  </button>`
             : A}
             </div>
             <div class="dialog-footer-actions">
-              <button
-                type="button"
-                class="btn-outline"
-                @click=${() => this._closeEditDialog()}
-                ?disabled=${this._busy}
-              >
+              <button type="button" class="btn-outline" @click=${() => this._closeEditDialog()} ?disabled=${this._busy}>
                 ${t(this.hass, "config_panel.zones_cancel")}
               </button>
               <button
                 type="button"
-                class="primary"
+                class="btn"
                 ?disabled=${this._busy || !edit || !this._canSaveZone(edit)}
                 @click=${() => edit && this._saveZone("update", edit.zone_id, edit)}
               >
@@ -4159,20 +6446,40 @@ __decorate([
 __decorate([
     r()
 ], ViewZones.prototype, "_editDraft", void 0);
+__decorate([
+    r()
+], ViewZones.prototype, "_filter", void 0);
+__decorate([
+    r()
+], ViewZones.prototype, "_expanded", void 0);
 defineCustomElementOnce("si-view-zones", ViewZones);
 
-const VERSION = "0.4.0";
-const PANEL_PAGES = ["general", "zones", "schedule", "timetable", "status"];
+const VERSION = "1.0.0";
+const PANEL_PAGES = ["overview", "zones", "schedule", "timetable", "settings"];
+/** Legacy path aliases so existing links / deep links keep working. */
+const PAGE_ALIASES = {
+    general: "overview",
+    status: "settings",
+};
 const TAB_LABEL_KEYS = {
-    general: "config_panel.tab_general",
+    overview: "config_panel.tab_overview",
     zones: "config_panel.tab_zones",
     schedule: "config_panel.tab_schedule",
     timetable: "config_panel.tab_timetable",
-    status: "config_panel.tab_status",
+    settings: "config_panel.tab_settings",
+};
+const TAB_ICONS = {
+    overview: "mdi:view-dashboard-outline",
+    zones: "mdi:vector-square",
+    schedule: "mdi:format-list-bulleted-type",
+    timetable: "mdi:calendar-week",
+    settings: "mdi:cog-outline",
 };
 function normalizePanelPage(raw) {
-    const p = raw || "general";
-    return PANEL_PAGES.includes(p) ? p : "general";
+    const p = raw || "overview";
+    if (PANEL_PAGES.includes(p))
+        return p;
+    return PAGE_ALIASES[p] ?? "overview";
 }
 class SimpleIrrigationPanel extends i {
     constructor() {
@@ -4352,7 +6659,7 @@ class SimpleIrrigationPanel extends i {
             }
             const defaultEntry = this._entries.find((e) => e.is_default);
             if (defaultEntry) {
-                navigate(this, exportPath(defaultEntry.entry_id, "general"));
+                navigate(this, exportPath(defaultEntry.entry_id, "overview"));
                 this.requestUpdate();
                 return;
             }
@@ -4362,8 +6669,11 @@ class SimpleIrrigationPanel extends i {
             return;
         }
         await this._loadState(entryId);
-        if (page && !PANEL_PAGES.includes(page)) {
-            navigate(this, exportPath(entryId, "general"));
+        // Redirect legacy/aliased/invalid page paths to their canonical page.
+        // (Must not compare against a dead literal — that would loop forever.)
+        const canonical = normalizePanelPage(page);
+        if (page !== canonical) {
+            navigate(this, exportPath(entryId, canonical));
         }
     }
     async _loadEntryList() {
@@ -4469,7 +6779,7 @@ class SimpleIrrigationPanel extends i {
         }
     }
     _pickEntry(entryId) {
-        navigate(this, exportPath(entryId, "general"));
+        navigate(this, exportPath(entryId, "overview"));
         /* `location-changed` runs `_reloadPath` → `_loadState`; avoid a second concurrent fetch. */
     }
     render() {
@@ -4530,12 +6840,15 @@ class SimpleIrrigationPanel extends i {
       <div class="header">
         <div class="toolbar">
           <ha-menu-button .hass=${this.hass} .narrow=${this.narrow}></ha-menu-button>
-          <div class="main-title">${t(this.hass, "config_panel.main_title")}</div>
+          <div class="main-title">
+            ${String(inst.name || "").trim() || t(this.hass, "config_panel.main_title")}
+          </div>
           <div class="version">v${VERSION}</div>
         </div>
         <ha-tab-group @wa-tab-show=${this._onTab}>
           ${PANEL_PAGES.map((p) => b `
               <ha-tab-group-tab slot="nav" panel=${p} .active=${page === p}>
+                <ha-icon slot="prefix" icon=${TAB_ICONS[p]}></ha-icon>
                 ${t(this.hass, TAB_LABEL_KEYS[p])}
               </ha-tab-group-tab>
             `)}
@@ -4543,16 +6856,15 @@ class SimpleIrrigationPanel extends i {
       </div>
       <div class="view">
         <div class="view-inner">
-          ${page === "general"
-            ? b `<si-view-general
+          ${page === "overview"
+            ? b `<si-view-overview
                 .hass=${this.hass}
                 .entryId=${path.entryId}
                 .installation=${inst}
                 .scheduleNext=${scheduleNext}
                 .runState=${rs}
-                .outputEntityDomains=${this._state?.output_entity_domains ?? ["switch", "input_boolean", "group", "valve"]}
                 .onSaved=${() => this._loadState(path.entryId, { silent: true })}
-              ></si-view-general>`
+              ></si-view-overview>`
             : A}
           ${page === "zones"
             ? b `<si-view-zones
@@ -4580,12 +6892,15 @@ class SimpleIrrigationPanel extends i {
                 .installation=${inst}
               ></si-view-timetable>`
             : A}
-          ${page === "status"
-            ? b `<si-view-status
+          ${page === "settings"
+            ? b `<si-view-settings
                 .hass=${this.hass}
-                .runState=${rs}
+                .entryId=${path.entryId}
                 .installation=${inst}
-              ></si-view-status>`
+                .runState=${rs}
+                .outputEntityDomains=${this._state?.output_entity_domains ?? ["switch", "input_boolean", "group", "valve"]}
+                .onSaved=${() => this._loadState(path.entryId, { silent: true })}
+              ></si-view-settings>`
             : A}
         </div>
       </div>

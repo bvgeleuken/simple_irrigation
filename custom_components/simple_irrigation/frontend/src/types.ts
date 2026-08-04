@@ -43,7 +43,10 @@ export interface HomeAssistant {
 
 export interface ScheduleNextSlot {
   slot_id: string;
+  /** Weekday the schedule fires next (0 = Monday … 6 = Sunday). */
   weekday: number;
+  /** All weekdays this slot runs on. */
+  weekdays?: number[];
   time_local: string;
   zone_names: string[];
   /** Optional user-defined label for this slot. */

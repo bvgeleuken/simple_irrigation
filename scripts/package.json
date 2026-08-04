@@ -1,0 +1,8 @@
+{
+  "name": "simple-irrigation-screenshots",
+  "private": true,
+  "description": "Headless-Chrome screenshot generator for the Simple Irrigation panel",
+  "dependencies": {
+    "puppeteer-core": "^23.0.0"
+  }
+}

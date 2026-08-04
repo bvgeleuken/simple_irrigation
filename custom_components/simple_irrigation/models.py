@@ -71,44 +71,89 @@ class Zone:
         )
 
 
+def normalize_weekdays(raw: Any) -> list[int]:
+    """Sorted, de-duplicated weekday indices in 0..6 (Mon..Sun)."""
+    out: list[int] = []
+    seen: set[int] = set()
+    if isinstance(raw, (list, tuple, set)):
+        for x in raw:
+            try:
+                v = int(x)
+            except (TypeError, ValueError):
+                continue
+            if 0 <= v <= 6 and v not in seen:
+                seen.add(v)
+                out.append(v)
+    out.sort()
+    return out
+
+
 @dataclass
 class ScheduleSlot:
-    """Weekly time slot with ordered zone IDs."""
+    """Weekly time slot with ordered zone IDs.
+
+    A slot may fire on several weekdays (``weekdays``); a single-day slot is just
+    ``weekdays=[n]``. The legacy scalar ``weekday`` key is still read (fallback) and
+    written (as the first weekday) for backward/rollback compatibility.
+    """
 
     slot_id: str
-    weekday: int  # 0 = Monday .. 6 = Sunday (datetime.weekday())
+    weekdays: list[int]  # 0 = Monday .. 6 = Sunday (datetime.weekday())
     time_local: str  # "HH:MM"
     enabled: bool = True
     zone_ids_ordered: list[str] = field(default_factory=list)
     name: str = ""  # optional label for automations / recognition in the UI
     week_parity: str = WEEK_PARITY_EVERY  # every | odd | even (ISO calendar week)
+    # --- Cycle grouping (presentation + generation metadata only) -----------
+    # The runtime never reads these; scheduling still uses weekdays/time/parity.
+    cycle_id: str | None = None  # uuid4 shared by all slots of one cycle
+    cycle_kind: str = "custom"  # daily | twice_daily | every_n_days | n_per_week | weekly | biweekly | custom
+    cycle_meta: dict[str, Any] | None = None  # {"n", "anchor_weekday", "times", "label"}
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-compatible dict."""
         return {
             "slot_id": self.slot_id,
-            "weekday": self.weekday,
+            "weekdays": list(self.weekdays),
+            # Legacy key so a downgraded integration keeps a valid single day.
+            "weekday": self.weekdays[0] if self.weekdays else 0,
             "time_local": self.time_local,
             "enabled": self.enabled,
             "zone_ids_ordered": list(self.zone_ids_ordered),
             "name": self.name,
             "week_parity": self.week_parity,
+            "cycle_id": self.cycle_id,
+            "cycle_kind": self.cycle_kind,
+            "cycle_meta": dict(self.cycle_meta) if self.cycle_meta else None,
         }
 
     @staticmethod
     def from_dict(data: dict[str, Any]) -> ScheduleSlot:
-        """Deserialize from store dict."""
+        """Deserialize from store dict (tolerates missing cycle keys)."""
         parity = str(data.get("week_parity") or WEEK_PARITY_EVERY)
         if parity not in WEEK_PARITIES:
             parity = WEEK_PARITY_EVERY
+        weekdays = normalize_weekdays(data.get("weekdays"))
+        if not weekdays and data.get("weekday") is not None:
+            weekdays = normalize_weekdays([data.get("weekday")])
+        if not weekdays:
+            weekdays = [0]
+        cycle_id_raw = data.get("cycle_id")
+        cycle_id = str(cycle_id_raw) if cycle_id_raw else None
+        cycle_kind = str(data.get("cycle_kind") or "custom")
+        cycle_meta_raw = data.get("cycle_meta")
+        cycle_meta = dict(cycle_meta_raw) if isinstance(cycle_meta_raw, dict) else None
         return ScheduleSlot(
             slot_id=data["slot_id"],
-            weekday=int(data["weekday"]),
+            weekdays=weekdays,
             time_local=str(data["time_local"]),
             enabled=bool(data.get("enabled", True)),
             zone_ids_ordered=list(data.get("zone_ids_ordered", [])),
             name=str(data.get("name") or ""),
             week_parity=parity,
+            cycle_id=cycle_id,
+            cycle_kind=cycle_kind,
+            cycle_meta=cycle_meta,
         )
 
 
