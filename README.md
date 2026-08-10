@@ -30,9 +30,9 @@ Outputs can be any mix of `switch`, `input_boolean`, `group` and `valve` entitie
 |-----|----------------|
 | **Overview** | Live run state with a countdown to the next run, the next few upcoming runs, the active watering mode, and quick actions: *Run next slot now*, *Skip today*, *Pause 48 h* (plus *Stop* / *Skip phase* while running). |
 | **Zones** | Named zones with one or more output entities, Eco / Normal / Extra runtimes, an **enabled** toggle and **exclusive** flag. Filter by **All / Enabled / Issues**, run a zone now, see how many cycles use it. |
-| **Schedule** | Your watering **cycles** and single slots. A guided **New irrigation cycle** wizard (daily, every 2/3 days, x-per-week, weekly, every 2 weeks, custom). Every row expands to a **14-day run strip**; multi-slot cycles show their members and can be detached. |
+| **Schedule** | Your watering **cycles** and single slots. A guided **New irrigation cycle** wizard (daily, every 2/3 days, x-per-week, weekly, every 2 weeks, custom). Every row expands to a **14-day run strip**; multi-slot cycles show their members and can be detached. Per-slot **conditions** gate a run on soil moisture, rain, tank level or any other entity. |
 | **Timetable** | Week-at-a-glance grid (zones × weekdays, morning / daytime / evening) with per-day totals, using the same phase and mode timing as a real run. On phones it becomes a per-day list. Click a run to jump straight to its editor. |
-| **Settings** | Installation name (shown in the panel header), pre-start outputs & delay, watering mode, max parallel zones, default installation, service reference and raw diagnostics. |
+| **Settings** | Installation name (shown in the panel header), pre-start outputs & delay, watering mode, max parallel zones, global **conditions**, default installation, service reference and raw diagnostics. |
 
 ---
 
@@ -115,6 +115,31 @@ Why the split? A slot can water on chosen weekdays and, optionally, only in **od
 - **Run order & phases:** the ordered zone list is grouped into **phases** by the *max parallel* limit and *exclusive* flags. The editor shows the phase breakdown live.
 - **Optimize cycles:** detects existing single-day slots that together form a known cadence and offers to merge them into one cycle — no re-entry, nothing runs differently.
 - **Run now:** *Run next slot now* (Overview), *Run this slot now* (a schedule row) and *Run zone now* (Zones) all use the same pre-start and shutdown pipeline as a scheduled run.
+
+### Conditions
+
+A **condition** states something that must hold for a scheduled run to start — "water, but only while the soil is dry". Each one is an entity, a comparison and a value:
+
+| Operator | Meaning | Example |
+|----------|---------|---------|
+| **is above** / **is below** | numeric compare (strict) | `sensor.cistern_litres` is above `200` |
+| **equals** | numeric compare with tolerance | `sensor.zones_open` equals `2` |
+| **state is** | text compare, case-insensitive | `input_select.season` state is `summer` |
+| **is on** / **is off** | boolean state | `binary_sensor.rain` is off |
+
+Any numeric entity works — there is no unit restriction, so litres, millimetres, percent and degrees all compare the same way. Rain sensors (`binary_sensor`), manual overrides (`input_boolean`) and helpers (`input_number`, `input_select`) are just as valid as `sensor`.
+
+Conditions live in two places and are combined with **AND** — all must hold:
+
+- **Settings → Conditions:** apply to every scheduled run. This is where a rain sensor or a cistern level belongs.
+- **Per schedule slot:** added below the start time, on top of the global ones. A slot can also **ignore the global conditions** — a greenhouse does not care about rain.
+
+Two deliberate behaviours:
+
+- **A broken sensor never stops irrigation.** If the entity is missing, `unavailable`, or its state cannot be read as a number, the run proceeds and a warning is logged. Plants dying because a sensor died is the worse failure.
+- **Conditions are checked at start time only.** A blocked run is skipped for that day, not retried later, and the *next run* times shown in the panel ignore conditions — today's sensor reading says nothing about tomorrow's.
+
+Manual runs (*Run now*, *Run zone now*) always start, regardless of conditions.
 
 ### Modes, pre-start, pause
 
