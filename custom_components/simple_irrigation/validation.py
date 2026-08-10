@@ -4,13 +4,22 @@ from __future__ import annotations
 
 from typing import Any
 
-from .const import MODES, OUTPUT_ENTITY_DOMAINS
+from .const import (
+    GUARD_BOOLEAN_OPERATORS,
+    GUARD_NUMERIC_OPERATORS,
+    GUARD_OPERATORS,
+    MAX_GUARDS,
+    MODES,
+    OUTPUT_ENTITY_DOMAINS,
+)
+from .models import Guard
 
 # Re-export for tests / callers
 __all__ = [
     "OUTPUT_ENTITY_DOMAINS",
     "domain_of",
     "is_allowed_output_domain",
+    "parse_guard_list",
     "parse_zone_switch_entities",
     "validate_output_entity_id",
     "validate_zone_payload",
@@ -41,6 +50,57 @@ def validate_output_entity_id(hass: Any, entity_id: str | None) -> str | None:
     if hass.states.get(entity_id) is None:
         return "unknown_entity"
     return None
+
+
+def parse_guard_list(hass: Any, raw: Any) -> tuple[list[Guard], str | None]:
+    """Build a guard list from an API payload.
+
+    Returns ``(guards, error_key)``; on any error the list is empty so callers
+    never apply a partial result. Deliberately domain-agnostic: rain is a
+    ``binary_sensor``, a manual override an ``input_boolean``, a tank level a
+    ``number`` — restricting to ``sensor`` would break most real use cases.
+    """
+    if raw in (None, ""):
+        return [], None
+    if not isinstance(raw, (list, tuple)):
+        return [], "invalid_guard_entity"
+    if len(raw) > MAX_GUARDS:
+        return [], "too_many_guards"
+
+    guards: list[Guard] = []
+    for item in raw:
+        if not isinstance(item, dict):
+            return [], "invalid_guard_entity"
+
+        entity_id = str(item.get("entity_id") or "").strip()
+        if not entity_id or "." not in entity_id:
+            return [], "invalid_guard_entity"
+        if hass.states.get(entity_id) is None:
+            return [], "unknown_entity"
+
+        operator = str(item.get("operator") or "").strip()
+        if operator not in GUARD_OPERATORS:
+            return [], "invalid_guard_operator"
+
+        rawval = item.get("value")
+        value: float | str | None
+        if operator in GUARD_BOOLEAN_OPERATORS:
+            value = None
+        elif operator in GUARD_NUMERIC_OPERATORS:
+            if rawval in (None, ""):
+                return [], "missing_guard_value"
+            try:
+                value = float(rawval)
+            except (TypeError, ValueError):
+                return [], "invalid_guard_value"
+        else:  # text operators
+            value = str(rawval).strip() if rawval not in (None, "") else ""
+            if not value:
+                return [], "missing_guard_value"
+
+        guards.append(Guard(entity_id=entity_id, operator=operator, value=value))
+
+    return guards, None
 
 
 def parse_zone_switch_entities(user_input: dict[str, Any]) -> list[str]:

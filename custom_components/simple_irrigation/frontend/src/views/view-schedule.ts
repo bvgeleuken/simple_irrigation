@@ -1,6 +1,16 @@
 import { LitElement, html, css, nothing, type PropertyValues, type TemplateResult } from "lit";
 import { state, query } from "lit/decorators.js";
 import { deleteCycle, runSlotNow, saveSlot, upsertCycle } from "../data/api";
+import { renderEntityDatalist } from "../entity-input";
+import {
+  GUARD_ENTITY_DOMAINS,
+  guardLabel,
+  guardsForSave,
+  guardsIncomplete,
+  normalizeGuards,
+  renderGuardList,
+  type Guard,
+} from "../guard-list-editor";
 import { defineCustomElementOnce, formatApiError } from "../helpers";
 import { stripEditSlotQueryFromUrl } from "../navigation";
 import { t } from "../i18n";
@@ -37,6 +47,8 @@ interface SlotRow {
   zone_ids_ordered: string[];
   name: string;
   week_parity: WeekParity;
+  guards: Guard[];
+  ignore_global_guards: boolean;
   cycle_id: string | null;
   cycle_kind: string;
   cycle_meta: CycleMeta | null;
@@ -212,6 +224,8 @@ export class ViewSchedule extends LitElement {
         name: String(o.name ?? "").trim(),
         week_parity:
           o.week_parity === "odd" || o.week_parity === "even" ? (o.week_parity as WeekParity) : "every",
+        guards: normalizeGuards(o.guards),
+        ignore_global_guards: Boolean(o.ignore_global_guards ?? false),
         cycle_id: rid,
         cycle_kind: String(o.cycle_kind ?? "custom"),
         cycle_meta: (o.cycle_meta as CycleMeta) ?? null,
@@ -257,7 +271,47 @@ export class ViewSchedule extends LitElement {
   }
 
   private _cloneSlot(s: SlotRow): SlotRow {
-    return { ...s, weekdays: [...s.weekdays], zone_ids_ordered: [...s.zone_ids_ordered] };
+    return {
+      ...s,
+      weekdays: [...s.weekdays],
+      zone_ids_ordered: [...s.zone_ids_ordered],
+      guards: s.guards.map((g) => ({ ...g })),
+    };
+  }
+
+  private _guardEntityListId(): string {
+    return `si-guard-${this.entryId}`;
+  }
+
+  /** Guards defined on the installation; inherited unless a slot opts out. */
+  private _globalGuards(): Guard[] {
+    return normalizeGuards(this.installation?.guards);
+  }
+
+  /** Badge text for a slot's own guards: one spelled out, several counted. */
+  private _guardBadge(guards: Guard[]): string {
+    return guards.length === 1
+      ? guardLabel(this.hass, guards[0])
+      : t(this.hass, "config_panel.guards_count", { n: String(guards.length) });
+  }
+
+  /** Read-only chips shown on a slot/cycle row. */
+  private _renderGuardMeta(guards: Guard[], ignoreGlobal: boolean): TemplateResult {
+    return html`
+      ${guards.length
+        ? html`<span class="meta"
+            ><ha-icon icon="mdi:shield-check-outline"></ha-icon>${this._guardBadge(guards)}</span
+          >`
+        : nothing}
+      ${ignoreGlobal
+        ? html`<span class="meta"
+            ><ha-icon icon="mdi:shield-off-outline"></ha-icon>${t(
+              this.hass,
+              "config_panel.schedule_guards_global_off"
+            )}</span
+          >`
+        : nothing}
+    `;
   }
 
   private _zonesMap(): Record<string, Record<string, unknown>> | undefined {
@@ -639,6 +693,10 @@ export class ViewSchedule extends LitElement {
       this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
       return;
     }
+    if (guardsIncomplete(d.guards)) {
+      this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
+      return;
+    }
     const ok = await this._call({
       action: "update",
       slot_id: d.slot_id,
@@ -648,6 +706,8 @@ export class ViewSchedule extends LitElement {
       zone_ids_ordered: d.zone_ids_ordered,
       name: d.name.trim(),
       week_parity: d.week_parity,
+      guards: guardsForSave(d.guards),
+      ignore_global_guards: d.ignore_global_guards,
     });
     if (ok) this._closeEditDialog();
   }
@@ -715,6 +775,19 @@ export class ViewSchedule extends LitElement {
           : nothing}
         <span>${weekdaysSummary(this.hass, m.weekdays)}</span>
         <span class="muted">${formatTimeLocalForDisplay(this.hass, m.time_local)}</span>
+        ${m.guards.length
+          ? html`<span class="muted"
+              ><ha-icon icon="mdi:shield-check-outline"></ha-icon>${this._guardBadge(m.guards)}</span
+            >`
+          : nothing}
+        ${m.ignore_global_guards
+          ? html`<span class="muted"
+              ><ha-icon icon="mdi:shield-off-outline"></ha-icon>${t(
+                this.hass,
+                "config_panel.schedule_guards_global_off"
+              )}</span
+            >`
+          : nothing}
         <span class="muted"
           >${m.zone_ids_ordered.length === 1
             ? t(this.hass, "config_panel.schedule_zones_in_order_one")
@@ -799,6 +872,12 @@ export class ViewSchedule extends LitElement {
                   { z: zoneIds.length, p: phases, m: est }
                 )}</span
               >
+              ${g.members[0]
+                ? this._renderGuardMeta(
+                    g.members[0].guards,
+                    g.members[0].ignore_global_guards
+                  )
+                : nothing}
               ${next
                 ? html`<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(
@@ -918,6 +997,7 @@ export class ViewSchedule extends LitElement {
                   { z: s.zone_ids_ordered.length, p: phases, m: est }
                 )}</span
               >
+              ${this._renderGuardMeta(s.guards, s.ignore_global_guards)}
               ${next
                 ? html`<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(
@@ -984,6 +1064,47 @@ export class ViewSchedule extends LitElement {
     return Object.keys(zones).filter((id) => !draft.zone_ids_ordered.includes(id));
   }
 
+  /**
+   * "Runs then and then — but only if x AND y AND z", so this sits below the
+   * timing fields rather than above them.
+   */
+  private _renderGuardSection(draft: SlotRow): TemplateResult {
+    const globals = this._globalGuards();
+    return html`
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
+        ${renderGuardList(this.hass, this._guardEntityListId(), draft.guards, (next) => {
+          draft.guards = next;
+          this.requestUpdate();
+        })}
+        <div class="switch-row">
+          <ha-switch
+            .disabled=${this._busy}
+            .checked=${draft.ignore_global_guards}
+            @change=${(e: Event) => {
+              draft.ignore_global_guards = Boolean(
+                (e.target as HTMLInputElement & { checked: boolean }).checked
+              );
+              this.requestUpdate();
+            }}
+          ></ha-switch>
+          <span class="switch-row-label"
+            >${t(this.hass, "config_panel.schedule_ignore_global_guards")}</span
+          >
+        </div>
+        <p class="hint">${t(this.hass, "config_panel.schedule_ignore_global_guards_hint")}</p>
+        ${globals.length && !draft.ignore_global_guards
+          ? html`<p class="hint">
+              ${t(this.hass, "config_panel.schedule_guards_inherited", {
+                list: globals.map((g) => guardLabel(this.hass, g)).join(", "),
+              })}
+            </p>`
+          : nothing}
+      </div>
+    `;
+  }
+
   private _renderEditDialog(draft: SlotRow): TemplateResult {
     const zones = this._zonesMap();
     const addZoneOpts = this._addZoneOptionsForDraft(draft);
@@ -1032,6 +1153,7 @@ export class ViewSchedule extends LitElement {
           />
         </div>
       </div>
+      ${this._renderGuardSection(draft)}
       <div class="field-block">
         <div class="switch-row">
           <ha-switch
@@ -1115,6 +1237,7 @@ export class ViewSchedule extends LitElement {
     const cleanupCandidates = this._analyzeCleanup().length;
 
     return html`
+      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>

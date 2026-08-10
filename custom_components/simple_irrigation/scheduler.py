@@ -12,6 +12,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.util import dt as dt_util
 
 from .grouping import compute_phases
+from .guards import guards_allow_run
 from .models import Installation, ScheduleSlot, Zone
 from .time_util import next_slot_fire_local_any
 
@@ -196,7 +197,8 @@ class IrrigationScheduler:
                 if nxt is None:
                     continue
                 if abs((now - nxt).total_seconds()) < 90:
-                    due_slots.append(slot)
+                    if guards_allow_run(self.hass, inst, slot):
+                        due_slots.append(slot)
 
             if not due_slots:
                 return

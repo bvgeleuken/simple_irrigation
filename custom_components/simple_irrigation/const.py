@@ -35,6 +35,28 @@ OUTPUT_DOMAIN_SERVICES: Final = {
     "valve": ("open_valve", "close_valve"),
 }
 
+# --- Guards -----------------------------------------------------------------
+# A guard states a condition that must HOLD for a scheduled run to start.
+# Guards are AND-combined; anything unreadable fails open (the run proceeds).
+GUARD_OP_ABOVE: Final = "above"
+GUARD_OP_BELOW: Final = "below"
+GUARD_OP_EQUALS: Final = "equals"
+GUARD_OP_STATE_IS: Final = "state_is"
+GUARD_OP_IS_TRUE: Final = "is_true"
+GUARD_OP_IS_FALSE: Final = "is_false"
+
+# Operators comparing the state as a number.
+GUARD_NUMERIC_OPERATORS: Final = (GUARD_OP_ABOVE, GUARD_OP_BELOW, GUARD_OP_EQUALS)
+# Operators comparing the state as text.
+GUARD_TEXT_OPERATORS: Final = (GUARD_OP_STATE_IS,)
+# Operators needing no value at all.
+GUARD_BOOLEAN_OPERATORS: Final = (GUARD_OP_IS_TRUE, GUARD_OP_IS_FALSE)
+GUARD_OPERATORS: Final = (
+    GUARD_NUMERIC_OPERATORS + GUARD_TEXT_OPERATORS + GUARD_BOOLEAN_OPERATORS
+)
+
+MAX_GUARDS: Final = 10
+
 STORE_VERSION: Final = 1
 
 CONF_INSTALLATION_NAME: Final = "installation_name"

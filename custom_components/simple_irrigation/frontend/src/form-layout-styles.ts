@@ -44,6 +44,43 @@ export const formLayoutStyles = css`
     flex: 1;
     min-width: 0;
   }
+  /* Guard rows carry up to three controls, so unlike .entity-picker-row they
+     must wrap instead of overflowing on narrow screens. */
+  .guard-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+  .guard-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+  }
+  .guard-row .native-entity-field {
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+  .guard-row .guard-operator {
+    flex: 0 0 160px;
+  }
+  .guard-row .guard-operator select.field-select {
+    width: 100%;
+  }
+  .guard-row ha-input.guard-value {
+    flex: 0 0 140px;
+  }
+  .guard-row button.row-remove {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+  /* Full-width note under a row (current reading, operator hint). */
+  .guard-row .guard-reading {
+    flex: 1 0 100%;
+    margin: 0;
+  }
   .native-entity-field {
     display: flex;
     flex-direction: column;

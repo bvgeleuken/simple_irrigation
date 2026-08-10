@@ -6,6 +6,14 @@ import {
   saveGlobal,
 } from "../data/api";
 import { renderEntityDatalist, renderNativeEntityField } from "../entity-input";
+import {
+  GUARD_ENTITY_DOMAINS,
+  guardsForSave,
+  guardsIncomplete,
+  normalizeGuards,
+  renderGuardList,
+  type Guard,
+} from "../guard-list-editor";
 import { defineCustomElementOnce, formatApiError } from "../helpers";
 import { t } from "../i18n";
 import { formLayoutStyles } from "../form-layout-styles";
@@ -80,6 +88,7 @@ export class ViewSettings extends LitElement {
   private _maxParallel = 2;
   private _preStart: string[] = [];
   private _preStartDelaySec = 10;
+  @state() private _guards: Guard[] = [];
 
   protected willUpdate(changed: Map<PropertyKey, unknown>): void {
     if (changed.has("installation") && this.installation && !this._dirty) {
@@ -99,6 +108,7 @@ export class ViewSettings extends LitElement {
     this._preStart = ps.length ? [...ps] : [""];
     const d = Number(inst.pre_start_delay_sec ?? 10);
     this._preStartDelaySec = Number.isFinite(d) ? Math.max(1, Math.min(3600, Math.round(d))) : 10;
+    this._guards = normalizeGuards(inst.guards);
     this._dirty = false;
   }
 
@@ -129,7 +139,16 @@ export class ViewSettings extends LitElement {
     return `si-ent-s-${this.entryId}`;
   }
 
+  private _guardEntityListId(): string {
+    return `si-guard-s-${this.entryId}`;
+  }
+
   private async _save(): Promise<void> {
+    if (guardsIncomplete(this._guards)) {
+      this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
+      this.requestUpdate();
+      return;
+    }
     this._busy = true;
     this._msg = undefined;
     this.requestUpdate();
@@ -141,6 +160,7 @@ export class ViewSettings extends LitElement {
         mode: this._mode,
         max_parallel_zones: this._maxParallel,
         is_default: this._isDefault,
+        guards: guardsForSave(this._guards),
       });
       if (!res.success) {
         this._msg = formatApiError(res.error, this.hass);
@@ -195,6 +215,7 @@ export class ViewSettings extends LitElement {
 
     return html`
       ${renderEntityDatalist(this.hass, this._entityListId(), domains)}
+      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:cog-outline"></ha-icon>
@@ -339,6 +360,22 @@ export class ViewSettings extends LitElement {
               ></ha-input>
             </div>
             <p class="hint">${t(this.hass, "config_panel.settings_max_parallel_hint")}</p>
+          </div>
+
+          <div class="section-title">${t(this.hass, "config_panel.settings_section_guards")}</div>
+          <div class="field-block">
+            <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
+            <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
+            ${renderGuardList(
+              this.hass,
+              this._guardEntityListId(),
+              this._guards,
+              (next) => {
+                this._guards = next;
+                this._markDirty();
+              }
+            )}
+            <p class="hint">${t(this.hass, "config_panel.settings_guards_hint")}</p>
           </div>
 
           <div class="section-title">${t(this.hass, "config_panel.general_default_section")}</div>

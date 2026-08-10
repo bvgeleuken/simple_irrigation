@@ -1,6 +1,16 @@
 import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
 import { upsertCycle } from "./data/api";
+import { renderEntityDatalist } from "./entity-input";
+import {
+  GUARD_ENTITY_DOMAINS,
+  guardsForSave,
+  guardsIncomplete,
+  guardsSummary,
+  normalizeGuards,
+  renderGuardList,
+  type Guard,
+} from "./guard-list-editor";
 import { defineCustomElementOnce, formatApiError } from "./helpers";
 import { t } from "./i18n";
 import { formLayoutStyles } from "./form-layout-styles";
@@ -192,6 +202,8 @@ export class CycleWizard extends LitElement {
   @state() private _zoneIds: string[] = [];
   @state() private _enabled = true;
   @state() private _label = "";
+  @state() private _guards: Guard[] = [];
+  @state() private _ignoreGlobalGuards = false;
   @state() private _cycleId: string | null = null;
   @state() private _busy = false;
   @state() private _msg?: string;
@@ -215,6 +227,8 @@ export class CycleWizard extends LitElement {
       this._zoneIds = this._defaultZoneIds();
       this._enabled = true;
       this._label = "";
+      this._guards = [];
+      this._ignoreGlobalGuards = false;
       this._syncDefaultsForOption();
     }
     this._step = opts?.step ?? 1;
@@ -245,6 +259,8 @@ export class CycleWizard extends LitElement {
       ? [...(first.zone_ids_ordered as string[])]
       : this._defaultZoneIds();
     this._enabled = Boolean(first.enabled ?? true);
+    this._guards = normalizeGuards(first.guards);
+    this._ignoreGlobalGuards = Boolean(first.ignore_global_guards ?? false);
   }
 
   private _option(): KindOption {
@@ -303,6 +319,11 @@ export class CycleWizard extends LitElement {
     const z = zones?.[id];
     return z ? String(z.name ?? id) : id;
   }
+
+  private _guardEntityListId(): string {
+    return `si-guard-cycle-${this.entryId}`;
+  }
+
 
   private _zoneDuration(id: string): number {
     const zones = this.installation?.zones as Record<string, Record<string, unknown>> | undefined;
@@ -383,6 +404,10 @@ export class CycleWizard extends LitElement {
     this._msg = undefined;
     this.requestUpdate();
     try {
+      if (guardsIncomplete(this._guards)) {
+        this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
+        return;
+      }
       const opt = this._option();
       const res = await upsertCycle(this.hass, this.entryId, {
         cycle_id: this._cycleId,
@@ -390,6 +415,8 @@ export class CycleWizard extends LitElement {
         cycle_meta: this._meta() as Record<string, unknown>,
         zone_ids_ordered: this._zoneIds,
         enabled: this._enabled,
+        guards: guardsForSave(this._guards),
+        ignore_global_guards: this._ignoreGlobalGuards,
       });
       if (!res.success) {
         this._msg = formatApiError(res.error, this.hass);
@@ -661,6 +688,30 @@ export class CycleWizard extends LitElement {
         </div>
       </div>
 
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
+        ${renderGuardList(this.hass, this._guardEntityListId(), this._guards, (next) => {
+          this._guards = next;
+          this.requestUpdate();
+        })}
+        <div class="switch-row">
+          <ha-switch
+            .checked=${this._ignoreGlobalGuards}
+            @change=${(e: Event) => {
+              this._ignoreGlobalGuards = Boolean(
+                (e.target as HTMLInputElement & { checked: boolean }).checked
+              );
+              this.requestUpdate();
+            }}
+          ></ha-switch>
+          <span class="switch-row-label"
+            >${t(this.hass, "config_panel.schedule_ignore_global_guards")}</span
+          >
+        </div>
+        <p class="hint">${t(this.hass, "config_panel.schedule_ignore_global_guards_hint")}</p>
+      </div>
+
       <div class="summary-card">
         <strong>${t(this.hass, "config_panel.cycle_creates_title")}</strong>
         <ul style="margin:8px 0 0;padding-left:1.1rem">
@@ -677,6 +728,9 @@ export class CycleWizard extends LitElement {
                       : "config_panel.week_parity_even"
                   )
                 : ""}
+              ${this._guards.length
+                ? html` · ${guardsSummary(this.hass, this._guards)}`
+                : nothing}
             </li>`
           )}
         </ul>
@@ -719,6 +773,7 @@ export class CycleWizard extends LitElement {
       ? "config_panel.cycle_edit_title"
       : "config_panel.cycle_new";
     return html`
+      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}

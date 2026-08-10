@@ -92,6 +92,21 @@ function t(hass, path, placeholders) {
     return s;
 }
 
+/** Backend error codes are snake_case identifiers, never prose. */
+const ERROR_CODE_RE = /^[a-z][a-z0-9_]*$/;
+/**
+ * Turn a backend error code into a translated sentence.
+ * Falls back to the raw code when no translation exists, so new codes degrade
+ * to the previous behaviour instead of showing an empty message.
+ */
+function translateErrorCode(value, hass) {
+    if (hass?.localize == null || !ERROR_CODE_RE.test(value)) {
+        return value;
+    }
+    const path = `config_panel.errors_${value}`;
+    const translated = t(hass, path);
+    return translated === path ? value : translated;
+}
 /** Home Assistant callApi may put a string or structured object in `error`. */
 function formatApiError(value, hass) {
     const fallback = hass?.localize != null
@@ -101,7 +116,7 @@ function formatApiError(value, hass) {
         return fallback;
     }
     if (typeof value === "string") {
-        return value;
+        return translateErrorCode(value, hass);
     }
     if (value instanceof Error) {
         return value.message;
@@ -112,7 +127,7 @@ function formatApiError(value, hass) {
             return o.message;
         }
         if (typeof o.error === "string") {
-            return o.error;
+            return translateErrorCode(o.error, hass);
         }
         try {
             return JSON.stringify(value);
@@ -2510,6 +2525,236 @@ __decorate([
 ], ViewOverview.prototype, "_msg", void 0);
 defineCustomElementOnce("si-view-overview", ViewOverview);
 
+/** Entity IDs for allowed output domains (same rule set as the backend). */
+function entityIdsForDomains(hass, domains) {
+    return Object.keys(hass.states)
+        .filter((eid) => domains.includes(eid.split(".", 1)[0]))
+        .sort((a, b) => a.localeCompare(b));
+}
+/** One shared `<datalist>` per form (by stable `listId`). */
+function renderEntityDatalist(hass, listId, domains) {
+    const ids = entityIdsForDomains(hass, domains);
+    return b `
+    <datalist id=${listId}>
+      ${ids.map((id) => b `<option value=${id}></option>`)}
+    </datalist>
+  `;
+}
+/**
+ * Browser autocomplete for entity_id — works inside panel_custom scoped registries where
+ * `ha-entity-picker` is not registered.
+ */
+function renderNativeEntityField(hass, listId, label, value, onValue, 
+/** Override when the default output example (valves, switches) would mislead. */
+placeholderKey = "config_panel.entity_placeholder_example") {
+    return b `
+    <div class="native-entity-field">
+      <label class="native-entity-label">${label}</label>
+      <input
+        type="text"
+        class="entity-id-input"
+        list=${listId}
+        .value=${value}
+        placeholder=${t(hass, placeholderKey)}
+        spellcheck="false"
+        autocomplete="off"
+        @input=${(e) => onValue(e.target.value)}
+      />
+    </div>
+  `;
+}
+
+const GUARD_OPERATORS = [
+    "above",
+    "below",
+    "equals",
+    "state_is",
+    "is_true",
+    "is_false",
+];
+/** Operators comparing the state as a number. */
+const GUARD_NUMERIC_OPERATORS = ["above", "below", "equals"];
+/** Operators comparing the state as text. */
+const GUARD_TEXT_OPERATORS = ["state_is"];
+/** Datalist suggestions only — the backend accepts any domain. */
+const GUARD_ENTITY_DOMAINS = [
+    "sensor",
+    "binary_sensor",
+    "input_boolean",
+    "input_number",
+    "input_select",
+    "number",
+    "switch",
+];
+const isNumericOp = (op) => GUARD_NUMERIC_OPERATORS.includes(op);
+const isTextOp = (op) => GUARD_TEXT_OPERATORS.includes(op);
+/** Boolean operators need no value at all. */
+const needsValue = (op) => isNumericOp(op) || isTextOp(op);
+function asOperator(raw) {
+    const s = String(raw ?? "");
+    return GUARD_OPERATORS.includes(s) ? s : "above";
+}
+/** Build a clean Guard[] from whatever the API delivered. */
+function normalizeGuards(raw) {
+    if (!Array.isArray(raw))
+        return [];
+    return raw.map((entry) => {
+        const o = (entry ?? {});
+        const operator = asOperator(o.operator);
+        let value = null;
+        if (isNumericOp(operator)) {
+            value = o.value === null || o.value === undefined || o.value === "" ? null : Number(o.value);
+        }
+        else if (isTextOp(operator)) {
+            value = o.value === null || o.value === undefined ? "" : String(o.value);
+        }
+        return { entity_id: String(o.entity_id ?? "").trim(), operator, value };
+    });
+}
+/** Drop blank rows and null out values the operator does not use. */
+function guardsForSave(guards) {
+    return guards
+        .filter((g) => g.entity_id.trim() !== "")
+        .map((g) => ({
+        entity_id: g.entity_id.trim(),
+        operator: g.operator,
+        value: needsValue(g.operator) ? g.value : null,
+    }));
+}
+/** True when a row has an entity but is missing the value its operator needs. */
+function guardsIncomplete(guards) {
+    return guards.some((g) => {
+        const hasEntity = g.entity_id.trim() !== "";
+        if (!hasEntity)
+            return false;
+        if (!needsValue(g.operator))
+            return false;
+        if (isNumericOp(g.operator))
+            return g.value === null || Number.isNaN(Number(g.value));
+        return String(g.value ?? "").trim() === "";
+    });
+}
+function entityName(hass, entityId) {
+    const st = hass.states[entityId];
+    return st ? String(st.attributes?.friendly_name ?? entityId) : entityId;
+}
+/** Current reading of the guarded entity, or "" when unknown. */
+function currentState(hass, entityId) {
+    const st = hass.states[entityId];
+    return st ? String(st.state) : "";
+}
+/** Human-readable single guard, e.g. "Tank level is above 20". */
+function guardLabel(hass, g) {
+    const op = t(hass, `config_panel.guard_op_${g.operator}`);
+    const entity = entityName(hass, g.entity_id);
+    if (!needsValue(g.operator)) {
+        return t(hass, "config_panel.guard_label_boolean", { entity, op });
+    }
+    return t(hass, "config_panel.guard_label_numeric", {
+        entity,
+        op,
+        value: String(g.value ?? ""),
+    });
+}
+/** One guard spelled out; several collapsed to a count. */
+function guardsSummary(hass, guards) {
+    if (guards.length === 0)
+        return t(hass, "config_panel.guards_none");
+    if (guards.length === 1)
+        return guardLabel(hass, guards[0]);
+    return t(hass, "config_panel.guards_count", { n: String(guards.length) });
+}
+function renderValueField(hass, guard, onValue) {
+    if (!needsValue(guard.operator))
+        return A;
+    if (isTextOp(guard.operator)) {
+        return b `<ha-input
+      class="guard-value"
+      type="text"
+      .label=${t(hass, "config_panel.guards_value_label")}
+      .value=${String(guard.value ?? "")}
+      @input=${(e) => onValue(e.target.value)}
+    ></ha-input>`;
+    }
+    return b `<ha-input
+    class="guard-value"
+    type="number"
+    step="any"
+    .label=${t(hass, "config_panel.guards_value_label")}
+    .value=${guard.value === null || guard.value === undefined ? "" : String(guard.value)}
+    @input=${(e) => {
+        const raw = e.target.value;
+        onValue(raw === "" ? null : Number(raw));
+    }}
+  ></ha-input>`;
+}
+/**
+ * Repeatable guard editor. Mirrors the pre-start entity list pattern.
+ * `onChange` always receives a fresh array so callers can mark dirty uniformly.
+ */
+function renderGuardList(hass, listId, guards, onChange) {
+    const replaceAt = (i, patch) => {
+        const next = guards.map((g, idx) => (idx === i ? { ...g, ...patch } : g));
+        onChange(next);
+    };
+    return b `
+    <div class="guard-rows">
+      ${guards.map((g, i) => {
+        const reading = currentState(hass, g.entity_id);
+        return b `
+          <div class="guard-row">
+            ${renderNativeEntityField(hass, listId, t(hass, "config_panel.guards_entity_label"), g.entity_id, (v) => replaceAt(i, { entity_id: v }), "config_panel.guards_entity_placeholder")}
+            <div class="native-entity-field guard-operator">
+              <label class="native-entity-label"
+                >${t(hass, "config_panel.guards_operator_label")}</label
+              >
+              <select
+                class="field-select"
+                .value=${g.operator}
+                @change=${(e) => {
+            const op = asOperator(e.target.value);
+            // Reset the value when switching between value kinds.
+            const value = isNumericOp(op) ? null : isTextOp(op) ? "" : null;
+            replaceAt(i, { operator: op, value });
+        }}
+              >
+                ${GUARD_OPERATORS.map((op) => b `<option value=${op} ?selected=${op === g.operator}>
+                    ${t(hass, `config_panel.guard_op_${op}`)}
+                  </option>`)}
+              </select>
+            </div>
+            ${renderValueField(hass, g, (v) => replaceAt(i, { value: v }))}
+            <button
+              type="button"
+              class="row-remove"
+              @click=${() => onChange(guards.filter((_, idx) => idx !== i))}
+            >
+              ${t(hass, "config_panel.guards_remove")}
+            </button>
+            ${reading !== ""
+            ? b `<p class="hint guard-reading">
+                  ${t(hass, "config_panel.guards_current_value", { v: reading })}
+                </p>`
+            : A}
+            ${g.operator === "equals"
+            ? b `<p class="hint guard-reading">
+                  ${t(hass, "config_panel.guards_equals_hint")}
+                </p>`
+            : A}
+          </div>
+        `;
+    })}
+      <button
+        type="button"
+        class="btn-outline"
+        @click=${() => onChange([...guards, { entity_id: "", operator: "above", value: null }])}
+      >
+        ${t(hass, "config_panel.guards_add")}
+      </button>
+    </div>
+  `;
+}
+
 /** Shared stacked form layout: titles, helper text, full-width controls. */
 const formLayoutStyles = i$3 `
   .field-block {
@@ -2553,6 +2798,43 @@ const formLayoutStyles = i$3 `
   .entity-picker-row .native-entity-field {
     flex: 1;
     min-width: 0;
+  }
+  /* Guard rows carry up to three controls, so unlike .entity-picker-row they
+     must wrap instead of overflowing on narrow screens. */
+  .guard-rows {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+  }
+  .guard-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 8px;
+    width: 100%;
+  }
+  .guard-row .native-entity-field {
+    flex: 1 1 220px;
+    min-width: 0;
+  }
+  .guard-row .guard-operator {
+    flex: 0 0 160px;
+  }
+  .guard-row .guard-operator select.field-select {
+    width: 100%;
+  }
+  .guard-row ha-input.guard-value {
+    flex: 0 0 140px;
+  }
+  .guard-row button.row-remove {
+    flex: 0 0 auto;
+    margin-left: auto;
+  }
+  /* Full-width note under a row (current reading, operator hint). */
+  .guard-row .guard-reading {
+    flex: 1 0 100%;
+    margin: 0;
   }
   .native-entity-field {
     display: flex;
@@ -2731,6 +3013,8 @@ class CycleWizard extends i {
         this._zoneIds = [];
         this._enabled = true;
         this._label = "";
+        this._guards = [];
+        this._ignoreGlobalGuards = false;
         this._cycleId = null;
         this._busy = false;
         this._seeded = false;
@@ -2875,6 +3159,8 @@ class CycleWizard extends i {
             this._zoneIds = this._defaultZoneIds();
             this._enabled = true;
             this._label = "";
+            this._guards = [];
+            this._ignoreGlobalGuards = false;
             this._syncDefaultsForOption();
         }
         this._step = opts?.step ?? 1;
@@ -2904,6 +3190,8 @@ class CycleWizard extends i {
             ? [...first.zone_ids_ordered]
             : this._defaultZoneIds();
         this._enabled = Boolean(first.enabled ?? true);
+        this._guards = normalizeGuards(first.guards);
+        this._ignoreGlobalGuards = Boolean(first.ignore_global_guards ?? false);
     }
     _option() {
         return KIND_OPTIONS.find((o) => o.id === this._optionId) ?? KIND_OPTIONS[0];
@@ -2958,6 +3246,9 @@ class CycleWizard extends i {
         const zones = this.installation?.zones;
         const z = zones?.[id];
         return z ? String(z.name ?? id) : id;
+    }
+    _guardEntityListId() {
+        return `si-guard-cycle-${this.entryId}`;
     }
     _zoneDuration(id) {
         const zones = this.installation?.zones;
@@ -3039,6 +3330,10 @@ class CycleWizard extends i {
         this._msg = undefined;
         this.requestUpdate();
         try {
+            if (guardsIncomplete(this._guards)) {
+                this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
+                return;
+            }
             const opt = this._option();
             const res = await upsertCycle(this.hass, this.entryId, {
                 cycle_id: this._cycleId,
@@ -3046,6 +3341,8 @@ class CycleWizard extends i {
                 cycle_meta: this._meta(),
                 zone_ids_ordered: this._zoneIds,
                 enabled: this._enabled,
+                guards: guardsForSave(this._guards),
+                ignore_global_guards: this._ignoreGlobalGuards,
             });
             if (!res.success) {
                 this._msg = formatApiError(res.error, this.hass);
@@ -3305,6 +3602,28 @@ class CycleWizard extends i {
         </div>
       </div>
 
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
+        ${renderGuardList(this.hass, this._guardEntityListId(), this._guards, (next) => {
+            this._guards = next;
+            this.requestUpdate();
+        })}
+        <div class="switch-row">
+          <ha-switch
+            .checked=${this._ignoreGlobalGuards}
+            @change=${(e) => {
+            this._ignoreGlobalGuards = Boolean(e.target.checked);
+            this.requestUpdate();
+        }}
+          ></ha-switch>
+          <span class="switch-row-label"
+            >${t(this.hass, "config_panel.schedule_ignore_global_guards")}</span
+          >
+        </div>
+        <p class="hint">${t(this.hass, "config_panel.schedule_ignore_global_guards_hint")}</p>
+      </div>
+
       <div class="summary-card">
         <strong>${t(this.hass, "config_panel.cycle_creates_title")}</strong>
         <ul style="margin:8px 0 0;padding-left:1.1rem">
@@ -3317,6 +3636,9 @@ class CycleWizard extends i {
                     ? "config_panel.week_parity_odd"
                     : "config_panel.week_parity_even")
             : ""}
+              ${this._guards.length
+            ? b ` · ${guardsSummary(this.hass, this._guards)}`
+            : A}
             </li>`)}
         </ul>
         ${est > 0
@@ -3350,6 +3672,7 @@ class CycleWizard extends i {
             ? "config_panel.cycle_edit_title"
             : "config_panel.cycle_new";
         return b `
+      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}
@@ -3423,6 +3746,12 @@ __decorate([
 __decorate([
     r()
 ], CycleWizard.prototype, "_label", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_guards", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_ignoreGlobalGuards", void 0);
 __decorate([
     r()
 ], CycleWizard.prototype, "_cycleId", void 0);
@@ -3580,6 +3909,8 @@ class ViewSchedule extends i {
                 zone_ids_ordered: Array.isArray(o.zone_ids_ordered) ? [...o.zone_ids_ordered] : [],
                 name: String(o.name ?? "").trim(),
                 week_parity: o.week_parity === "odd" || o.week_parity === "even" ? o.week_parity : "every",
+                guards: normalizeGuards(o.guards),
+                ignore_global_guards: Boolean(o.ignore_global_guards ?? false),
                 cycle_id: rid,
                 cycle_kind: String(o.cycle_kind ?? "custom"),
                 cycle_meta: o.cycle_meta ?? null,
@@ -3625,7 +3956,40 @@ class ViewSchedule extends i {
         return { groups, custom: single };
     }
     _cloneSlot(s) {
-        return { ...s, weekdays: [...s.weekdays], zone_ids_ordered: [...s.zone_ids_ordered] };
+        return {
+            ...s,
+            weekdays: [...s.weekdays],
+            zone_ids_ordered: [...s.zone_ids_ordered],
+            guards: s.guards.map((g) => ({ ...g })),
+        };
+    }
+    _guardEntityListId() {
+        return `si-guard-${this.entryId}`;
+    }
+    /** Guards defined on the installation; inherited unless a slot opts out. */
+    _globalGuards() {
+        return normalizeGuards(this.installation?.guards);
+    }
+    /** Badge text for a slot's own guards: one spelled out, several counted. */
+    _guardBadge(guards) {
+        return guards.length === 1
+            ? guardLabel(this.hass, guards[0])
+            : t(this.hass, "config_panel.guards_count", { n: String(guards.length) });
+    }
+    /** Read-only chips shown on a slot/cycle row. */
+    _renderGuardMeta(guards, ignoreGlobal) {
+        return b `
+      ${guards.length
+            ? b `<span class="meta"
+            ><ha-icon icon="mdi:shield-check-outline"></ha-icon>${this._guardBadge(guards)}</span
+          >`
+            : A}
+      ${ignoreGlobal
+            ? b `<span class="meta"
+            ><ha-icon icon="mdi:shield-off-outline"></ha-icon>${t(this.hass, "config_panel.schedule_guards_global_off")}</span
+          >`
+            : A}
+    `;
     }
     _zonesMap() {
         return this.installation?.zones;
@@ -4001,6 +4365,10 @@ class ViewSchedule extends i {
             this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
             return;
         }
+        if (guardsIncomplete(d.guards)) {
+            this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
+            return;
+        }
         const ok = await this._call({
             action: "update",
             slot_id: d.slot_id,
@@ -4010,6 +4378,8 @@ class ViewSchedule extends i {
             zone_ids_ordered: d.zone_ids_ordered,
             name: d.name.trim(),
             week_parity: d.week_parity,
+            guards: guardsForSave(d.guards),
+            ignore_global_guards: d.ignore_global_guards,
         });
         if (ok)
             this._closeEditDialog();
@@ -4082,6 +4452,16 @@ class ViewSchedule extends i {
             : A}
         <span>${weekdaysSummary(this.hass, m.weekdays)}</span>
         <span class="muted">${formatTimeLocalForDisplay(this.hass, m.time_local)}</span>
+        ${m.guards.length
+            ? b `<span class="muted"
+              ><ha-icon icon="mdi:shield-check-outline"></ha-icon>${this._guardBadge(m.guards)}</span
+            >`
+            : A}
+        ${m.ignore_global_guards
+            ? b `<span class="muted"
+              ><ha-icon icon="mdi:shield-off-outline"></ha-icon>${t(this.hass, "config_panel.schedule_guards_global_off")}</span
+            >`
+            : A}
         <span class="muted"
           >${m.zone_ids_ordered.length === 1
             ? t(this.hass, "config_panel.schedule_zones_in_order_one")
@@ -4152,6 +4532,9 @@ class ViewSchedule extends i {
               <span class="meta"
                 ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: zoneIds.length, p: phases, m: est })}</span
               >
+              ${g.members[0]
+            ? this._renderGuardMeta(g.members[0].guards, g.members[0].ignore_global_guards)
+            : A}
               ${next
             ? b `<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(this.hass, mondayBasedWeekday(next))}
@@ -4248,6 +4631,7 @@ class ViewSchedule extends i {
               <span class="meta"
                 ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: s.zone_ids_ordered.length, p: phases, m: est })}</span
               >
+              ${this._renderGuardMeta(s.guards, s.ignore_global_guards)}
               ${next
             ? b `<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(this.hass, mondayBasedWeekday(next))}
@@ -4308,6 +4692,44 @@ class ViewSchedule extends i {
             return [];
         return Object.keys(zones).filter((id) => !draft.zone_ids_ordered.includes(id));
     }
+    /**
+     * "Runs then and then — but only if x AND y AND z", so this sits below the
+     * timing fields rather than above them.
+     */
+    _renderGuardSection(draft) {
+        const globals = this._globalGuards();
+        return b `
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
+        ${renderGuardList(this.hass, this._guardEntityListId(), draft.guards, (next) => {
+            draft.guards = next;
+            this.requestUpdate();
+        })}
+        <div class="switch-row">
+          <ha-switch
+            .disabled=${this._busy}
+            .checked=${draft.ignore_global_guards}
+            @change=${(e) => {
+            draft.ignore_global_guards = Boolean(e.target.checked);
+            this.requestUpdate();
+        }}
+          ></ha-switch>
+          <span class="switch-row-label"
+            >${t(this.hass, "config_panel.schedule_ignore_global_guards")}</span
+          >
+        </div>
+        <p class="hint">${t(this.hass, "config_panel.schedule_ignore_global_guards_hint")}</p>
+        ${globals.length && !draft.ignore_global_guards
+            ? b `<p class="hint">
+              ${t(this.hass, "config_panel.schedule_guards_inherited", {
+                list: globals.map((g) => guardLabel(this.hass, g)).join(", "),
+            })}
+            </p>`
+            : A}
+      </div>
+    `;
+    }
     _renderEditDialog(draft) {
         const zones = this._zonesMap();
         const addZoneOpts = this._addZoneOptionsForDraft(draft);
@@ -4354,6 +4776,7 @@ class ViewSchedule extends i {
           />
         </div>
       </div>
+      ${this._renderGuardSection(draft)}
       <div class="field-block">
         <div class="switch-row">
           <ha-switch
@@ -4435,6 +4858,7 @@ class ViewSchedule extends i {
         const hasAny = groups.length > 0 || custom.length > 0;
         const cleanupCandidates = this._analyzeCleanup().length;
         return b `
+      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>
@@ -4589,43 +5013,6 @@ __decorate([
 ], ViewSchedule.prototype, "_wizard", void 0);
 defineCustomElementOnce("si-view-schedule", ViewSchedule);
 
-/** Entity IDs for allowed output domains (same rule set as the backend). */
-function entityIdsForDomains(hass, domains) {
-    return Object.keys(hass.states)
-        .filter((eid) => domains.includes(eid.split(".", 1)[0]))
-        .sort((a, b) => a.localeCompare(b));
-}
-/** One shared `<datalist>` per form (by stable `listId`). */
-function renderEntityDatalist(hass, listId, domains) {
-    const ids = entityIdsForDomains(hass, domains);
-    return b `
-    <datalist id=${listId}>
-      ${ids.map((id) => b `<option value=${id}></option>`)}
-    </datalist>
-  `;
-}
-/**
- * Browser autocomplete for entity_id — works inside panel_custom scoped registries where
- * `ha-entity-picker` is not registered.
- */
-function renderNativeEntityField(hass, listId, label, value, onValue) {
-    return b `
-    <div class="native-entity-field">
-      <label class="native-entity-label">${label}</label>
-      <input
-        type="text"
-        class="entity-id-input"
-        list=${listId}
-        .value=${value}
-        placeholder=${t(hass, "config_panel.entity_placeholder_example")}
-        spellcheck="false"
-        autocomplete="off"
-        @input=${(e) => onValue(e.target.value)}
-      />
-    </div>
-  `;
-}
-
 class ViewSettings extends i {
     constructor() {
         super(...arguments);
@@ -4640,6 +5027,7 @@ class ViewSettings extends i {
         this._maxParallel = 2;
         this._preStart = [];
         this._preStartDelaySec = 10;
+        this._guards = [];
         this._beforeUnload = (e) => {
             if (this._dirty) {
                 e.preventDefault();
@@ -4709,6 +5097,7 @@ class ViewSettings extends i {
         this._preStart = ps.length ? [...ps] : [""];
         const d = Number(inst.pre_start_delay_sec ?? 10);
         this._preStartDelaySec = Number.isFinite(d) ? Math.max(1, Math.min(3600, Math.round(d))) : 10;
+        this._guards = normalizeGuards(inst.guards);
         this._dirty = false;
     }
     connectedCallback() {
@@ -4727,7 +5116,15 @@ class ViewSettings extends i {
     _entityListId() {
         return `si-ent-s-${this.entryId}`;
     }
+    _guardEntityListId() {
+        return `si-guard-s-${this.entryId}`;
+    }
     async _save() {
+        if (guardsIncomplete(this._guards)) {
+            this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
+            this.requestUpdate();
+            return;
+        }
         this._busy = true;
         this._msg = undefined;
         this.requestUpdate();
@@ -4739,6 +5136,7 @@ class ViewSettings extends i {
                 mode: this._mode,
                 max_parallel_zones: this._maxParallel,
                 is_default: this._isDefault,
+                guards: guardsForSave(this._guards),
             });
             if (!res.success) {
                 this._msg = formatApiError(res.error, this.hass);
@@ -4793,6 +5191,7 @@ class ViewSettings extends i {
         const domains = this.outputEntityDomains ?? ["switch", "input_boolean", "group", "valve"];
         return b `
       ${renderEntityDatalist(this.hass, this._entityListId(), domains)}
+      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:cog-outline"></ha-icon>
@@ -4923,6 +5322,17 @@ class ViewSettings extends i {
             <p class="hint">${t(this.hass, "config_panel.settings_max_parallel_hint")}</p>
           </div>
 
+          <div class="section-title">${t(this.hass, "config_panel.settings_section_guards")}</div>
+          <div class="field-block">
+            <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
+            <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
+            ${renderGuardList(this.hass, this._guardEntityListId(), this._guards, (next) => {
+            this._guards = next;
+            this._markDirty();
+        })}
+            <p class="hint">${t(this.hass, "config_panel.settings_guards_hint")}</p>
+          </div>
+
           <div class="section-title">${t(this.hass, "config_panel.general_default_section")}</div>
           <div class="field-block">
             <div class="switch-row">
@@ -5035,6 +5445,9 @@ __decorate([
 __decorate([
     r()
 ], ViewSettings.prototype, "_showRaw", void 0);
+__decorate([
+    r()
+], ViewSettings.prototype, "_guards", void 0);
 defineCustomElementOnce("si-view-settings", ViewSettings);
 
 class ViewTimetable extends i {
