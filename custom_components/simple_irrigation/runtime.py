@@ -25,8 +25,9 @@ from .const import (
     RUN_STATE_STOPPING,
 )
 from .grouping import can_join_active_phase, compute_phases
+from .guards import guards_allow_run
 from .models import RunState, Zone
-from .scheduler import phases_for_slot, slot_allows_humidity_run
+from .scheduler import phases_for_slot
 
 if TYPE_CHECKING:
     from .coordinator import SimpleIrrigationCoordinator
@@ -525,7 +526,7 @@ class IrrigationRuntime:
             if nxt is None:
                 continue
             if abs((now - nxt).total_seconds()) < 120:
-                if slot_allows_humidity_run(self.hass, slot):
+                if guards_allow_run(self.hass, inst, slot):
                     due_slots.append(slot)
         merged: list[list[str]] = []
         for slot in due_slots:

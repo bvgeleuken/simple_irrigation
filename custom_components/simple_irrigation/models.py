@@ -2,11 +2,89 @@
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any
 
-from .const import MODE_NORMAL, RUN_STATE_IDLE, WEEK_PARITIES, WEEK_PARITY_EVERY
+from .const import (
+    GUARD_BOOLEAN_OPERATORS,
+    GUARD_NUMERIC_OPERATORS,
+    GUARD_OP_ABOVE,
+    GUARD_OPERATORS,
+    MODE_NORMAL,
+    RUN_STATE_IDLE,
+    WEEK_PARITIES,
+    WEEK_PARITY_EVERY,
+)
+
+_LOGGER = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class Guard:
+    """One condition that must hold for a scheduled run to start.
+
+    ``value`` is interpreted by ``operator``: a number for the numeric operators,
+    text for ``state_is``, and ignored (always ``None``) for the boolean ones.
+    Guards are immutable value objects — the list is always replaced wholesale,
+    never mutated in place, which makes copying between slots trivially safe.
+    """
+
+    entity_id: str
+    operator: str = GUARD_OP_ABOVE
+    value: float | str | None = None
+
+    def to_dict(self) -> dict[str, Any]:
+        """Serialize to JSON-compatible dict."""
+        return {
+            "entity_id": self.entity_id,
+            "operator": self.operator,
+            "value": self.value,
+        }
+
+    @staticmethod
+    def from_dict(data: Any) -> Guard | None:
+        """Deserialize one guard; return None when it cannot be used."""
+        if not isinstance(data, dict):
+            return None
+        entity_id = str(data.get("entity_id") or "").strip()
+        if not entity_id or "." not in entity_id:
+            return None
+        operator = str(data.get("operator") or "").strip()
+        if operator not in GUARD_OPERATORS:
+            return None
+
+        raw = data.get("value")
+        value: float | str | None
+        if operator in GUARD_BOOLEAN_OPERATORS:
+            value = None
+        elif operator in GUARD_NUMERIC_OPERATORS:
+            if raw in (None, ""):
+                return None
+            try:
+                value = float(raw)
+            except (TypeError, ValueError):
+                return None
+        else:  # text operators
+            value = str(raw).strip() if raw not in (None, "") else None
+            if not value:
+                return None
+        return Guard(entity_id=entity_id, operator=operator, value=value)
+
+
+def parse_guards(raw: Any) -> list[Guard]:
+    """Tolerantly build a guard list; unusable entries are dropped with a warning."""
+    out: list[Guard] = []
+    if not isinstance(raw, (list, tuple)):
+        return out
+    for item in raw:
+        guard = Guard.from_dict(item)
+        if guard is None:
+            _LOGGER.warning("Dropping unusable guard definition: %r", item)
+            continue
+        out.append(guard)
+    return out
 
 
 @dataclass
@@ -104,8 +182,10 @@ class ScheduleSlot:
     zone_ids_ordered: list[str] = field(default_factory=list)
     name: str = ""  # optional label for automations / recognition in the UI
     week_parity: str = WEEK_PARITY_EVERY  # every | odd | even (ISO calendar week)
-    humidity_sensor_entity_id: str | None = None
-    humidity_threshold: float | None = None
+    # Conditions for this slot; AND-combined with the installation's guards
+    # unless ``ignore_global_guards`` opts out (e.g. a greenhouse ignoring rain).
+    guards: list[Guard] = field(default_factory=list)
+    ignore_global_guards: bool = False
     # --- Cycle grouping (presentation + generation metadata only) -----------
     # The runtime never reads these; scheduling still uses weekdays/time/parity.
     cycle_id: str | None = None  # uuid4 shared by all slots of one cycle
@@ -124,8 +204,8 @@ class ScheduleSlot:
             "zone_ids_ordered": list(self.zone_ids_ordered),
             "name": self.name,
             "week_parity": self.week_parity,
-            "humidity_sensor_entity_id": self.humidity_sensor_entity_id,
-            "humidity_threshold": self.humidity_threshold,
+            "guards": [g.to_dict() for g in self.guards],
+            "ignore_global_guards": self.ignore_global_guards,
             "cycle_id": self.cycle_id,
             "cycle_kind": self.cycle_kind,
             "cycle_meta": dict(self.cycle_meta) if self.cycle_meta else None,
@@ -155,16 +235,8 @@ class ScheduleSlot:
             zone_ids_ordered=list(data.get("zone_ids_ordered", [])),
             name=str(data.get("name") or ""),
             week_parity=parity,
-            humidity_sensor_entity_id=(
-                str(data["humidity_sensor_entity_id"]).strip()
-                if data.get("humidity_sensor_entity_id")
-                else None
-            ),
-            humidity_threshold=(
-                float(data["humidity_threshold"])
-                if data.get("humidity_threshold") not in (None, "")
-                else None
-            ),
+            guards=parse_guards(data.get("guards")),
+            ignore_global_guards=bool(data.get("ignore_global_guards", False)),
             cycle_id=cycle_id,
             cycle_kind=cycle_kind,
             cycle_meta=cycle_meta,
@@ -184,6 +256,8 @@ class Installation:
     pause_until: datetime | None = None
     max_parallel_zones: int = 2
     is_default: bool = False
+    # Conditions applied to every scheduled run unless a slot opts out.
+    guards: list[Guard] = field(default_factory=list)
     zones: dict[str, Zone] = field(default_factory=dict)
     schedule_slots: list[ScheduleSlot] = field(default_factory=list)
 
@@ -199,6 +273,7 @@ class Installation:
             "pause_until": self.pause_until.isoformat() if self.pause_until else None,
             "max_parallel_zones": self.max_parallel_zones,
             "is_default": self.is_default,
+            "guards": [g.to_dict() for g in self.guards],
             "zones": {k: v.to_dict() for k, v in self.zones.items()},
             "schedule_slots": [s.to_dict() for s in self.schedule_slots],
         }
@@ -230,6 +305,7 @@ class Installation:
             pause_until=pause_until,
             max_parallel_zones=max(1, int(data.get("max_parallel_zones", 2))),
             is_default=bool(data.get("is_default", False)),
+            guards=parse_guards(data.get("guards")),
             zones=zones,
             schedule_slots=schedule_slots,
         )

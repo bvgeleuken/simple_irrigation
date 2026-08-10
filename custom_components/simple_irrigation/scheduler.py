@@ -12,6 +12,7 @@ from homeassistant.helpers.event import async_track_point_in_time
 from homeassistant.util import dt as dt_util
 
 from .grouping import compute_phases
+from .guards import guards_allow_run
 from .models import Installation, ScheduleSlot, Zone
 from .time_util import next_slot_fire_local_any
 
@@ -69,41 +70,6 @@ def phases_for_slot(
         max_parallel,
         skip_disabled=True,
     )
-
-
-def slot_allows_humidity_run(hass: HomeAssistant, slot: ScheduleSlot) -> bool:
-    """Return True when the slot may run for the current humidity reading."""
-    sensor_id = (slot.humidity_sensor_entity_id or "").strip()
-    threshold = slot.humidity_threshold
-    if not sensor_id or threshold is None:
-        return True
-
-    state = hass.states.get(sensor_id)
-    if state is None:
-        _LOGGER.warning("Humidity sensor %s is unavailable; allowing slot %s", sensor_id, slot.slot_id)
-        return True
-
-    raw = str(state.state).strip().replace("%", "")
-    try:
-        humidity = float(raw)
-    except (TypeError, ValueError):
-        _LOGGER.warning(
-            "Humidity sensor %s has non-numeric state %r; allowing slot %s",
-            sensor_id,
-            state.state,
-            slot.slot_id,
-        )
-        return True
-
-    if humidity > threshold:
-        _LOGGER.info(
-            "Skipping slot %s because humidity %.2f%% is above threshold %.2f%%",
-            slot.slot_id,
-            humidity,
-            threshold,
-        )
-        return False
-    return True
 
 
 class IrrigationScheduler:
@@ -231,7 +197,7 @@ class IrrigationScheduler:
                 if nxt is None:
                     continue
                 if abs((now - nxt).total_seconds()) < 90:
-                    if slot_allows_humidity_run(self.hass, slot):
+                    if guards_allow_run(self.hass, inst, slot):
                         due_slots.append(slot)
 
             if not due_slots:
