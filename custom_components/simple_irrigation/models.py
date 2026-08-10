@@ -104,6 +104,8 @@ class ScheduleSlot:
     zone_ids_ordered: list[str] = field(default_factory=list)
     name: str = ""  # optional label for automations / recognition in the UI
     week_parity: str = WEEK_PARITY_EVERY  # every | odd | even (ISO calendar week)
+    humidity_sensor_entity_id: str | None = None
+    humidity_threshold: float | None = None
     # --- Cycle grouping (presentation + generation metadata only) -----------
     # The runtime never reads these; scheduling still uses weekdays/time/parity.
     cycle_id: str | None = None  # uuid4 shared by all slots of one cycle
@@ -122,6 +124,8 @@ class ScheduleSlot:
             "zone_ids_ordered": list(self.zone_ids_ordered),
             "name": self.name,
             "week_parity": self.week_parity,
+            "humidity_sensor_entity_id": self.humidity_sensor_entity_id,
+            "humidity_threshold": self.humidity_threshold,
             "cycle_id": self.cycle_id,
             "cycle_kind": self.cycle_kind,
             "cycle_meta": dict(self.cycle_meta) if self.cycle_meta else None,
@@ -151,6 +155,16 @@ class ScheduleSlot:
             zone_ids_ordered=list(data.get("zone_ids_ordered", [])),
             name=str(data.get("name") or ""),
             week_parity=parity,
+            humidity_sensor_entity_id=(
+                str(data["humidity_sensor_entity_id"]).strip()
+                if data.get("humidity_sensor_entity_id")
+                else None
+            ),
+            humidity_threshold=(
+                float(data["humidity_threshold"])
+                if data.get("humidity_threshold") not in (None, "")
+                else None
+            ),
             cycle_id=cycle_id,
             cycle_kind=cycle_kind,
             cycle_meta=cycle_meta,

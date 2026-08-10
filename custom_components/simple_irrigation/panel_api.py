@@ -37,6 +37,8 @@ from .scheduler import compute_next_runs, phases_for_slot
 from .time_util import next_slot_fire_local_any, parse_hh_mm
 from .validation import (
     parse_zone_switch_entities,
+    validate_humidity_sensor_entity_id,
+    validate_humidity_threshold,
     validate_max_parallel,
     validate_mode,
     validate_pre_start_entities,
@@ -447,6 +449,8 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 vol.Optional("zone_ids_ordered"): [cv.string],
                 vol.Optional("name"): cv.string,
                 vol.Optional("week_parity"): vol.In(WEEK_PARITIES),
+                vol.Optional("humidity_sensor_entity_id"): vol.Any(cv.string, None),
+                vol.Optional("humidity_threshold"): vol.Any(vol.Coerce(float), None),
                 vol.Optional("cycle_id"): vol.Any(cv.string, None),
                 vol.Optional("cycle_kind"): vol.In(CYCLE_KINDS),
                 vol.Optional("cycle_meta"): vol.Schema(
@@ -483,6 +487,38 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 return normalize_weekdays([data["weekday"]])
             return fallback
 
+        def _resolve_humidity_rule(
+            slot: ScheduleSlot | None = None,
+        ) -> tuple[str | None, float | None] | str | None:
+            sensor_present = "humidity_sensor_entity_id" in data
+            threshold_present = "humidity_threshold" in data
+            if not sensor_present and not threshold_present:
+                if slot is not None:
+                    return slot.humidity_sensor_entity_id, slot.humidity_threshold
+                return None
+
+            sensor_raw = data.get("humidity_sensor_entity_id")
+            threshold_raw = data.get("humidity_threshold")
+            sensor_id = str(sensor_raw).strip() if sensor_raw not in (None, "") else None
+            try:
+                threshold = None if threshold_raw in (None, "") else float(threshold_raw)
+            except (TypeError, ValueError):
+                return "invalid_humidity_threshold"
+
+            if sensor_id is None and threshold is None:
+                return (None, None)
+
+            if not sensor_id or threshold is None:
+                return "invalid_humidity_rule"
+
+            sensor_err = validate_humidity_sensor_entity_id(hass, sensor_id)
+            if sensor_err:
+                return sensor_err
+            threshold_err = validate_humidity_threshold(threshold)
+            if threshold_err:
+                return threshold_err
+            return sensor_id, threshold
+
         if action == "add":
             t = data.get("time_local", "06:00")
             if parse_hh_mm(str(t).strip()) is None:
@@ -490,6 +526,10 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             weekdays = _resolve_weekdays([0])
             if not weekdays:
                 return self.json({"success": False, "error": "invalid_weekdays"}, status=400)
+            humidity_rule = _resolve_humidity_rule()
+            if isinstance(humidity_rule, str):
+                return self.json({"success": False, "error": humidity_rule}, status=400)
+            humidity_sensor_entity_id, humidity_threshold = humidity_rule or (None, None)
             slot = ScheduleSlot(
                 slot_id=str(uuid.uuid4()),
                 weekdays=weekdays,
@@ -497,6 +537,8 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 enabled=bool(data.get("enabled", True)),
                 name=str(data.get("name") or "").strip(),
                 week_parity=str(data.get("week_parity") or WEEK_PARITY_EVERY),
+                humidity_sensor_entity_id=humidity_sensor_entity_id,
+                humidity_threshold=humidity_threshold,
             )
             inst.schedule_slots.append(slot)
             await coord.async_update_installation(inst)
@@ -524,6 +566,10 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             if not specs:
                 return self.json({"success": False, "error": "invalid_cycle"}, status=400)
             label = str(meta.get("label") or "").strip()
+            humidity_rule = _resolve_humidity_rule()
+            if isinstance(humidity_rule, str):
+                return self.json({"success": False, "error": humidity_rule}, status=400)
+            humidity_sensor_entity_id, humidity_threshold = humidity_rule or (None, None)
 
             # A "cycle" only exists when the cadence genuinely needs >=2 slots
             # (e.g. every 2/3 days via odd/even parity). Cadences expressible as a
@@ -547,6 +593,16 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                     zone_ids_ordered=list(zone_ids),
                     name=label,
                     week_parity=spec["week_parity"],
+                    humidity_sensor_entity_id=(
+                        humidity_sensor_entity_id
+                        if humidity_rule is not None
+                        else (existing[0].humidity_sensor_entity_id if existing else None)
+                    ),
+                    humidity_threshold=(
+                        humidity_threshold
+                        if humidity_rule is not None
+                        else (existing[0].humidity_threshold if existing else None)
+                    ),
                     cycle_id=new_cid,
                     cycle_kind=kind if is_cycle else "custom",
                     cycle_meta=dict(meta) if is_cycle else None,
@@ -612,6 +668,8 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                     zone_ids_ordered=list(slot.zone_ids_ordered),
                     name=slot.name,
                     week_parity=slot.week_parity,
+                    humidity_sensor_entity_id=slot.humidity_sensor_entity_id,
+                    humidity_threshold=slot.humidity_threshold,
                 )
                 for wd in slot.weekdays
             ]
@@ -650,6 +708,11 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 slot.name = str(data["name"] or "").strip()
             if "week_parity" in data:
                 slot.week_parity = str(data["week_parity"])
+            humidity_rule = _resolve_humidity_rule(slot)
+            if isinstance(humidity_rule, str):
+                return self.json({"success": False, "error": humidity_rule}, status=400)
+            if humidity_rule is not None:
+                slot.humidity_sensor_entity_id, slot.humidity_threshold = humidity_rule
             if "cycle_id" in data:
                 slot.cycle_id = str(data["cycle_id"]) if data["cycle_id"] else None
             if "cycle_kind" in data:

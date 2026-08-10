@@ -39,6 +39,8 @@ export const upsertCycle = (
     cycle_meta: Record<string, unknown>;
     zone_ids_ordered: string[];
     enabled: boolean;
+    humidity_sensor_entity_id?: string | null;
+    humidity_threshold?: number | null;
   }
 ): Promise<{ success: boolean; error?: string; cycle_id?: string; slots?: string[] }> =>
   hass.callApi("POST", "simple_irrigation/panel/slot", {

@@ -9,6 +9,8 @@ from custom_components.simple_irrigation.validation import (
     is_allowed_output_domain,
     parse_zone_switch_entities,
     validate_output_entity_id,
+    validate_humidity_sensor_entity_id,
+    validate_humidity_threshold,
 )
 
 
@@ -53,3 +55,17 @@ def test_parse_zone_switch_entities_list_and_legacy() -> None:
         {"switch_entity_ids": [], "switch_entity_id": "switch.y"}
     ) == ["switch.y"]
     assert parse_zone_switch_entities({}) == []
+
+
+def test_validate_humidity_sensor_entity_id_domain() -> None:
+    hass = MagicMock()
+    hass.states.get.return_value = MagicMock()
+    assert validate_humidity_sensor_entity_id(hass, "sensor.soil_humidity") is None
+    assert validate_humidity_sensor_entity_id(hass, "switch.pump") is not None
+
+
+def test_validate_humidity_threshold() -> None:
+    assert validate_humidity_threshold(0) is None
+    assert validate_humidity_threshold(45.5) is None
+    assert validate_humidity_threshold(101) is not None
+    assert validate_humidity_threshold(None) is not None

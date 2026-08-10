@@ -12,6 +12,8 @@ __all__ = [
     "domain_of",
     "is_allowed_output_domain",
     "parse_zone_switch_entities",
+    "validate_humidity_sensor_entity_id",
+    "validate_humidity_threshold",
     "validate_output_entity_id",
     "validate_zone_payload",
     "validate_pre_start_entities",
@@ -40,6 +42,30 @@ def validate_output_entity_id(hass: Any, entity_id: str | None) -> str | None:
         return "invalid_output"
     if hass.states.get(entity_id) is None:
         return "unknown_entity"
+    return None
+
+
+def validate_humidity_sensor_entity_id(hass: Any, entity_id: str | None) -> str | None:
+    """Return error key or None if humidity sensor entity exists and is readable."""
+    if not entity_id or "." not in entity_id:
+        return "invalid_humidity_sensor"
+    if domain_of(entity_id) != "sensor":
+        return "invalid_humidity_sensor"
+    if hass.states.get(entity_id) is None:
+        return "unknown_entity"
+    return None
+
+
+def validate_humidity_threshold(value: Any) -> str | None:
+    """Return error key or None for a humidity threshold in percent."""
+    if value is None or value == "":
+        return "invalid_humidity_threshold"
+    try:
+        threshold = float(value)
+    except (TypeError, ValueError):
+        return "invalid_humidity_threshold"
+    if threshold < 0 or threshold > 100:
+        return "invalid_humidity_threshold"
     return None
 
 
