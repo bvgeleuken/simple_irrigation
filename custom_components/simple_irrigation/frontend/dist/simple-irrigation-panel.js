@@ -2510,6 +2510,43 @@ __decorate([
 ], ViewOverview.prototype, "_msg", void 0);
 defineCustomElementOnce("si-view-overview", ViewOverview);
 
+/** Entity IDs for allowed output domains (same rule set as the backend). */
+function entityIdsForDomains(hass, domains) {
+    return Object.keys(hass.states)
+        .filter((eid) => domains.includes(eid.split(".", 1)[0]))
+        .sort((a, b) => a.localeCompare(b));
+}
+/** One shared `<datalist>` per form (by stable `listId`). */
+function renderEntityDatalist(hass, listId, domains) {
+    const ids = entityIdsForDomains(hass, domains);
+    return b `
+    <datalist id=${listId}>
+      ${ids.map((id) => b `<option value=${id}></option>`)}
+    </datalist>
+  `;
+}
+/**
+ * Browser autocomplete for entity_id — works inside panel_custom scoped registries where
+ * `ha-entity-picker` is not registered.
+ */
+function renderNativeEntityField(hass, listId, label, value, onValue) {
+    return b `
+    <div class="native-entity-field">
+      <label class="native-entity-label">${label}</label>
+      <input
+        type="text"
+        class="entity-id-input"
+        list=${listId}
+        .value=${value}
+        placeholder=${t(hass, "config_panel.entity_placeholder_example")}
+        spellcheck="false"
+        autocomplete="off"
+        @input=${(e) => onValue(e.target.value)}
+      />
+    </div>
+  `;
+}
+
 /** Shared stacked form layout: titles, helper text, full-width controls. */
 const formLayoutStyles = i$3 `
   .field-block {
@@ -2731,6 +2768,8 @@ class CycleWizard extends i {
         this._zoneIds = [];
         this._enabled = true;
         this._label = "";
+        this._humiditySensorEntityId = "";
+        this._humidityThreshold = null;
         this._cycleId = null;
         this._busy = false;
         this._seeded = false;
@@ -2875,6 +2914,8 @@ class CycleWizard extends i {
             this._zoneIds = this._defaultZoneIds();
             this._enabled = true;
             this._label = "";
+            this._humiditySensorEntityId = "";
+            this._humidityThreshold = null;
             this._syncDefaultsForOption();
         }
         this._step = opts?.step ?? 1;
@@ -2904,6 +2945,11 @@ class CycleWizard extends i {
             ? [...first.zone_ids_ordered]
             : this._defaultZoneIds();
         this._enabled = Boolean(first.enabled ?? true);
+        this._humiditySensorEntityId = String(first.humidity_sensor_entity_id ?? "").trim();
+        this._humidityThreshold =
+            first.humidity_threshold === null || first.humidity_threshold === undefined || first.humidity_threshold === ""
+                ? null
+                : Number(first.humidity_threshold);
     }
     _option() {
         return KIND_OPTIONS.find((o) => o.id === this._optionId) ?? KIND_OPTIONS[0];
@@ -2958,6 +3004,16 @@ class CycleWizard extends i {
         const zones = this.installation?.zones;
         const z = zones?.[id];
         return z ? String(z.name ?? id) : id;
+    }
+    _humidityEntityListId() {
+        return `si-humidity-cycle-${this.entryId}`;
+    }
+    _entityName(entityId) {
+        const st = this.hass.states[entityId];
+        return st ? String(st.attributes?.friendly_name ?? entityId) : entityId;
+    }
+    _humiditySummary() {
+        return `${this._entityName(this._humiditySensorEntityId)} · ${t(this.hass, "config_panel.schedule_humidity_summary", { n: String(this._humidityThreshold ?? "") })}`;
     }
     _zoneDuration(id) {
         const zones = this.installation?.zones;
@@ -3039,6 +3095,12 @@ class CycleWizard extends i {
         this._msg = undefined;
         this.requestUpdate();
         try {
+            const sensorFilled = Boolean(this._humiditySensorEntityId.trim());
+            const thresholdFilled = this._humidityThreshold !== null && this._humidityThreshold !== undefined;
+            if (sensorFilled !== thresholdFilled) {
+                this._msg = t(this.hass, "config_panel.schedule_err_humidity_rule");
+                return;
+            }
             const opt = this._option();
             const res = await upsertCycle(this.hass, this.entryId, {
                 cycle_id: this._cycleId,
@@ -3046,6 +3108,8 @@ class CycleWizard extends i {
                 cycle_meta: this._meta(),
                 zone_ids_ordered: this._zoneIds,
                 enabled: this._enabled,
+                humidity_sensor_entity_id: sensorFilled ? this._humiditySensorEntityId.trim() : null,
+                humidity_threshold: sensorFilled ? this._humidityThreshold : null,
             });
             if (!res.success) {
                 this._msg = formatApiError(res.error, this.hass);
@@ -3305,6 +3369,31 @@ class CycleWizard extends i {
         </div>
       </div>
 
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_humidity_section_title")}</span>
+        <div class="field-row" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          ${renderNativeEntityField(this.hass, this._humidityEntityListId(), t(this.hass, "config_panel.schedule_humidity_sensor_title"), this._humiditySensorEntityId, (v) => {
+            this._humiditySensorEntityId = v;
+            this.requestUpdate();
+        })}
+          <ha-input
+            style="min-width:160px;flex:0 0 160px"
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            .label=${t(this.hass, "config_panel.schedule_humidity_threshold_title")}
+            .value=${this._humidityThreshold === null ? "" : String(this._humidityThreshold)}
+            @input=${(e) => {
+            const raw = e.target.value;
+            this._humidityThreshold = raw === "" ? null : Number(raw);
+            this.requestUpdate();
+        }}
+          ></ha-input>
+        </div>
+        <p class="hint">${t(this.hass, "config_panel.schedule_humidity_section_desc")}</p>
+      </div>
+
       <div class="summary-card">
         <strong>${t(this.hass, "config_panel.cycle_creates_title")}</strong>
         <ul style="margin:8px 0 0;padding-left:1.1rem">
@@ -3317,6 +3406,9 @@ class CycleWizard extends i {
                     ? "config_panel.week_parity_odd"
                     : "config_panel.week_parity_even")
             : ""}
+              ${this._humiditySensorEntityId && this._humidityThreshold !== null
+            ? b ` · ${this._humiditySummary()}`
+            : A}
             </li>`)}
         </ul>
         ${est > 0
@@ -3350,6 +3442,7 @@ class CycleWizard extends i {
             ? "config_panel.cycle_edit_title"
             : "config_panel.cycle_new";
         return b `
+      ${renderEntityDatalist(this.hass, this._humidityEntityListId(), ["sensor"])}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}
@@ -3423,6 +3516,12 @@ __decorate([
 __decorate([
     r()
 ], CycleWizard.prototype, "_label", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_humiditySensorEntityId", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_humidityThreshold", void 0);
 __decorate([
     r()
 ], CycleWizard.prototype, "_cycleId", void 0);
@@ -3580,6 +3679,10 @@ class ViewSchedule extends i {
                 zone_ids_ordered: Array.isArray(o.zone_ids_ordered) ? [...o.zone_ids_ordered] : [],
                 name: String(o.name ?? "").trim(),
                 week_parity: o.week_parity === "odd" || o.week_parity === "even" ? o.week_parity : "every",
+                humidity_sensor_entity_id: String(o.humidity_sensor_entity_id ?? "").trim(),
+                humidity_threshold: o.humidity_threshold === null || o.humidity_threshold === undefined || o.humidity_threshold === ""
+                    ? null
+                    : Number(o.humidity_threshold),
                 cycle_id: rid,
                 cycle_kind: String(o.cycle_kind ?? "custom"),
                 cycle_meta: o.cycle_meta ?? null,
@@ -3626,6 +3729,18 @@ class ViewSchedule extends i {
     }
     _cloneSlot(s) {
         return { ...s, weekdays: [...s.weekdays], zone_ids_ordered: [...s.zone_ids_ordered] };
+    }
+    _humidityEntityListId() {
+        return `si-humidity-${this.entryId}`;
+    }
+    _entityName(entityId) {
+        const st = this.hass.states[entityId];
+        return st ? String(st.attributes?.friendly_name ?? entityId) : entityId;
+    }
+    _humiditySummary(entityId, threshold) {
+        return `${this._entityName(entityId)} · ${t(this.hass, "config_panel.schedule_humidity_summary", {
+            n: threshold === null ? "" : String(threshold),
+        })}`;
     }
     _zonesMap() {
         return this.installation?.zones;
@@ -4001,6 +4116,12 @@ class ViewSchedule extends i {
             this._msg = t(this.hass, "config_panel.schedule_err_no_weekdays");
             return;
         }
+        const sensorFilled = Boolean(d.humidity_sensor_entity_id.trim());
+        const thresholdFilled = d.humidity_threshold !== null && d.humidity_threshold !== undefined;
+        if (sensorFilled !== thresholdFilled) {
+            this._msg = t(this.hass, "config_panel.schedule_err_humidity_rule");
+            return;
+        }
         const ok = await this._call({
             action: "update",
             slot_id: d.slot_id,
@@ -4010,6 +4131,8 @@ class ViewSchedule extends i {
             zone_ids_ordered: d.zone_ids_ordered,
             name: d.name.trim(),
             week_parity: d.week_parity,
+            humidity_sensor_entity_id: sensorFilled ? d.humidity_sensor_entity_id.trim() : null,
+            humidity_threshold: sensorFilled ? d.humidity_threshold : null,
         });
         if (ok)
             this._closeEditDialog();
@@ -4082,6 +4205,11 @@ class ViewSchedule extends i {
             : A}
         <span>${weekdaysSummary(this.hass, m.weekdays)}</span>
         <span class="muted">${formatTimeLocalForDisplay(this.hass, m.time_local)}</span>
+        ${m.humidity_sensor_entity_id && m.humidity_threshold !== null
+            ? b `<span class="muted"
+              ><ha-icon icon="mdi:water-percent"></ha-icon>${this._humiditySummary(m.humidity_sensor_entity_id, m.humidity_threshold)}</span
+            >`
+            : A}
         <span class="muted"
           >${m.zone_ids_ordered.length === 1
             ? t(this.hass, "config_panel.schedule_zones_in_order_one")
@@ -4152,6 +4280,11 @@ class ViewSchedule extends i {
               <span class="meta"
                 ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: zoneIds.length, p: phases, m: est })}</span
               >
+              ${g.members[0]?.humidity_sensor_entity_id && g.members[0]?.humidity_threshold !== null
+            ? b `<span class="meta"
+                    ><ha-icon icon="mdi:water-percent"></ha-icon>${this._humiditySummary(g.members[0].humidity_sensor_entity_id, g.members[0].humidity_threshold)}</span
+                  >`
+            : A}
               ${next
             ? b `<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(this.hass, mondayBasedWeekday(next))}
@@ -4248,6 +4381,11 @@ class ViewSchedule extends i {
               <span class="meta"
                 ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: s.zone_ids_ordered.length, p: phases, m: est })}</span
               >
+              ${s.humidity_sensor_entity_id && s.humidity_threshold !== null
+            ? b `<span class="meta"
+                    ><ha-icon icon="mdi:water-percent"></ha-icon>${this._humiditySummary(s.humidity_sensor_entity_id, s.humidity_threshold)}</span
+                  >`
+            : A}
               ${next
             ? b `<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(this.hass, mondayBasedWeekday(next))}
@@ -4312,6 +4450,30 @@ class ViewSchedule extends i {
         const zones = this._zonesMap();
         const addZoneOpts = this._addZoneOptionsForDraft(draft);
         return b `
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_humidity_section_title")}</span>
+        <div class="field-row" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
+          ${renderNativeEntityField(this.hass, this._humidityEntityListId(), t(this.hass, "config_panel.schedule_humidity_sensor_title"), draft.humidity_sensor_entity_id, (v) => {
+            draft.humidity_sensor_entity_id = v;
+            this.requestUpdate();
+        })}
+          <ha-input
+            style="min-width:160px;flex:0 0 160px"
+            type="number"
+            min="0"
+            max="100"
+            step="0.1"
+            .label=${t(this.hass, "config_panel.schedule_humidity_threshold_title")}
+            .value=${draft.humidity_threshold === null ? "" : String(draft.humidity_threshold)}
+            @input=${(e) => {
+            const raw = e.target.value;
+            draft.humidity_threshold = raw === "" ? null : Number(raw);
+            this.requestUpdate();
+        }}
+          ></ha-input>
+        </div>
+        <p class="hint">${t(this.hass, "config_panel.schedule_humidity_section_desc")}</p>
+      </div>
       <div class="field-block">
         <span class="field-title">${t(this.hass, "config_panel.schedule_name_optional_title")}</span>
         <div class="field-row">
@@ -4435,6 +4597,7 @@ class ViewSchedule extends i {
         const hasAny = groups.length > 0 || custom.length > 0;
         const cleanupCandidates = this._analyzeCleanup().length;
         return b `
+      ${renderEntityDatalist(this.hass, this._humidityEntityListId(), ["sensor"])}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>
@@ -4588,43 +4751,6 @@ __decorate([
     e("si-cycle-wizard")
 ], ViewSchedule.prototype, "_wizard", void 0);
 defineCustomElementOnce("si-view-schedule", ViewSchedule);
-
-/** Entity IDs for allowed output domains (same rule set as the backend). */
-function entityIdsForDomains(hass, domains) {
-    return Object.keys(hass.states)
-        .filter((eid) => domains.includes(eid.split(".", 1)[0]))
-        .sort((a, b) => a.localeCompare(b));
-}
-/** One shared `<datalist>` per form (by stable `listId`). */
-function renderEntityDatalist(hass, listId, domains) {
-    const ids = entityIdsForDomains(hass, domains);
-    return b `
-    <datalist id=${listId}>
-      ${ids.map((id) => b `<option value=${id}></option>`)}
-    </datalist>
-  `;
-}
-/**
- * Browser autocomplete for entity_id — works inside panel_custom scoped registries where
- * `ha-entity-picker` is not registered.
- */
-function renderNativeEntityField(hass, listId, label, value, onValue) {
-    return b `
-    <div class="native-entity-field">
-      <label class="native-entity-label">${label}</label>
-      <input
-        type="text"
-        class="entity-id-input"
-        list=${listId}
-        .value=${value}
-        placeholder=${t(hass, "config_panel.entity_placeholder_example")}
-        spellcheck="false"
-        autocomplete="off"
-        @input=${(e) => onValue(e.target.value)}
-      />
-    </div>
-  `;
-}
 
 class ViewSettings extends i {
     constructor() {
