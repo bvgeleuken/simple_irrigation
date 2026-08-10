@@ -1,3 +1,4 @@
+import type { Guard } from "../guard-list-editor";
 import type { HomeAssistant, PanelStateResult } from "../types";
 
 export const fetchPanelState = (
@@ -39,8 +40,8 @@ export const upsertCycle = (
     cycle_meta: Record<string, unknown>;
     zone_ids_ordered: string[];
     enabled: boolean;
-    humidity_sensor_entity_id?: string | null;
-    humidity_threshold?: number | null;
+    guards?: Guard[];
+    ignore_global_guards?: boolean;
   }
 ): Promise<{ success: boolean; error?: string; cycle_id?: string; slots?: string[] }> =>
   hass.callApi("POST", "simple_irrigation/panel/slot", {

@@ -1,7 +1,16 @@
 import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
 import { upsertCycle } from "./data/api";
-import { renderEntityDatalist, renderNativeEntityField } from "./entity-input";
+import { renderEntityDatalist } from "./entity-input";
+import {
+  GUARD_ENTITY_DOMAINS,
+  guardsForSave,
+  guardsIncomplete,
+  guardsSummary,
+  normalizeGuards,
+  renderGuardList,
+  type Guard,
+} from "./guard-list-editor";
 import { defineCustomElementOnce, formatApiError } from "./helpers";
 import { t } from "./i18n";
 import { formLayoutStyles } from "./form-layout-styles";
@@ -193,8 +202,8 @@ export class CycleWizard extends LitElement {
   @state() private _zoneIds: string[] = [];
   @state() private _enabled = true;
   @state() private _label = "";
-  @state() private _humiditySensorEntityId = "";
-  @state() private _humidityThreshold: number | null = null;
+  @state() private _guards: Guard[] = [];
+  @state() private _ignoreGlobalGuards = false;
   @state() private _cycleId: string | null = null;
   @state() private _busy = false;
   @state() private _msg?: string;
@@ -218,8 +227,8 @@ export class CycleWizard extends LitElement {
       this._zoneIds = this._defaultZoneIds();
       this._enabled = true;
       this._label = "";
-      this._humiditySensorEntityId = "";
-      this._humidityThreshold = null;
+      this._guards = [];
+      this._ignoreGlobalGuards = false;
       this._syncDefaultsForOption();
     }
     this._step = opts?.step ?? 1;
@@ -250,11 +259,8 @@ export class CycleWizard extends LitElement {
       ? [...(first.zone_ids_ordered as string[])]
       : this._defaultZoneIds();
     this._enabled = Boolean(first.enabled ?? true);
-    this._humiditySensorEntityId = String(first.humidity_sensor_entity_id ?? "").trim();
-    this._humidityThreshold =
-      first.humidity_threshold === null || first.humidity_threshold === undefined || first.humidity_threshold === ""
-        ? null
-        : Number(first.humidity_threshold);
+    this._guards = normalizeGuards(first.guards);
+    this._ignoreGlobalGuards = Boolean(first.ignore_global_guards ?? false);
   }
 
   private _option(): KindOption {
@@ -314,22 +320,10 @@ export class CycleWizard extends LitElement {
     return z ? String(z.name ?? id) : id;
   }
 
-  private _humidityEntityListId(): string {
-    return `si-humidity-cycle-${this.entryId}`;
+  private _guardEntityListId(): string {
+    return `si-guard-cycle-${this.entryId}`;
   }
 
-  private _entityName(entityId: string): string {
-    const st = this.hass.states[entityId];
-    return st ? String(st.attributes?.friendly_name ?? entityId) : entityId;
-  }
-
-  private _humiditySummary(): string {
-    return `${this._entityName(this._humiditySensorEntityId)} · ${t(
-      this.hass,
-      "config_panel.schedule_humidity_summary",
-      { n: String(this._humidityThreshold ?? "") }
-    )}`;
-  }
 
   private _zoneDuration(id: string): number {
     const zones = this.installation?.zones as Record<string, Record<string, unknown>> | undefined;
@@ -410,10 +404,8 @@ export class CycleWizard extends LitElement {
     this._msg = undefined;
     this.requestUpdate();
     try {
-      const sensorFilled = Boolean(this._humiditySensorEntityId.trim());
-      const thresholdFilled = this._humidityThreshold !== null && this._humidityThreshold !== undefined;
-      if (sensorFilled !== thresholdFilled) {
-        this._msg = t(this.hass, "config_panel.schedule_err_humidity_rule");
+      if (guardsIncomplete(this._guards)) {
+        this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
         return;
       }
       const opt = this._option();
@@ -423,8 +415,8 @@ export class CycleWizard extends LitElement {
         cycle_meta: this._meta() as Record<string, unknown>,
         zone_ids_ordered: this._zoneIds,
         enabled: this._enabled,
-        humidity_sensor_entity_id: sensorFilled ? this._humiditySensorEntityId.trim() : null,
-        humidity_threshold: sensorFilled ? this._humidityThreshold : null,
+        guards: guardsForSave(this._guards),
+        ignore_global_guards: this._ignoreGlobalGuards,
       });
       if (!res.success) {
         this._msg = formatApiError(res.error, this.hass);
@@ -697,34 +689,27 @@ export class CycleWizard extends LitElement {
       </div>
 
       <div class="field-block">
-        <span class="field-title">${t(this.hass, "config_panel.schedule_humidity_section_title")}</span>
-        <div class="field-row" style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end">
-          ${renderNativeEntityField(
-            this.hass,
-            this._humidityEntityListId(),
-            t(this.hass, "config_panel.schedule_humidity_sensor_title"),
-            this._humiditySensorEntityId,
-            (v) => {
-              this._humiditySensorEntityId = v;
-              this.requestUpdate();
-            }
-          )}
-          <ha-input
-            style="min-width:160px;flex:0 0 160px"
-            type="number"
-            min="0"
-            max="100"
-            step="0.1"
-            .label=${t(this.hass, "config_panel.schedule_humidity_threshold_title")}
-            .value=${this._humidityThreshold === null ? "" : String(this._humidityThreshold)}
-            @input=${(e: Event) => {
-              const raw = (e.target as HTMLInputElement).value;
-              this._humidityThreshold = raw === "" ? null : Number(raw);
+        <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
+        ${renderGuardList(this.hass, this._guardEntityListId(), this._guards, (next) => {
+          this._guards = next;
+          this.requestUpdate();
+        })}
+        <div class="switch-row">
+          <ha-switch
+            .checked=${this._ignoreGlobalGuards}
+            @change=${(e: Event) => {
+              this._ignoreGlobalGuards = Boolean(
+                (e.target as HTMLInputElement & { checked: boolean }).checked
+              );
               this.requestUpdate();
             }}
-          ></ha-input>
+          ></ha-switch>
+          <span class="switch-row-label"
+            >${t(this.hass, "config_panel.schedule_ignore_global_guards")}</span
+          >
         </div>
-        <p class="hint">${t(this.hass, "config_panel.schedule_humidity_section_desc")}</p>
+        <p class="hint">${t(this.hass, "config_panel.schedule_ignore_global_guards_hint")}</p>
       </div>
 
       <div class="summary-card">
@@ -743,8 +728,8 @@ export class CycleWizard extends LitElement {
                       : "config_panel.week_parity_even"
                   )
                 : ""}
-              ${this._humiditySensorEntityId && this._humidityThreshold !== null
-                ? html` · ${this._humiditySummary()}`
+              ${this._guards.length
+                ? html` · ${guardsSummary(this.hass, this._guards)}`
                 : nothing}
             </li>`
           )}
@@ -788,7 +773,7 @@ export class CycleWizard extends LitElement {
       ? "config_panel.cycle_edit_title"
       : "config_panel.cycle_new";
     return html`
-      ${renderEntityDatalist(this.hass, this._humidityEntityListId(), ["sensor"])}
+      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}

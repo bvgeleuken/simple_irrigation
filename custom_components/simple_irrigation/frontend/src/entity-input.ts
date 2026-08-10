@@ -32,7 +32,9 @@ export function renderNativeEntityField(
   listId: string,
   label: string,
   value: string,
-  onValue: (v: string) => void
+  onValue: (v: string) => void,
+  /** Override when the default output example (valves, switches) would mislead. */
+  placeholderKey = "config_panel.entity_placeholder_example"
 ): TemplateResult {
   return html`
     <div class="native-entity-field">
@@ -42,7 +44,7 @@ export function renderNativeEntityField(
         class="entity-id-input"
         list=${listId}
         .value=${value}
-        placeholder=${t(hass, "config_panel.entity_placeholder_example")}
+        placeholder=${t(hass, placeholderKey)}
         spellcheck="false"
         autocomplete="off"
         @input=${(e: Event) => onValue((e.target as HTMLInputElement).value)}
