@@ -401,7 +401,6 @@
     "guards_entity_placeholder": "bijv. sensor.bodemvochtigheid of sensor.regen_vandaag",
     "guards_operator_label": "Voorwaarde",
     "guards_value_label": "Waarde",
-    "guards_state_select_placeholder": "Selecteer een status…",
     "guards_add": "Voorwaarde toevoegen",
     "guards_remove": "Verwijderen",
     "guards_count": "{n} voorwaarden",

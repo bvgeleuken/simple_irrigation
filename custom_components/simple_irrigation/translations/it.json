@@ -376,8 +376,6 @@
     "schedule_name_optional_title": "Nome (facoltativo)",
     "schedule_name_optional_desc": "Una breve etichetta per riconoscere questa fascia nella panoramica e quando ne scegli una altrove.",
     "schedule_slot_name": "Nome fascia",
-    "schedule_weekday_title": "Giorno della settimana",
-    "schedule_weekday_desc": "Giorno in cui inizia questa esecuzione.",
     "schedule_week_parity_title": "Ciclo settimanale",
     "schedule_week_parity_desc": "Esegui ogni settimana, oppure solo nelle settimane ISO dispari/pari. Due fasce su settimane alternate danno un ciclo ogni due settimane.",
     "week_parity_every": "Ogni settimana",
