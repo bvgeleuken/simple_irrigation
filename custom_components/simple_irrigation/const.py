@@ -35,7 +35,7 @@ OUTPUT_DOMAIN_SERVICES: Final = {
     "valve": ("open_valve", "close_valve"),
 }
 
-# Domain of the optional pre-start script (see PRE_START_SCRIPT_TIMEOUT_SEC).
+# Domain of the optional pre-start / post-run scripts (see SCRIPT_TIMEOUT_SEC).
 SCRIPT_DOMAIN: Final = "script"
 
 # --- Guards -----------------------------------------------------------------
@@ -75,10 +75,11 @@ MODES: Final = (MODE_ECO, MODE_NORMAL, MODE_EXTRA)
 PRE_START_DELAY_SEC: Final = 10
 
 # The pre-start script runs to completion before the pre-start outputs come up,
-# so it may wait for the world to be ready (mower docking, window closing).
-# Fail-open: when it overruns this timeout the run continues anyway.
-PRE_START_SCRIPT_TIMEOUT_SEC: Final = 300
-MAX_PRE_START_SCRIPT_TIMEOUT_SEC: Final = 3600
+# the post-run script after the last output went off — so both may wait for the
+# world (mower docking, window closing). Fail-open: when one overruns this
+# timeout it is stopped and the run continues anyway.
+SCRIPT_TIMEOUT_SEC: Final = 300
+MAX_SCRIPT_TIMEOUT_SEC: Final = 3600
 
 RUN_STATE_IDLE: Final = "idle"
 RUN_STATE_PREPARING: Final = "preparing"

@@ -13,8 +13,8 @@ from .const import (
     GUARD_OP_ABOVE,
     GUARD_OPERATORS,
     MODE_NORMAL,
-    PRE_START_SCRIPT_TIMEOUT_SEC,
     RUN_STATE_IDLE,
+    SCRIPT_TIMEOUT_SEC,
     WEEK_PARITIES,
     WEEK_PARITY_EVERY,
 )
@@ -167,6 +167,16 @@ def normalize_weekdays(raw: Any) -> list[int]:
     return out
 
 
+def parse_optional_timeout(raw: Any) -> int | None:
+    """A slot's script timeout; ``None`` means "inherit the installation's"."""
+    if raw in (None, ""):
+        return None
+    try:
+        return max(1, int(raw))
+    except (TypeError, ValueError):
+        return None
+
+
 @dataclass
 class ScheduleSlot:
     """Weekly time slot with ordered zone IDs.
@@ -187,6 +197,17 @@ class ScheduleSlot:
     # unless ``ignore_global_guards`` opts out (e.g. a greenhouse ignoring rain).
     guards: list[Guard] = field(default_factory=list)
     ignore_global_guards: bool = False
+    # --- Script overrides ---------------------------------------------------
+    # A slot may replace the installation's pre-start / post-run script — the
+    # lawn sends the mower home, the drip line does not care. The ``override_``
+    # flag is what makes "no script at all for this slot" expressible: with the
+    # flag set, an empty entity_id means none, not "fall back to the global".
+    override_pre_start_script: bool = False
+    pre_start_script: str = ""
+    pre_start_script_timeout_sec: int | None = None  # None = inherit
+    override_post_run_script: bool = False
+    post_run_script: str = ""
+    post_run_script_timeout_sec: int | None = None  # None = inherit
     # --- Cycle grouping (presentation + generation metadata only) -----------
     # The runtime never reads these; scheduling still uses weekdays/time/parity.
     cycle_id: str | None = None  # uuid4 shared by all slots of one cycle
@@ -207,6 +228,12 @@ class ScheduleSlot:
             "week_parity": self.week_parity,
             "guards": [g.to_dict() for g in self.guards],
             "ignore_global_guards": self.ignore_global_guards,
+            "override_pre_start_script": self.override_pre_start_script,
+            "pre_start_script": self.pre_start_script,
+            "pre_start_script_timeout_sec": self.pre_start_script_timeout_sec,
+            "override_post_run_script": self.override_post_run_script,
+            "post_run_script": self.post_run_script,
+            "post_run_script_timeout_sec": self.post_run_script_timeout_sec,
             "cycle_id": self.cycle_id,
             "cycle_kind": self.cycle_kind,
             "cycle_meta": dict(self.cycle_meta) if self.cycle_meta else None,
@@ -238,6 +265,16 @@ class ScheduleSlot:
             week_parity=parity,
             guards=parse_guards(data.get("guards")),
             ignore_global_guards=bool(data.get("ignore_global_guards", False)),
+            override_pre_start_script=bool(data.get("override_pre_start_script", False)),
+            pre_start_script=str(data.get("pre_start_script") or ""),
+            pre_start_script_timeout_sec=parse_optional_timeout(
+                data.get("pre_start_script_timeout_sec")
+            ),
+            override_post_run_script=bool(data.get("override_post_run_script", False)),
+            post_run_script=str(data.get("post_run_script") or ""),
+            post_run_script_timeout_sec=parse_optional_timeout(
+                data.get("post_run_script_timeout_sec")
+            ),
             cycle_id=cycle_id,
             cycle_kind=cycle_kind,
             cycle_meta=cycle_meta,
@@ -255,7 +292,10 @@ class Installation:
     pre_start_delay_sec: int = 10
     # Script run to completion before the pre-start outputs; "" disables it.
     pre_start_script: str = ""
-    pre_start_script_timeout_sec: int = PRE_START_SCRIPT_TIMEOUT_SEC
+    pre_start_script_timeout_sec: int = SCRIPT_TIMEOUT_SEC
+    # Script run once every output is off again; "" disables it.
+    post_run_script: str = ""
+    post_run_script_timeout_sec: int = SCRIPT_TIMEOUT_SEC
     mode: str = MODE_NORMAL
     pause_until: datetime | None = None
     max_parallel_zones: int = 2
@@ -275,6 +315,8 @@ class Installation:
             "pre_start_delay_sec": self.pre_start_delay_sec,
             "pre_start_script": self.pre_start_script,
             "pre_start_script_timeout_sec": self.pre_start_script_timeout_sec,
+            "post_run_script": self.post_run_script,
+            "post_run_script_timeout_sec": self.post_run_script_timeout_sec,
             "mode": self.mode,
             "pause_until": self.pause_until.isoformat() if self.pause_until else None,
             "max_parallel_zones": self.max_parallel_zones,
@@ -309,7 +351,11 @@ class Installation:
             pre_start_delay_sec=int(data.get("pre_start_delay_sec", 10)),
             pre_start_script=str(data.get("pre_start_script") or ""),
             pre_start_script_timeout_sec=int(
-                data.get("pre_start_script_timeout_sec", PRE_START_SCRIPT_TIMEOUT_SEC)
+                data.get("pre_start_script_timeout_sec") or SCRIPT_TIMEOUT_SEC
+            ),
+            post_run_script=str(data.get("post_run_script") or ""),
+            post_run_script_timeout_sec=int(
+                data.get("post_run_script_timeout_sec") or SCRIPT_TIMEOUT_SEC
             ),
             mode=str(data.get("mode", MODE_NORMAL)),
             pause_until=pause_until,
@@ -336,6 +382,9 @@ class RunState:
     current_slot_id: str | None = None
     manual_run: bool = False
     upcoming_phases: list[list[str]] = field(default_factory=list)
+    # Pipeline script the run is currently blocked on, so the panel can say what
+    # it is waiting for instead of just "preparing" for five silent minutes.
+    active_script: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-compatible dict."""
@@ -362,6 +411,7 @@ class RunState:
             "current_slot_id": self.current_slot_id,
             "manual_run": self.manual_run,
             "upcoming_phases": [list(g) for g in self.upcoming_phases],
+            "active_script": self.active_script,
         }
 
     @staticmethod
@@ -400,4 +450,5 @@ class RunState:
             current_slot_id=data.get("current_slot_id"),
             manual_run=bool(data.get("manual_run", False)),
             upcoming_phases=upcoming_phases,
+            active_script=data.get("active_script") or None,
         )

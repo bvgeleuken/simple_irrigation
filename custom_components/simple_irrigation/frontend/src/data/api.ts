@@ -42,6 +42,8 @@ export const upsertCycle = (
     enabled: boolean;
     guards?: Guard[];
     ignore_global_guards?: boolean;
+    /** Script overrides — `override_<phase>_script`, `<phase>_script`, `…_timeout_sec`. */
+    [scriptKey: string]: unknown;
   }
 ): Promise<{ success: boolean; error?: string; cycle_id?: string; slots?: string[] }> =>
   hass.callApi("POST", "simple_irrigation/panel/slot", {

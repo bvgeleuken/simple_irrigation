@@ -12,11 +12,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from custom_components.simple_irrigation.models import Installation
+from custom_components.simple_irrigation.models import Installation, RunState
 from custom_components.simple_irrigation.runtime import IrrigationRuntime
+from custom_components.simple_irrigation.scripts import ScriptCall
 from custom_components.simple_irrigation.validation import (
-    validate_pre_start_script,
-    validate_pre_start_script_timeout,
+    validate_script_entity,
+    validate_script_timeout,
 )
 
 
@@ -35,6 +36,8 @@ def _hass(calls: list[tuple[str, str, dict]]) -> MagicMock:
 def _runtime(hass: MagicMock, inst: Installation) -> IrrigationRuntime:
     coordinator = MagicMock()
     coordinator.installation = inst
+    coordinator.run_state = RunState()
+    coordinator.async_update_run_state = AsyncMock()
     return IrrigationRuntime(hass, coordinator)
 
 
@@ -49,32 +52,32 @@ def _installation(**kwargs) -> Installation:
 
 def test_empty_script_is_valid() -> None:
     """No script configured is the normal case, not an error."""
-    assert validate_pre_start_script(MagicMock(), "") is None
-    assert validate_pre_start_script(MagicMock(), None) is None
+    assert validate_script_entity(MagicMock(), "") is None
+    assert validate_script_entity(MagicMock(), None) is None
 
 
 def test_script_must_be_a_script_entity() -> None:
     hass = MagicMock()
     hass.states.get.return_value = MagicMock(state="off")
-    assert validate_pre_start_script(hass, "switch.pump") == "invalid_script"
-    assert validate_pre_start_script(hass, "mower_go_home") == "invalid_script"
-    assert validate_pre_start_script(hass, "script.mower_go_home") is None
+    assert validate_script_entity(hass, "switch.pump") == "invalid_script"
+    assert validate_script_entity(hass, "mower_go_home") == "invalid_script"
+    assert validate_script_entity(hass, "script.mower_go_home") is None
 
 
 def test_unknown_script_entity_rejected() -> None:
     hass = MagicMock()
     hass.states.get.return_value = None
-    assert validate_pre_start_script(hass, "script.nope") == "unknown_entity"
+    assert validate_script_entity(hass, "script.nope") == "unknown_entity"
 
 
 @pytest.mark.parametrize("value", [0, -1, 3601, "abc", None])
 def test_invalid_timeouts(value) -> None:
-    assert validate_pre_start_script_timeout(value) == "invalid_script_timeout"
+    assert validate_script_timeout(value) == "invalid_script_timeout"
 
 
 @pytest.mark.parametrize("value", [1, 300, 3600, "120"])
 def test_valid_timeouts(value) -> None:
-    assert validate_pre_start_script_timeout(value) is None
+    assert validate_script_timeout(value) is None
 
 
 # --- runtime -----------------------------------------------------------------
@@ -106,7 +109,9 @@ async def test_script_is_called_blocking_by_object_id() -> None:
     hass = _hass(calls)
     runtime = _runtime(hass, _installation())
 
-    await runtime._async_run_pre_start_script("script.mower_go_home", 60)
+    await runtime._async_run_script(
+        ScriptCall("script.mower_go_home", 60), "Pre-start", abort_on_stop=True
+    )
 
     assert calls == [("script", "mower_go_home", {})]
     assert hass.services.async_call.await_args.kwargs["blocking"] is True
@@ -117,7 +122,7 @@ async def test_no_script_configured_is_a_no_op() -> None:
     calls: list[tuple[str, str, dict]] = []
     runtime = _runtime(_hass(calls), _installation())
 
-    await runtime._async_run_pre_start_script("", 60)
+    await runtime._async_run_script(ScriptCall("", 60), "Pre-start", abort_on_stop=True)
 
     assert calls == []
 
@@ -128,7 +133,9 @@ async def test_non_script_entity_is_skipped() -> None:
     calls: list[tuple[str, str, dict]] = []
     runtime = _runtime(_hass(calls), _installation())
 
-    await runtime._async_run_pre_start_script("switch.pump", 60)
+    await runtime._async_run_script(
+        ScriptCall("switch.pump", 60), "Pre-start", abort_on_stop=True
+    )
 
     assert calls == []
 
