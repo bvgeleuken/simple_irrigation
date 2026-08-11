@@ -13,6 +13,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.util import dt as dt_util
 
 from .const import (
+    DOMAIN,
     EVENT_RUN_FAILED,
     EVENT_RUN_FINISHED,
     EVENT_RUN_STARTED,
@@ -23,6 +24,7 @@ from .const import (
     RUN_STATE_PREPARING,
     RUN_STATE_RUNNING,
     RUN_STATE_STOPPING,
+    SCRIPT_DOMAIN,
 )
 from .grouping import can_join_active_phase, compute_phases
 from .guards import guards_allow_run
@@ -254,9 +256,75 @@ class IrrigationRuntime:
 
     async def _async_pre_start(self, delay_sec: int) -> None:
         inst = self.coordinator.installation
+        await self._async_run_pre_start_script(
+            inst.pre_start_script,
+            inst.pre_start_script_timeout_sec,
+        )
+        if self._stop_event.is_set():
+            return
         for entity_id in inst.pre_start_switches:
             await self._async_switch_turn_on(entity_id)
         await self._async_sleep_interruptible(float(delay_sec))
+
+    async def _async_run_pre_start_script(self, entity_id: str, timeout_sec: int) -> None:
+        """Run the pre-start script to completion, before anything is switched on.
+
+        Calling ``script.<object_id>`` rather than ``script.turn_on`` is what makes
+        this block, so the script may wait for the world to be ready — a mower
+        docking, a window closing — instead of only kicking something off.
+
+        Fail-open, like the conditions in guards.py: a script that errors or
+        overruns its timeout logs a warning and watering proceeds. A stuck helper
+        must not cost a whole irrigation run.
+        """
+        if not entity_id:
+            return
+        domain, _, object_id = entity_id.partition(".")
+        if domain != SCRIPT_DOMAIN or not object_id:
+            _LOGGER.warning("Pre-start script %s is not a script entity; skipping", entity_id)
+            return
+
+        timeout = max(1, int(timeout_sec))
+        _LOGGER.debug("Pre-start script %s: waiting up to %s s", entity_id, timeout)
+        call = self.hass.async_create_task(
+            self.hass.services.async_call(SCRIPT_DOMAIN, object_id, {}, blocking=True),
+            f"{DOMAIN} pre-start script {entity_id}",
+        )
+        stop = self.hass.async_create_task(self._stop_event.wait())
+        try:
+            done, _pending = await asyncio.wait(
+                {call, stop},
+                timeout=timeout,
+                return_when=asyncio.FIRST_COMPLETED,
+            )
+            if call in done:
+                call.result()  # surface script errors to the handler below
+                return
+            if stop in done:
+                _LOGGER.info("Pre-start script %s aborted: run was stopped", entity_id)
+            else:
+                _LOGGER.warning(
+                    "Pre-start script %s did not finish within %s s; watering anyway",
+                    entity_id,
+                    timeout,
+                )
+            await self._async_script_turn_off(entity_id)
+        except Exception as err:  # noqa: BLE001
+            _LOGGER.warning("Pre-start script %s failed (%s); watering anyway", entity_id, err)
+        finally:
+            for task in (call, stop):
+                if not task.done():
+                    task.cancel()
+
+    async def _async_script_turn_off(self, entity_id: str) -> None:
+        """Stop a pre-start script we gave up on; leaving it running is worse."""
+        with suppress(Exception):
+            await self.hass.services.async_call(
+                SCRIPT_DOMAIN,
+                "turn_off",
+                {"entity_id": entity_id},
+                blocking=False,
+            )
 
     async def _async_run_phase_expandable(self, initial_zone_ids: list[str], mode: str) -> None:
         """Run one phase; extra manual zones may join mid-phase when parallel rules allow."""

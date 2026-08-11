@@ -22,6 +22,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     DOMAIN,
     GUARD_OPERATORS,
+    MAX_PRE_START_SCRIPT_TIMEOUT_SEC,
     MODES,
     OUTPUT_ENTITY_DOMAINS,
     PANEL_API_REGISTERED_KEY,
@@ -42,6 +43,8 @@ from .validation import (
     validate_max_parallel,
     validate_mode,
     validate_pre_start_entities,
+    validate_pre_start_script,
+    validate_pre_start_script_timeout,
     validate_zone_payload,
 )
 
@@ -248,6 +251,10 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
                 vol.Optional("mode"): vol.In(MODES),
                 vol.Optional("max_parallel_zones"): vol.All(int, vol.Range(min=1, max=16)),
                 vol.Optional("pre_start_delay_sec"): vol.All(cv.positive_int, vol.Range(max=3600)),
+                vol.Optional("pre_start_script"): vol.Any(cv.string, None),
+                vol.Optional("pre_start_script_timeout_sec"): vol.All(
+                    cv.positive_int, vol.Range(max=MAX_PRE_START_SCRIPT_TIMEOUT_SEC)
+                ),
                 vol.Optional("enabled"): cv.boolean,
                 vol.Optional("is_default"): cv.boolean,
                 vol.Optional("pause_until"): vol.Any(cv.string, None),
@@ -262,7 +269,7 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
         entry = _get_entry(hass, data["entry_id"])
         coord = _get_coordinator(hass, entry.entry_id)
         if coord is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
         inst = coord.installation
 
         if "name" in data and data["name"]:
@@ -270,18 +277,29 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
         if "pre_start_switches" in data:
             err = validate_pre_start_entities(hass, data["pre_start_switches"])
             if err:
-                return self.json({"success": False, "error": err}, status=400)
+                return self.json({"success": False, "error": err}, status_code=400)
             inst.pre_start_switches = list(data["pre_start_switches"])
         if "mode" in data:
             if validate_mode(data["mode"]):
-                return self.json({"success": False, "error": "invalid_mode"}, status=400)
+                return self.json({"success": False, "error": "invalid_mode"}, status_code=400)
             inst.mode = data["mode"]
         if "max_parallel_zones" in data:
             if validate_max_parallel(data["max_parallel_zones"]):
-                return self.json({"success": False, "error": "invalid_max_parallel"}, status=400)
+                return self.json({"success": False, "error": "invalid_max_parallel"}, status_code=400)
             inst.max_parallel_zones = int(data["max_parallel_zones"])
         if "pre_start_delay_sec" in data:
             inst.pre_start_delay_sec = int(data["pre_start_delay_sec"])
+        if "pre_start_script" in data:
+            script = str(data["pre_start_script"] or "").strip()
+            err = validate_pre_start_script(hass, script)
+            if err:
+                return self.json({"success": False, "error": err}, status_code=400)
+            inst.pre_start_script = script
+        if "pre_start_script_timeout_sec" in data:
+            err = validate_pre_start_script_timeout(data["pre_start_script_timeout_sec"])
+            if err:
+                return self.json({"success": False, "error": err}, status_code=400)
+            inst.pre_start_script_timeout_sec = int(data["pre_start_script_timeout_sec"])
         if "enabled" in data:
             inst.enabled = bool(data["enabled"])
         if "is_default" in data:
@@ -289,7 +307,7 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
         if "guards" in data:
             guards, guard_err = parse_guard_list(hass, data["guards"])
             if guard_err:
-                return self.json({"success": False, "error": guard_err}, status=400)
+                return self.json({"success": False, "error": guard_err}, status_code=400)
             inst.guards = guards
         if "pause_until" in data:
             raw = data["pause_until"]
@@ -299,7 +317,7 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
                 try:
                     inst.pause_until = datetime.fromisoformat(str(raw))
                 except ValueError:
-                    return self.json({"success": False, "error": "invalid_pause_until"}, status=400)
+                    return self.json({"success": False, "error": "invalid_pause_until"}, status_code=400)
 
         await coord.async_update_installation(inst)
         if inst.is_default:
@@ -352,7 +370,7 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
         entry = _get_entry(hass, data["entry_id"])
         coord = _get_coordinator(hass, entry.entry_id)
         if coord is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
         inst = coord.installation
         action = data["action"]
 
@@ -370,7 +388,7 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
             }
             err = validate_zone_payload(hass, payload)
             if err:
-                return self.json({"success": False, "error": err}, status=400)
+                return self.json({"success": False, "error": err}, status_code=400)
             entity_ids = parse_zone_switch_entities(payload)
             zid = str(uuid.uuid4())
             inst.zones[zid] = Zone(
@@ -388,7 +406,7 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
 
         zid = data.get("zone_id")
         if not zid or zid not in inst.zones:
-            return self.json({"success": False, "error": "unknown_zone"}, status=400)
+            return self.json({"success": False, "error": "unknown_zone"}, status_code=400)
 
         if action == "delete":
             inst.zones.pop(zid, None)
@@ -423,7 +441,7 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
         }
         err = validate_zone_payload(hass, merged)
         if err:
-            return self.json({"success": False, "error": err}, status=400)
+            return self.json({"success": False, "error": err}, status_code=400)
         zone.name = merged["name"].strip()
         zone.switch_entity_ids = parse_zone_switch_entities(merged)
         zone.enabled = bool(merged["enabled"])
@@ -490,7 +508,7 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
         _get_entry(hass, data["entry_id"])
         coord = _get_coordinator(hass, data["entry_id"])
         if coord is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
         inst = coord.installation
         action = data["action"]
 
@@ -508,15 +526,15 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
         if action == "add":
             t = data.get("time_local", "06:00")
             if parse_hh_mm(str(t).strip()) is None:
-                return self.json({"success": False, "error": "invalid_time"}, status=400)
+                return self.json({"success": False, "error": "invalid_time"}, status_code=400)
             weekdays = _resolve_weekdays([0])
             if not weekdays:
-                return self.json({"success": False, "error": "invalid_weekdays"}, status=400)
+                return self.json({"success": False, "error": "invalid_weekdays"}, status_code=400)
             guards: list[Guard] = []
             if "guards" in data:
                 guards, guard_err = parse_guard_list(hass, data["guards"])
                 if guard_err:
-                    return self.json({"success": False, "error": guard_err}, status=400)
+                    return self.json({"success": False, "error": guard_err}, status_code=400)
             slot = ScheduleSlot(
                 slot_id=str(uuid.uuid4()),
                 weekdays=weekdays,
@@ -538,20 +556,20 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             seen_z: set[str] = set()
             for zid in zone_ids:
                 if zid not in inst.zones:
-                    return self.json({"success": False, "error": "unknown_zone"}, status=400)
+                    return self.json({"success": False, "error": "unknown_zone"}, status_code=400)
                 if zid in seen_z:
-                    return self.json({"success": False, "error": "duplicate_zone"}, status=400)
+                    return self.json({"success": False, "error": "duplicate_zone"}, status_code=400)
                 seen_z.add(zid)
             for tstr in meta.get("times") or []:
                 if parse_hh_mm(str(tstr).strip()) is None:
-                    return self.json({"success": False, "error": "invalid_time"}, status=400)
+                    return self.json({"success": False, "error": "invalid_time"}, status_code=400)
             enabled = bool(data.get("enabled", True))
             incoming_id = str(data.get("cycle_id") or "")  # set when editing an existing cycle
             anchor = int(meta.get("anchor_weekday", 0))
             p0 = anchor_week_parity(anchor, dt_util.now().date())
             specs = generate_cycle_slots(kind, meta, anchor_parity=p0)
             if not specs:
-                return self.json({"success": False, "error": "invalid_cycle"}, status=400)
+                return self.json({"success": False, "error": "invalid_cycle"}, status_code=400)
             label = str(meta.get("label") or "").strip()
 
             # A "cycle" only exists when the cadence genuinely needs >=2 slots
@@ -573,7 +591,7 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             if "guards" in data:
                 cycle_guards, guard_err = parse_guard_list(hass, data["guards"])
                 if guard_err:
-                    return self.json({"success": False, "error": guard_err}, status=400)
+                    return self.json({"success": False, "error": guard_err}, status_code=400)
             else:
                 cycle_guards = list(existing[0].guards) if existing else []
             if "ignore_global_guards" in data:
@@ -624,20 +642,20 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
         if action == "cycle_delete":
             rid = data.get("cycle_id")
             if not rid:
-                return self.json({"success": False, "error": "missing_cycle_id"}, status=400)
+                return self.json({"success": False, "error": "missing_cycle_id"}, status_code=400)
             remaining = [s for s in inst.schedule_slots if s.cycle_id != rid]
             if len(remaining) == len(inst.schedule_slots):
-                return self.json({"success": False, "error": "unknown_cycle"}, status=400)
+                return self.json({"success": False, "error": "unknown_cycle"}, status_code=400)
             inst.schedule_slots = remaining
             await coord.async_update_installation(inst)
             return self.json({"success": True})
 
         sid = data.get("slot_id")
         if not sid:
-            return self.json({"success": False, "error": "missing_slot_id"}, status=400)
+            return self.json({"success": False, "error": "missing_slot_id"}, status_code=400)
         slot = _find_slot(sid)
         if slot is None:
-            return self.json({"success": False, "error": "unknown_slot"}, status=400)
+            return self.json({"success": False, "error": "unknown_slot"}, status_code=400)
 
         if action == "delete":
             inst.schedule_slots = [s for s in inst.schedule_slots if s.slot_id != sid]
@@ -646,7 +664,7 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
 
         if action == "split":
             if len(slot.weekdays) <= 1:
-                return self.json({"success": False, "error": "nothing_to_split"}, status=400)
+                return self.json({"success": False, "error": "nothing_to_split"}, status_code=400)
             idx = inst.schedule_slots.index(slot)
             new_slots = [
                 ScheduleSlot(
@@ -673,13 +691,13 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             if weekdays is not None:
                 if not weekdays:
                     return self.json(
-                        {"success": False, "error": "invalid_weekdays"}, status=400
+                        {"success": False, "error": "invalid_weekdays"}, status_code=400
                     )
                 slot.weekdays = weekdays
             if "time_local" in data:
                 tl = str(data["time_local"]).strip()
                 if parse_hh_mm(tl) is None:
-                    return self.json({"success": False, "error": "invalid_time"}, status=400)
+                    return self.json({"success": False, "error": "invalid_time"}, status_code=400)
                 slot.time_local = tl
             if "enabled" in data:
                 slot.enabled = bool(data["enabled"])
@@ -688,9 +706,9 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 seen: set[str] = set()
                 for zid in new_order:
                     if zid not in inst.zones:
-                        return self.json({"success": False, "error": "unknown_zone"}, status=400)
+                        return self.json({"success": False, "error": "unknown_zone"}, status_code=400)
                     if zid in seen:
-                        return self.json({"success": False, "error": "duplicate_zone"}, status=400)
+                        return self.json({"success": False, "error": "duplicate_zone"}, status_code=400)
                     seen.add(zid)
                 slot.zone_ids_ordered = new_order
             if "name" in data:
@@ -700,7 +718,7 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             if "guards" in data:
                 slot_guards, guard_err = parse_guard_list(hass, data["guards"])
                 if guard_err:
-                    return self.json({"success": False, "error": guard_err}, status=400)
+                    return self.json({"success": False, "error": guard_err}, status_code=400)
                 slot.guards = slot_guards
             if "ignore_global_guards" in data:
                 slot.ignore_global_guards = bool(data["ignore_global_guards"])
@@ -717,9 +735,9 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
         if action == "add_zone":
             zid = data.get("zone_id")
             if not zid or zid not in inst.zones:
-                return self.json({"success": False, "error": "unknown_zone"}, status=400)
+                return self.json({"success": False, "error": "unknown_zone"}, status_code=400)
             if zid in slot.zone_ids_ordered:
-                return self.json({"success": False, "error": "duplicate_zone"}, status=400)
+                return self.json({"success": False, "error": "duplicate_zone"}, status_code=400)
             slot.zone_ids_ordered.append(zid)
             await coord.async_update_installation(inst)
             return self.json({"success": True})
@@ -728,7 +746,7 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             zid = data.get("zone_id")
             direction = data.get("direction")
             if not zid or zid not in slot.zone_ids_ordered or direction not in ("up", "down"):
-                return self.json({"success": False, "error": "invalid_reorder"}, status=400)
+                return self.json({"success": False, "error": "invalid_reorder"}, status_code=400)
             idx = slot.zone_ids_ordered.index(zid)
             if direction == "up" and idx > 0:
                 slot.zone_ids_ordered[idx - 1], slot.zone_ids_ordered[idx] = (
@@ -743,7 +761,7 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
             await coord.async_update_installation(inst)
             return self.json({"success": True})
 
-        return self.json({"success": False, "error": "unsupported"}, status=400)
+        return self.json({"success": False, "error": "unsupported"}, status_code=400)
 
 
 class SimpleIrrigationPanelRunSlotView(HomeAssistantView):
@@ -768,13 +786,13 @@ class SimpleIrrigationPanelRunSlotView(HomeAssistantView):
         coord = _get_coordinator(hass, data["entry_id"])
         runtime = _get_runtime(hass, data["entry_id"])
         if coord is None or runtime is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
         sid = data["slot_id"]
         try:
             await runtime.async_run_schedule_slot(sid)
         except ScheduleSlotRunError as err:
             status = 409 if err.code == "busy" else 400
-            return self.json({"success": False, "error": err.code}, status=status)
+            return self.json({"success": False, "error": err.code}, status_code=status)
         return self.json({"success": True})
 
 
@@ -800,13 +818,13 @@ class SimpleIrrigationPanelRunZoneView(HomeAssistantView):
         coord = _get_coordinator(hass, data["entry_id"])
         runtime = _get_runtime(hass, data["entry_id"])
         if coord is None or runtime is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
         zid = data["zone_id"]
         try:
             await runtime.async_run_zone(zid, duration_min=None)
         except ZoneManualRunError as err:
             status = 409 if err.code == "busy" else 400
-            return self.json({"success": False, "error": err.code}, status=status)
+            return self.json({"success": False, "error": err.code}, status_code=status)
         return self.json({"success": True})
 
 
@@ -832,7 +850,7 @@ class SimpleIrrigationPanelControlView(HomeAssistantView):
         coord = _get_coordinator(hass, data["entry_id"])
         runtime = _get_runtime(hass, data["entry_id"])
         if coord is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
         action = data["action"]
 
         if action == "clear_error":
@@ -844,7 +862,7 @@ class SimpleIrrigationPanelControlView(HomeAssistantView):
             return self.json({"success": True})
 
         if runtime is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
 
         if action == "stop":
             await runtime.async_stop_all()
@@ -853,7 +871,7 @@ class SimpleIrrigationPanelControlView(HomeAssistantView):
         # skip_phase
         ok = await runtime.async_skip_to_next_phase()
         if not ok:
-            return self.json({"success": False, "error": "not_running"}, status=409)
+            return self.json({"success": False, "error": "not_running"}, status_code=409)
         return self.json({"success": True})
 
 
@@ -877,11 +895,11 @@ class SimpleIrrigationPanelSkipTodayView(HomeAssistantView):
         _get_entry(hass, data["entry_id"])
         coord = _get_coordinator(hass, data["entry_id"])
         if coord is None:
-            return self.json({"success": False, "error": "not_found"}, status=404)
+            return self.json({"success": False, "error": "not_found"}, status_code=404)
         inst = coord.installation
         tz = dt_util.get_time_zone(hass.config.time_zone)
         if tz is None:
-            return self.json({"success": False, "error": "no_timezone"}, status=500)
+            return self.json({"success": False, "error": "no_timezone"}, status_code=500)
         now = dt_util.now()
         local = now.astimezone(tz)
         start_today = local.replace(hour=0, minute=0, second=0, microsecond=0)

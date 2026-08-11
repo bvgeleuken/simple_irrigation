@@ -5027,6 +5027,8 @@ class ViewSettings extends i {
         this._maxParallel = 2;
         this._preStart = [];
         this._preStartDelaySec = 10;
+        this._preStartScript = "";
+        this._preStartScriptTimeoutSec = 300;
         this._guards = [];
         this._beforeUnload = (e) => {
             if (this._dirty) {
@@ -5097,6 +5099,11 @@ class ViewSettings extends i {
         this._preStart = ps.length ? [...ps] : [""];
         const d = Number(inst.pre_start_delay_sec ?? 10);
         this._preStartDelaySec = Number.isFinite(d) ? Math.max(1, Math.min(3600, Math.round(d))) : 10;
+        this._preStartScript = String(inst.pre_start_script ?? "");
+        const st = Number(inst.pre_start_script_timeout_sec ?? 300);
+        this._preStartScriptTimeoutSec = Number.isFinite(st)
+            ? Math.max(1, Math.min(3600, Math.round(st)))
+            : 300;
         this._guards = normalizeGuards(inst.guards);
         this._dirty = false;
     }
@@ -5119,6 +5126,9 @@ class ViewSettings extends i {
     _guardEntityListId() {
         return `si-guard-s-${this.entryId}`;
     }
+    _scriptEntityListId() {
+        return `si-script-s-${this.entryId}`;
+    }
     async _save() {
         if (guardsIncomplete(this._guards)) {
             this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
@@ -5133,6 +5143,8 @@ class ViewSettings extends i {
                 name: this._name,
                 pre_start_switches: this._preStart.filter(Boolean),
                 pre_start_delay_sec: this._preStartDelaySec,
+                pre_start_script: this._preStartScript.trim(),
+                pre_start_script_timeout_sec: this._preStartScriptTimeoutSec,
                 mode: this._mode,
                 max_parallel_zones: this._maxParallel,
                 is_default: this._isDefault,
@@ -5192,6 +5204,7 @@ class ViewSettings extends i {
         return b `
       ${renderEntityDatalist(this.hass, this._entityListId(), domains)}
       ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
+      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), ["script"])}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:cog-outline"></ha-icon>
@@ -5217,6 +5230,46 @@ class ViewSettings extends i {
           </div>
 
           <div class="section-title">${t(this.hass, "config_panel.settings_section_pump")}</div>
+          <div class="field-block">
+            <span class="field-title">${t(this.hass, "config_panel.general_pre_start_script_title")}</span>
+            <div class="field-row">
+              ${renderNativeEntityField(this.hass, this._scriptEntityListId(), t(this.hass, "config_panel.general_pre_start_script_field"), this._preStartScript, (v) => {
+            this._preStartScript = v;
+            this._markDirty();
+            this.requestUpdate();
+        }, "config_panel.entity_placeholder_script")}
+            </div>
+            <details class="inline-help">
+              <summary>
+                <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+                ${t(this.hass, "config_panel.general_pre_start_script_title")}
+              </summary>
+              <p>${t(this.hass, "config_panel.general_pre_start_script_desc")}</p>
+            </details>
+          </div>
+          ${this._preStartScript.trim()
+            ? b `<div class="field-block">
+                <span class="field-title">
+                  ${t(this.hass, "config_panel.general_pre_start_script_timeout_title")}
+                </span>
+                <div class="field-row">
+                  <ha-input
+                    type="number"
+                    .label=${t(this.hass, "config_panel.general_pre_start_script_timeout_field")}
+                    .value=${String(this._preStartScriptTimeoutSec)}
+                    min="1"
+                    max="3600"
+                    @input=${(e) => {
+                this._preStartScriptTimeoutSec = Math.max(1, Math.min(3600, parseInt(e.target.value, 10) || 1));
+                this._markDirty();
+            }}
+                  ></ha-input>
+                </div>
+                <p class="hint">
+                  ${t(this.hass, "config_panel.settings_pre_start_script_timeout_hint")}
+                </p>
+              </div>`
+            : A}
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_pre_start_title")}</span>
             <div class="field-row">

@@ -13,6 +13,7 @@ from .const import (
     GUARD_OP_ABOVE,
     GUARD_OPERATORS,
     MODE_NORMAL,
+    PRE_START_SCRIPT_TIMEOUT_SEC,
     RUN_STATE_IDLE,
     WEEK_PARITIES,
     WEEK_PARITY_EVERY,
@@ -252,6 +253,9 @@ class Installation:
     enabled: bool = True
     pre_start_switches: list[str] = field(default_factory=list)
     pre_start_delay_sec: int = 10
+    # Script run to completion before the pre-start outputs; "" disables it.
+    pre_start_script: str = ""
+    pre_start_script_timeout_sec: int = PRE_START_SCRIPT_TIMEOUT_SEC
     mode: str = MODE_NORMAL
     pause_until: datetime | None = None
     max_parallel_zones: int = 2
@@ -269,6 +273,8 @@ class Installation:
             "enabled": self.enabled,
             "pre_start_switches": list(self.pre_start_switches),
             "pre_start_delay_sec": self.pre_start_delay_sec,
+            "pre_start_script": self.pre_start_script,
+            "pre_start_script_timeout_sec": self.pre_start_script_timeout_sec,
             "mode": self.mode,
             "pause_until": self.pause_until.isoformat() if self.pause_until else None,
             "max_parallel_zones": self.max_parallel_zones,
@@ -301,6 +307,10 @@ class Installation:
             enabled=bool(data.get("enabled", True)),
             pre_start_switches=list(data.get("pre_start_switches", [])),
             pre_start_delay_sec=int(data.get("pre_start_delay_sec", 10)),
+            pre_start_script=str(data.get("pre_start_script") or ""),
+            pre_start_script_timeout_sec=int(
+                data.get("pre_start_script_timeout_sec", PRE_START_SCRIPT_TIMEOUT_SEC)
+            ),
             mode=str(data.get("mode", MODE_NORMAL)),
             pause_until=pause_until,
             max_parallel_zones=max(1, int(data.get("max_parallel_zones", 2))),
