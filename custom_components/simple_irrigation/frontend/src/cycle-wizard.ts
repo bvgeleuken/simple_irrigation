@@ -11,6 +11,14 @@ import {
   renderGuardList,
   type Guard,
 } from "./guard-list-editor";
+import {
+  EMPTY_SCRIPT_OVERRIDE,
+  SCRIPT_ENTITY_DOMAINS,
+  normalizeScriptOverride,
+  renderScriptOverride,
+  scriptOverrideForSave,
+  type ScriptOverride,
+} from "./script-override";
 import { defineCustomElementOnce, formatApiError } from "./helpers";
 import { t } from "./i18n";
 import { formLayoutStyles } from "./form-layout-styles";
@@ -204,6 +212,8 @@ export class CycleWizard extends LitElement {
   @state() private _label = "";
   @state() private _guards: Guard[] = [];
   @state() private _ignoreGlobalGuards = false;
+  @state() private _preStartScript: ScriptOverride = EMPTY_SCRIPT_OVERRIDE;
+  @state() private _postRunScript: ScriptOverride = EMPTY_SCRIPT_OVERRIDE;
   @state() private _cycleId: string | null = null;
   @state() private _busy = false;
   @state() private _msg?: string;
@@ -229,6 +239,8 @@ export class CycleWizard extends LitElement {
       this._label = "";
       this._guards = [];
       this._ignoreGlobalGuards = false;
+      this._preStartScript = { ...EMPTY_SCRIPT_OVERRIDE };
+      this._postRunScript = { ...EMPTY_SCRIPT_OVERRIDE };
       this._syncDefaultsForOption();
     }
     this._step = opts?.step ?? 1;
@@ -261,6 +273,9 @@ export class CycleWizard extends LitElement {
     this._enabled = Boolean(first.enabled ?? true);
     this._guards = normalizeGuards(first.guards);
     this._ignoreGlobalGuards = Boolean(first.ignore_global_guards ?? false);
+    // All members of a cycle share their scripts, so the first one speaks for all.
+    this._preStartScript = normalizeScriptOverride(first, "pre_start");
+    this._postRunScript = normalizeScriptOverride(first, "post_run");
   }
 
   private _option(): KindOption {
@@ -324,6 +339,18 @@ export class CycleWizard extends LitElement {
     return `si-guard-cycle-${this.entryId}`;
   }
 
+  private _scriptEntityListId(): string {
+    return `si-script-cycle-${this.entryId}`;
+  }
+
+  private _globalScript(phase: "pre_start" | "post_run"): string {
+    return String(this.installation?.[`${phase}_script`] ?? "").trim();
+  }
+
+  private _globalScriptTimeout(phase: "pre_start" | "post_run"): number {
+    const n = Number(this.installation?.[`${phase}_script_timeout_sec`] ?? 300);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : 300;
+  }
 
   private _zoneDuration(id: string): number {
     const zones = this.installation?.zones as Record<string, Record<string, unknown>> | undefined;
@@ -417,6 +444,8 @@ export class CycleWizard extends LitElement {
         enabled: this._enabled,
         guards: guardsForSave(this._guards),
         ignore_global_guards: this._ignoreGlobalGuards,
+        ...scriptOverrideForSave(this._preStartScript, "pre_start"),
+        ...scriptOverrideForSave(this._postRunScript, "post_run"),
       });
       if (!res.success) {
         this._msg = formatApiError(res.error, this.hass);
@@ -712,6 +741,35 @@ export class CycleWizard extends LitElement {
         <p class="hint">${t(this.hass, "config_panel.schedule_ignore_global_guards_hint")}</p>
       </div>
 
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_scripts_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.schedule_scripts_section_desc")}</p>
+      </div>
+      ${renderScriptOverride(
+        this.hass,
+        this._scriptEntityListId(),
+        "pre_start",
+        this._preStartScript,
+        this._globalScript("pre_start"),
+        this._globalScriptTimeout("pre_start"),
+        this._busy,
+        (next) => {
+          this._preStartScript = next;
+        }
+      )}
+      ${renderScriptOverride(
+        this.hass,
+        this._scriptEntityListId(),
+        "post_run",
+        this._postRunScript,
+        this._globalScript("post_run"),
+        this._globalScriptTimeout("post_run"),
+        this._busy,
+        (next) => {
+          this._postRunScript = next;
+        }
+      )}
+
       <div class="summary-card">
         <strong>${t(this.hass, "config_panel.cycle_creates_title")}</strong>
         <ul style="margin:8px 0 0;padding-left:1.1rem">
@@ -774,6 +832,7 @@ export class CycleWizard extends LitElement {
       : "config_panel.cycle_new";
     return html`
       ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
+      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}

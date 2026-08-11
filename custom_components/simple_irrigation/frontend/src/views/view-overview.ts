@@ -119,6 +119,18 @@ export class ViewOverview extends LitElement {
       .hero-state.error {
         color: var(--error-color);
       }
+      .hero-sub {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: -6px 0 12px;
+        color: var(--secondary-text-color);
+        font-size: 0.9rem;
+      }
+      .hero-sub ha-icon {
+        --mdc-icon-size: 18px;
+        flex: none;
+      }
       .num {
         font-variant-numeric: tabular-nums;
         font-weight: 600;
@@ -259,6 +271,12 @@ export class ViewOverview extends LitElement {
     const zones = this._inst.zones as Record<string, Record<string, unknown>> | undefined;
     const z = zones?.[zoneId];
     return z ? String(z.name ?? zoneId) : zoneId;
+  }
+
+  /** Friendly name of any entity, falling back to its id. */
+  private _entityName(entityId: string): string {
+    const st = this.hass?.states?.[entityId];
+    return st ? String(st.attributes?.friendly_name ?? entityId) : entityId;
   }
 
   private _zonesPhaseInput(): Record<string, ZonePhaseInput> {
@@ -463,6 +481,17 @@ export class ViewOverview extends LitElement {
         : t(this.hass, "config_panel.general_state_idle");
     const showSkip =
       runBusy && runState !== "stopping" && (runState === "preparing" || upcoming.length > 0);
+    // A blocking script is why "Preparing" can sit there for minutes — name it.
+    const activeScript = rs.active_script ? String(rs.active_script) : "";
+    const scriptLine = activeScript
+      ? t(
+          this.hass,
+          runState === "stopping"
+            ? "config_panel.general_state_post_run_script"
+            : "config_panel.general_state_pre_start_script",
+          { name: this._entityName(activeScript) }
+        )
+      : "";
 
     return html`
       <ha-card>
@@ -476,6 +505,12 @@ export class ViewOverview extends LitElement {
         <div class="card-content">
           ${this._msg ? html`<div class="error">${this._msg}</div>` : nothing}
           <div class="hero-state ${badgeClass}">${stateWord}</div>
+          ${scriptLine
+            ? html`<div class="hero-sub">
+                <ha-icon icon="mdi:script-text-play-outline"></ha-icon>
+                <span>${scriptLine}</span>
+              </div>`
+            : nothing}
 
           ${!runBusy && this._planEnabled() && next
             ? html`
@@ -541,7 +576,11 @@ export class ViewOverview extends LitElement {
           <div class="action-row">
             ${runBusy
               ? html`
-                  <button type="button" class="btn-danger" ?disabled=${this._busy}
+                  <!-- Already stopping: the run is ending and its cleanup (post-run
+                       script) cannot be cut short, so the button would only hang. The
+                       hero line above says what it is waiting for. -->
+                  <button type="button" class="btn-danger"
+                    ?disabled=${this._busy || runState === "stopping"}
                     @click=${() => this._call(() => panelControl(this.hass, this.entryId, "stop"))}>
                     ${t(this.hass, "config_panel.general_stop_irrigation")}
                   </button>

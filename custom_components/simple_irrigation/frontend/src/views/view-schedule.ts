@@ -11,6 +11,14 @@ import {
   renderGuardList,
   type Guard,
 } from "../guard-list-editor";
+import {
+  SCRIPT_ENTITY_DOMAINS,
+  hasScriptOverride,
+  normalizeScriptOverride,
+  renderScriptOverride,
+  scriptOverrideForSave,
+  type ScriptOverride,
+} from "../script-override";
 import { defineCustomElementOnce, formatApiError } from "../helpers";
 import { stripEditSlotQueryFromUrl } from "../navigation";
 import { t } from "../i18n";
@@ -49,6 +57,8 @@ interface SlotRow {
   week_parity: WeekParity;
   guards: Guard[];
   ignore_global_guards: boolean;
+  pre_start_script: ScriptOverride;
+  post_run_script: ScriptOverride;
   cycle_id: string | null;
   cycle_kind: string;
   cycle_meta: CycleMeta | null;
@@ -226,6 +236,8 @@ export class ViewSchedule extends LitElement {
           o.week_parity === "odd" || o.week_parity === "even" ? (o.week_parity as WeekParity) : "every",
         guards: normalizeGuards(o.guards),
         ignore_global_guards: Boolean(o.ignore_global_guards ?? false),
+        pre_start_script: normalizeScriptOverride(o, "pre_start"),
+        post_run_script: normalizeScriptOverride(o, "post_run"),
         cycle_id: rid,
         cycle_kind: String(o.cycle_kind ?? "custom"),
         cycle_meta: (o.cycle_meta as CycleMeta) ?? null,
@@ -276,11 +288,38 @@ export class ViewSchedule extends LitElement {
       weekdays: [...s.weekdays],
       zone_ids_ordered: [...s.zone_ids_ordered],
       guards: s.guards.map((g) => ({ ...g })),
+      pre_start_script: { ...s.pre_start_script },
+      post_run_script: { ...s.post_run_script },
     };
   }
 
   private _guardEntityListId(): string {
     return `si-guard-${this.entryId}`;
+  }
+
+  private _scriptEntityListId(): string {
+    return `si-script-${this.entryId}`;
+  }
+
+  /** The installation's script for one phase, inherited unless a slot overrides. */
+  private _globalScript(phase: "pre_start" | "post_run"): string {
+    return String(this.installation?.[`${phase}_script`] ?? "").trim();
+  }
+
+  private _globalScriptTimeout(phase: "pre_start" | "post_run"): number {
+    const n = Number(this.installation?.[`${phase}_script_timeout_sec`] ?? 300);
+    return Number.isFinite(n) && n > 0 ? Math.round(n) : 300;
+  }
+
+  /** Read-only chip shown on a slot/cycle row that brings its own scripts. */
+  private _renderScriptMeta(s: SlotRow): TemplateResult | typeof nothing {
+    if (!hasScriptOverride(s.pre_start_script, s.post_run_script)) return nothing;
+    return html`<span class="meta"
+      ><ha-icon icon="mdi:script-text-outline"></ha-icon>${t(
+        this.hass,
+        "config_panel.schedule_scripts_own"
+      )}</span
+    >`;
   }
 
   /** Guards defined on the installation; inherited unless a slot opts out. */
@@ -708,6 +747,8 @@ export class ViewSchedule extends LitElement {
       week_parity: d.week_parity,
       guards: guardsForSave(d.guards),
       ignore_global_guards: d.ignore_global_guards,
+      ...scriptOverrideForSave(d.pre_start_script, "pre_start"),
+      ...scriptOverrideForSave(d.post_run_script, "post_run"),
     });
     if (ok) this._closeEditDialog();
   }
@@ -785,6 +826,14 @@ export class ViewSchedule extends LitElement {
               ><ha-icon icon="mdi:shield-off-outline"></ha-icon>${t(
                 this.hass,
                 "config_panel.schedule_guards_global_off"
+              )}</span
+            >`
+          : nothing}
+        ${hasScriptOverride(m.pre_start_script, m.post_run_script)
+          ? html`<span class="muted"
+              ><ha-icon icon="mdi:script-text-outline"></ha-icon>${t(
+                this.hass,
+                "config_panel.schedule_scripts_own"
               )}</span
             >`
           : nothing}
@@ -873,10 +922,10 @@ export class ViewSchedule extends LitElement {
                 )}</span
               >
               ${g.members[0]
-                ? this._renderGuardMeta(
+                ? html`${this._renderGuardMeta(
                     g.members[0].guards,
                     g.members[0].ignore_global_guards
-                  )
+                  )}${this._renderScriptMeta(g.members[0])}`
                 : nothing}
               ${next
                 ? html`<span class="meta"
@@ -998,6 +1047,7 @@ export class ViewSchedule extends LitElement {
                 )}</span
               >
               ${this._renderGuardMeta(s.guards, s.ignore_global_guards)}
+              ${this._renderScriptMeta(s)}
               ${next
                 ? html`<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(
@@ -1105,6 +1155,46 @@ export class ViewSchedule extends LitElement {
     `;
   }
 
+  /**
+   * Scripts sit on the slot, not the zone: zones run in parallel phases, so a
+   * per-zone script would have no single point in the pipeline to run at. Keep
+   * zones that need different preparation in different slots.
+   */
+  private _renderScriptSection(draft: SlotRow): TemplateResult {
+    return html`
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_scripts_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.schedule_scripts_section_desc")}</p>
+      </div>
+      ${renderScriptOverride(
+        this.hass,
+        this._scriptEntityListId(),
+        "pre_start",
+        draft.pre_start_script,
+        this._globalScript("pre_start"),
+        this._globalScriptTimeout("pre_start"),
+        this._busy,
+        (next) => {
+          draft.pre_start_script = next;
+          this.requestUpdate();
+        }
+      )}
+      ${renderScriptOverride(
+        this.hass,
+        this._scriptEntityListId(),
+        "post_run",
+        draft.post_run_script,
+        this._globalScript("post_run"),
+        this._globalScriptTimeout("post_run"),
+        this._busy,
+        (next) => {
+          draft.post_run_script = next;
+          this.requestUpdate();
+        }
+      )}
+    `;
+  }
+
   private _renderEditDialog(draft: SlotRow): TemplateResult {
     const zones = this._zonesMap();
     const addZoneOpts = this._addZoneOptionsForDraft(draft);
@@ -1154,6 +1244,7 @@ export class ViewSchedule extends LitElement {
         </div>
       </div>
       ${this._renderGuardSection(draft)}
+      ${this._renderScriptSection(draft)}
       <div class="field-block">
         <div class="switch-row">
           <ha-switch
@@ -1238,6 +1329,7 @@ export class ViewSchedule extends LitElement {
 
     return html`
       ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
+      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>

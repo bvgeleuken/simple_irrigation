@@ -30,9 +30,9 @@ Outputs can be any mix of `switch`, `input_boolean`, `group` and `valve` entitie
 |-----|----------------|
 | **Overview** | Live run state with a countdown to the next run, the next few upcoming runs, the active watering mode, and quick actions: *Run next slot now*, *Skip today*, *Pause 48 h* (plus *Stop* / *Skip phase* while running). |
 | **Zones** | Named zones with one or more output entities, Eco / Normal / Extra runtimes, an **enabled** toggle and **exclusive** flag. Filter by **All / Enabled / Issues**, run a zone now, see how many cycles use it. |
-| **Schedule** | Your watering **cycles** and single slots. A guided **New irrigation cycle** wizard (daily, every 2/3 days, x-per-week, weekly, every 2 weeks, custom). Every row expands to a **14-day run strip**; multi-slot cycles show their members and can be detached. Per-slot **conditions** gate a run on soil moisture, rain, tank level or any other entity. |
+| **Schedule** | Your watering **cycles** and single slots. A guided **New irrigation cycle** wizard (daily, every 2/3 days, x-per-week, weekly, every 2 weeks, custom). Every row expands to a **14-day run strip**; multi-slot cycles show their members and can be detached. Per-slot **conditions** gate a run on soil moisture, rain, tank level or any other entity, and per-slot **scripts** override the installation's pre-start / post-run script. |
 | **Timetable** | Week-at-a-glance grid (zones × weekdays, morning / daytime / evening) with per-day totals, using the same phase and mode timing as a real run. On phones it becomes a per-day list. Click a run to jump straight to its editor. |
-| **Settings** | Installation name (shown in the panel header), optional **pre-start script**, pre-start outputs & delay, watering mode, max parallel zones, global **conditions**, default installation, service reference and raw diagnostics. |
+| **Settings** | Installation name (shown in the panel header), optional **pre-start** and **post-run scripts**, pre-start outputs & delay, watering mode, max parallel zones, global **conditions**, default installation, service reference and raw diagnostics. |
 
 ---
 
@@ -145,19 +145,19 @@ Manual runs (*Run now*, *Run zone now*) always start, regardless of conditions.
 
 - **Watering mode (Eco / Normal / Extra):** chosen on Overview or Settings, or via `simple_irrigation.set_mode` for weather/tank automations.
 - **Max parallel zones:** caps concurrency; exclusive zones still run alone.
-- **Pre-start script:** optional script run **before** the pre-start outputs — see below.
+- **Pre-start / post-run scripts:** optional scripts run **before** the pre-start outputs and **after** the last one goes off — see below.
 - **Pre-start outputs & delay:** outputs turned on before any zone (pump / master valve), with an editable delay to build pressure — both configured on **Settings**.
 - **Pause / Skip today / Pause 48 h:** affect **scheduled** starts only; an already-running cycle is stopped from **Overview**.
 
-### Pre-start script
+### Pre-start and post-run scripts
 
-Sometimes the garden has to be made ready before a drop of water flows: send the robot mower home, close a window, switch a well pump’s power over. **Settings → Pump / pre-start → Pre-start script** takes one `script.*` entity and runs it **to completion** before the pre-start outputs come up:
+Sometimes the garden has to be made ready before a drop of water flows: send the robot mower home, close a window, switch a well pump’s power over — and let it all go back to normal afterwards. **Settings → Pump / pre-start** takes one `script.*` entity for each end of the pipeline and runs it **to completion**:
 
 ```
-pre-start script  →  pre-start outputs on  →  pre-start delay  →  zones
+pre-start script  →  pre-start outputs on  →  pre-start delay  →  zones  →  all outputs off  →  post-run script
 ```
 
-Because the script blocks, it may *wait* — that is the part an automation on `simple_irrigation_run_started` cannot do:
+Because the scripts block, they may *wait* — that is the part an automation on `simple_irrigation_run_started` cannot do:
 
 ```yaml
 # script.mower_go_home — send the mower back and wait until it has docked
@@ -172,10 +172,26 @@ sequence:
     timeout: "00:08:00"
 ```
 
-- **A stuck script never costs a run.** When the configured **timeout** (default 300 s) expires the script is stopped, a warning is logged, and watering starts anyway — the same fail-open rule as conditions.
-- It runs for **every** start through the pipeline: scheduled runs, *Run now*, *Run this slot now* and *Run zone now*.
+- **A stuck script never costs a run.** When the configured **timeout** (default 300 s) expires the script is stopped, a warning is logged, and the run continues anyway — the same fail-open rule as conditions.
+- **You can see what it is waiting for.** While a script blocks, Overview says *“Waiting for the pre-start script: …”* under **Preparing** (and the same for the post-run script under **Stopping…**), so a five-minute mower script no longer looks like a hung run. The same detail is on `binary_sensor.<installation>_running` as the `run_state`, `active_zone_ids` and `active_script` attributes, for your own dashboards and automations.
+- **Stop** is greyed out while the post-run script runs: the run is already ending, and stopping cannot cut its cleanup short.
+- Both run for **every** start through the pipeline: scheduled runs, *Run now*, *Run this slot now* and *Run zone now*.
+- The **post-run script** runs at the end of *every* run — finished, failed, or stopped from Overview — so whatever the pre-start script prepared is always undone. `Stop all` therefore waits for it before the run is reported idle.
 - Use a **script**, not an automation. `automation.trigger` skips the automation’s conditions by default and silently does nothing when the automation is already running in `single` mode — a silent no-op at exactly the wrong moment. Scripts also take parameters and are what the built-in `script.<name>` blocking call is designed for.
-- Anything the script needs to undo afterwards belongs in an automation on `simple_irrigation_run_finished`; Simple Irrigation only turns its own outputs back off.
+
+#### Per-schedule overrides
+
+Not every run needs the same preparation: the lawn sprinklers want the mower out of the way, drip irrigation does not care. **Schedule → edit a slot (or the cycle wizard) → Scripts** overrides either script for that schedule:
+
+| Setting | Effect |
+|---------|--------|
+| Switch off (default) | The installation’s script runs. |
+| Switch on, entity filled in | That script runs **instead** of the installation’s, with its own timeout (empty = the installation’s). |
+| Switch on, entity empty | **No script at all** for this schedule — the drip-irrigation case. |
+
+Scripts belong to the **schedule**, not to the zone: zones run in parallel phases, so a per-zone script would have no single point in the pipeline to run at. Keep zones that need different preparation in different slots rather than mixing them.
+
+When several slots are due in the same minute their zones are merged into one run — and a run has one pre-start and one post-run script. The first overriding slot wins and the disagreement is logged; build slots that do not mix if that matters to you.
 
 ### Timetable
 

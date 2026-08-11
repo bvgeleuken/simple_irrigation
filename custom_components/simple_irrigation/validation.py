@@ -9,7 +9,7 @@ from .const import (
     GUARD_NUMERIC_OPERATORS,
     GUARD_OPERATORS,
     MAX_GUARDS,
-    MAX_PRE_START_SCRIPT_TIMEOUT_SEC,
+    MAX_SCRIPT_TIMEOUT_SEC,
     MODES,
     OUTPUT_ENTITY_DOMAINS,
     SCRIPT_DOMAIN,
@@ -26,8 +26,8 @@ __all__ = [
     "validate_output_entity_id",
     "validate_zone_payload",
     "validate_pre_start_entities",
-    "validate_pre_start_script",
-    "validate_pre_start_script_timeout",
+    "validate_script_entity",
+    "validate_script_timeout",
 ]
 
 
@@ -160,8 +160,8 @@ def validate_pre_start_entities(hass: Any, entity_ids: list[str] | None) -> str 
     return None
 
 
-def validate_pre_start_script(hass: Any, entity_id: str | None) -> str | None:
-    """Return error key or None; empty means "no pre-start script"."""
+def validate_script_entity(hass: Any, entity_id: str | None) -> str | None:
+    """Return error key or None; empty means "no script for this phase"."""
     if not entity_id:
         return None
     if domain_of(entity_id) != SCRIPT_DOMAIN:
@@ -171,13 +171,13 @@ def validate_pre_start_script(hass: Any, entity_id: str | None) -> str | None:
     return None
 
 
-def validate_pre_start_script_timeout(value: Any) -> str | None:
+def validate_script_timeout(value: Any) -> str | None:
     """Return error key or None."""
     try:
         n = int(value)
     except (TypeError, ValueError):
         return "invalid_script_timeout"
-    if n < 1 or n > MAX_PRE_START_SCRIPT_TIMEOUT_SEC:
+    if n < 1 or n > MAX_SCRIPT_TIMEOUT_SEC:
         return "invalid_script_timeout"
     return None
 
