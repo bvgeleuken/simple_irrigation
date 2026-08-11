@@ -22,6 +22,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     DOMAIN,
     GUARD_OPERATORS,
+    MAX_PRE_START_SCRIPT_TIMEOUT_SEC,
     MODES,
     OUTPUT_ENTITY_DOMAINS,
     PANEL_API_REGISTERED_KEY,
@@ -42,6 +43,8 @@ from .validation import (
     validate_max_parallel,
     validate_mode,
     validate_pre_start_entities,
+    validate_pre_start_script,
+    validate_pre_start_script_timeout,
     validate_zone_payload,
 )
 
@@ -248,6 +251,10 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
                 vol.Optional("mode"): vol.In(MODES),
                 vol.Optional("max_parallel_zones"): vol.All(int, vol.Range(min=1, max=16)),
                 vol.Optional("pre_start_delay_sec"): vol.All(cv.positive_int, vol.Range(max=3600)),
+                vol.Optional("pre_start_script"): vol.Any(cv.string, None),
+                vol.Optional("pre_start_script_timeout_sec"): vol.All(
+                    cv.positive_int, vol.Range(max=MAX_PRE_START_SCRIPT_TIMEOUT_SEC)
+                ),
                 vol.Optional("enabled"): cv.boolean,
                 vol.Optional("is_default"): cv.boolean,
                 vol.Optional("pause_until"): vol.Any(cv.string, None),
@@ -282,6 +289,17 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
             inst.max_parallel_zones = int(data["max_parallel_zones"])
         if "pre_start_delay_sec" in data:
             inst.pre_start_delay_sec = int(data["pre_start_delay_sec"])
+        if "pre_start_script" in data:
+            script = str(data["pre_start_script"] or "").strip()
+            err = validate_pre_start_script(hass, script)
+            if err:
+                return self.json({"success": False, "error": err}, status=400)
+            inst.pre_start_script = script
+        if "pre_start_script_timeout_sec" in data:
+            err = validate_pre_start_script_timeout(data["pre_start_script_timeout_sec"])
+            if err:
+                return self.json({"success": False, "error": err}, status=400)
+            inst.pre_start_script_timeout_sec = int(data["pre_start_script_timeout_sec"])
         if "enabled" in data:
             inst.enabled = bool(data["enabled"])
         if "is_default" in data:

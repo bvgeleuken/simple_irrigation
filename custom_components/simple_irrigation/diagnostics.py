@@ -55,6 +55,8 @@ async def async_get_config_entry_diagnostics(
             "pause_until": inst.pause_until.isoformat() if inst.pause_until else None,
             "pre_start_switches": inst.pre_start_switches,
             "pre_start_delay_sec": inst.pre_start_delay_sec,
+            "pre_start_script": inst.pre_start_script,
+            "pre_start_script_timeout_sec": inst.pre_start_script_timeout_sec,
         },
         "zones": {zid: z.to_dict() for zid, z in inst.zones.items()},
         "schedule_slots": slots_diag,
