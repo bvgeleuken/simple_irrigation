@@ -6920,7 +6920,7 @@ __decorate([
 ], ViewZones.prototype, "_expanded", void 0);
 defineCustomElementOnce("si-view-zones", ViewZones);
 
-const VERSION = "1.1.0";
+const VERSION = "1.2.0";
 const PANEL_PAGES = ["overview", "zones", "schedule", "timetable", "settings"];
 /** Legacy path aliases so existing links / deep links keep working. */
 const PAGE_ALIASES = {
