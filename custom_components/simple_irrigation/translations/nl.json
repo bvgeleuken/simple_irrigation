@@ -1,0 +1,586 @@
+{
+  "title": "Eenvoudige Irrigatie",
+  "config": {
+    "step": {
+      "user": {
+        "title": "Eenvoudige Irrigatie",
+        "description": "Maak de installatie aan en open Eenvoudige Irrigatie in de zijbalk om zones en planning te configureren.",
+        "data": {
+          "name": "Installatienaam",
+          "pre_start_switches": "Pre-start uitgangen (aan/uit)",
+          "pre_start_delay_sec": "Pre-start vertraging (seconden)",
+          "default_mode": "Standaardmodus",
+          "max_parallel_zones": "Maximum parallelle zones"
+        }
+      }
+    },
+    "error": {
+      "invalid_max_parallel": "Maximum parallelle zones moet minstens 1 zijn."
+    }
+  },
+  "selector": {
+    "default_mode": {
+      "options": {
+        "eco": "Eco",
+        "normal": "Normaal",
+        "extra": "Extra"
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "mode": {
+        "name": "Modus",
+        "state": {
+          "eco": "Eco",
+          "normal": "Normaal",
+          "extra": "Extra"
+        }
+      }
+    },
+    "sensor": {
+      "active_zones": {
+        "name": "Actieve zones"
+      },
+      "next_run": {
+        "name": "Volgende keer"
+      },
+      "pause_until": {
+        "name": "Pause tot"
+      },
+      "zone_next_run": {
+        "name": "{zone_name} volgende keer"
+      },
+      "zone_last_run": {
+        "name": "{zone_name} vorige keer"
+      }
+    },
+    "binary_sensor": {
+      "running": {
+        "name": "Actief"
+      },
+      "paused": {
+        "name": "Gepauzeerd"
+      },
+      "error_state": {
+        "name": "Fout"
+      },
+      "zone_active": {
+        "name": "{zone_name} actief"
+      }
+    },
+    "button": {
+      "run_due": {
+        "name": "Voer vervallen zones uit"
+      },
+      "stop_all": {
+        "name": "Stop alles"
+      },
+      "zone_run_now": {
+        "name": "{zone_name} nu uitvoeren"
+      }
+    },
+    "switch": {
+      "schedule_enabled": {
+        "name": "Planning ingeschakeld"
+      },
+      "slot_enabled": {
+        "name": "{slot_name} ingeschakeld"
+      }
+    }
+  },
+  "services": {
+    "run_zone": {
+      "name": "Zone uitvoeren",
+      "description": "Start een volledige handmatige run voor één zone: pre-start uitgangen (indien geconfigureerd), vervolgens de zone voor de duur in Eco/Normaal/Extra modus, daarna alle uitgangen uit.",
+      "fields": {
+        "zone_id": {
+          "name": "Zone-ID",
+          "description": "Interne zone-ID van de installatie (weergegeven in diagnostiek / paneel)."
+        },
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere Simple Irrigation entries."
+        }
+      }
+    },
+    "run_zone_with_duration": {
+      "name": "Zone uitvoeren met duur",
+      "description": "Voert een zone uit voor een vaste duur in minuten, negeert Eco/Normaal/Extra kolom voor deze run.",
+      "fields": {
+        "zone_id": {
+          "name": "Zone-ID",
+          "description": "Interne zone-ID."
+        },
+        "duration_min": {
+          "name": "Duur (minuten)",
+          "description": "Hoe lang de zone wordt uitgevoerd (1–1440)."
+        },
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    },
+    "run_due_zones": {
+      "name": "Vervallen zones uitvoeren",
+      "description": "Voert uit wat nu vervallen is volgens de planning (hetzelfde idee als de knop Vervallen zones uitvoeren).",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    },
+    "run_schedule_slot": {
+      "name": "Planningsslot uitvoeren",
+      "description": "Start de volledige reeks voor één planningsslot onmiddellijk (pre-start, fases, daarna uit)—hetzelfde als \"Dit slot nu uitvoeren\" in het paneel.",
+      "fields": {
+        "slot_id": {
+          "name": "Slot-ID",
+          "description": "Interne slot-ID van de installatie (weergegeven in diagnostiek / paneel)."
+        },
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    },
+    "stop_all": {
+      "name": "Stop alles",
+      "description": "Stopt de huidige irrigatiecyclus en schakelt zone-uitgangen uit.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    },
+    "set_mode": {
+      "name": "Modus instellen",
+      "description": "Stelt de globale watermodus in (Eco, Normaal of Extra).",
+      "fields": {
+        "mode": {
+          "name": "Modus",
+          "description": "eco, normal, of extra."
+        },
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    },
+    "set_zone_enabled": {
+      "name": "Zone ingeschakeld instellen",
+      "description": "Schakelt een zone in of uit. Uitgeschakelde zones worden overgeslagen in elk planningsslot.",
+      "fields": {
+        "zone_id": {
+          "name": "Zone-ID",
+          "description": "Interne zone UUID (sleutels onder zones in Diagnostiek downloaden voor deze integratie)."
+        },
+        "enabled": {
+          "name": "Ingeschakeld",
+          "description": "Uitgeschakeld betekent dat de zone wordt overgeslagen totdat deze weer wordt ingeschakeld."
+        },
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    },
+    "pause_until": {
+      "name": "Pause tot",
+      "description": "Pauzeert automatische geplande runs tot de opgegeven datum en tijd.",
+      "fields": {
+        "until": {
+          "name": "Tot",
+          "description": "Datum en tijd wanneer geplande runs mogen hervatten."
+        },
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    },
+    "clear_pause": {
+      "name": "Pause wissen",
+      "description": "Wist een geplande pauze zodat automatische runs opnieuw kunnen plaatsvinden.",
+      "fields": {
+        "config_entry_id": {
+          "name": "Config entry ID",
+          "description": "Optioneel. Installatiedoel bij meerdere entries."
+        }
+      }
+    }
+  },
+  "config_panel": {
+    "sidebar_title": "Eenvoudige Irrigatie",
+    "loading": "Laden…",
+    "main_title": "Eenvoudige Irrigatie",
+    "tab_general": "Algemeen",
+    "tab_zones": "Zones",
+    "tab_schedule": "Planning",
+    "tab_timetable": "Tabel",
+    "tab_status": "Status",
+    "timetable_card_title": "Wekelijkse tabel",
+    "timetable_intro": "Wekelijkse wateringschema per zone. Tijden gebruiken uw Home Assistant-tijdzone; balken gebruiken de huidige modus (Eco / Normaal / Extra), pre-start vertraging en dezelfde fase-regels als een echte run.",
+    "timetable_empty_no_zones": "Voeg zones toe op het tabblad Zones om de tabel te zien.",
+    "timetable_empty_no_slots": "Voeg planningsslots toe op het tabblad Planning om te zien wanneer zones worden uitgevoerd.",
+    "timetable_col_zone": "Zone",
+    "timetable_bucket_aria_morning": "Ochtend",
+    "timetable_bucket_aria_day": "Overdag",
+    "timetable_bucket_aria_evening": "Avond",
+    "timetable_duration_min": "{n} min",
+    "timetable_legend_label": "Tabellegenda",
+    "timetable_legend_bucket_morning": "Ochtend (0:00–8:00)",
+    "timetable_legend_bucket_day": "Overdag (8:00–16:00)",
+    "timetable_legend_bucket_evening": "Avond (16:00–24:00)",
+    "timetable_legend_active": "Actief slot",
+    "timetable_legend_disabled": "Uitgeschakeld slot",
+    "timetable_legend_biweekly": "Elke 2 weken (gestippeld)",
+    "timetable_mode_eco": "Eco",
+    "timetable_mode_normal": "Normaal",
+    "timetable_mode_extra": "Extra",
+    "timetable_bar_tooltip": "{start} – {end} · {mode}",
+    "timetable_week_toggle_label": "Kalenderweek weergegeven in de tabel",
+    "timetable_week_current_hint": "deze week · CW {n}",
+    "timetable_parity_badge_odd": "oneven wken",
+    "timetable_parity_badge_even": "even wken",
+    "entry_picker_title": "Eenvoudige Irrigatie",
+    "entry_picker_lead": "Kies een installatie om zones, wekelijkse planning en runtime-opties te bewerken. Elk item is een onafhankelijk irrigatieplan.",
+    "entry_picker_loading": "Installaties laden…",
+    "entry_badge_ha": "Integratie uitgeschakeld",
+    "entry_badge_plan_off": "Plan uit",
+    "entry_badge_active": "Actief",
+    "entry_badge_default": "Standaard",
+    "entry_card_desc": "Configureer zones, planningsslots, uitvoervolgorde en pre-start uitgangen voor deze controller.",
+    "entry_picker_empty": "Nog geen installaties. Voeg de integratie toe onder Instellingen → Apparaten & services → Integratie toevoegen en zoek naar Eenvoudige Irrigatie.",
+    "entry_picker_howto": "Voeg nog een plan toe (bijv. lente / zomer / andere tuin): gebruik Instellingen → Apparaten & services → Integratie toevoegen → Eenvoudige Irrigatie. Elk plan verschijnt in de lijst hierboven.",
+    "errors_request_failed": "Aanvraag mislukt",
+    "errors_not_running_skip": "Er wordt momenteel niets uitgevoerd.",
+    "entity_placeholder_example": "bijv. valve.tuin of switch.pomp",
+    "entity_placeholder_script": "bijv. script.grasmaaier_naar_huis",
+    "general_card_current_run": "Huidige run",
+    "general_label_irrigation_state": "Irrigatiestatus",
+    "general_state_preparing": "Voorbereiden",
+    "general_state_stopping": "Stoppen…",
+    "general_state_running": "Actief",
+    "general_state_error_idle": "Fout (inactief)",
+    "general_state_idle": "Inactief",
+    "general_preparing_hint": "Pre-start uitgangen en vertraging voordat zones beginnen.",
+    "general_active_zones": "Actieve zones",
+    "general_next_zones": "Volgende zones",
+    "general_last_error": "Laatste fout",
+    "general_scheduled_pause_hint": "Geplande pauzes gebruiken Planbesturing hieronder. Ze stoppen een al gaande run niet—gebruik Stoppen hier.",
+    "general_stop_irrigation": "Stop irrigatie",
+    "general_skip_phase": "Ga naar volgende fase",
+    "general_clear_error": "Foutbericht wissen",
+    "general_card_schedule_overview": "Planningsoverzicht",
+    "general_plan_off_hint": "Dit plan is uitgeschakeld. Er zullen geen automatische runs starten totdat u dit opnieuw inschakelt.",
+    "general_next_scheduled_run": "Volgende geplande run",
+    "general_no_slots": "Geen ingeschakelde planningsslots of zones toegewezen.",
+    "general_none_scheduled": "Niets gepland",
+    "general_card_plan_control": "Planbesturing",
+    "general_enable_plan": "Schakel automatische irrigatie in voor dit plan",
+    "general_pause_active_hint": "Geplande runs zijn gepauzeerd tot {when} (lokale tijd). U kunt dit hieronder wissen of de simple_irrigation.clear_pause service gebruiken met config_entry_id in automaties.",
+    "general_skip_today": "Sla irrigatie vandaag over",
+    "general_clear_pause": "Pause wissen",
+    "general_card_settings": "Algemene instellingen",
+    "general_installation_name": "Installatienaam",
+    "general_installation_name_desc": "Weergegeven in lijsten en helpt u verschillende controllers onderscheiden.",
+    "general_field_name": "Naam",
+    "general_pre_start_title": "Pre-start uitgangen",
+    "general_pre_start_desc": "Uitgangen ingeschakeld voordat een zone wordt uitgevoerd (bijv. pomp of hoofdklep). Ondersteunt schakelaars, kleppen, input_boolean en groepen. Gebruik dezelfde entity ID's als elders in Home Assistant; laat leeg indien niet nodig.",
+    "general_pre_start_output_n": "Pre-start uitgang (aan/uit)",
+    "general_pre_start_output_i": "Pre-start {n}",
+    "general_remove": "Verwijderen",
+    "general_add_pre_start": "Pre-start uitgang toevoegen",
+    "general_pre_start_delay_title": "Pre-start vertraging",
+    "general_pre_start_delay_desc": "Hoe lang na het inschakelen van pre-start uitgangen wordt gewacht voordat zonebewatering begint. Geeft de pomp tijd om druk op te bouwen, vult hoofdlijnen en kan geluidsoverlast door lucht in de buizen verminderen.",
+    "general_pre_start_delay_field": "Vertraging (seconden)",
+    "general_pre_start_script_title": "Pre-start script",
+    "general_pre_start_script_field": "Script (entity ID)",
+    "general_pre_start_script_desc": "Optioneel script dat volledig wordt uitgevoerd voordat de pre-start uitgangen actief worden—gebruik het om de wereld eerst gereed te maken, bijv. stuur de robotmaaier naar huis en wacht tot deze is aangekomen. Omdat het blokkeert, kan het script wachten (wait_for_trigger, wait_template); bewatering begint zodra het klaar is. Laat leeg indien niet nodig.",
+    "general_pre_start_script_timeout_title": "Pre-start script timeout",
+    "general_pre_start_script_timeout_field": "Timeout (seconden)",
+    "general_watering_mode": "Wateringmodus",
+    "general_watering_mode_desc": "Bepaalt welke per-zone duurkolom wordt gebruikt: Eco (korter), Normaal of Extra (langer). U kunt dit ook van automaties aansturen—bijvoorbeeld wanneer waterkwaliteit of buitentemperatuur Eco vs Extra zou moeten bepalen—door de simple_irrigation.set_mode service aan te roepen met modus ingesteld op eco, normal of extra (en config_entry_id indien u meerdere plans hebt).",
+    "general_mode_eco": "Eco",
+    "general_mode_normal": "Normaal",
+    "general_mode_extra": "Extra",
+    "general_max_parallel": "Max parallelle zones",
+    "general_max_parallel_desc": "Hoeveel zones tegelijkertijd mogen bewateren. Exclusieve zones worden altijd alleen uitgevoerd.",
+    "general_max_parallel_field": "Max parallelle zones",
+    "general_default_section": "Standaard irrigatie",
+    "general_default_toggle_label": "Open deze installatie standaard",
+    "general_default_toggle_desc": "Als ingeschakeld, opent u met een klik op Eenvoudige Irrigatie in de zijbalk deze installatie rechtstreeks in plaats van het selectiescherm weer te geven.",
+    "general_default_confirm_title": "Wijzig standaard irrigatie",
+    "general_default_confirm_body": "Het instellen van \"{name}\" als standaard verwijdert de standaardinstelling van \"{other}\". Doorgaan?",
+    "general_default_confirm_ok": "Instellen als standaard",
+    "general_default_confirm_cancel": "Annuleren",
+    "general_saving": "Opslaan…",
+    "general_save": "Opslaan",
+    "zones_card_title": "Zones",
+    "zones_intro": "Elke zone heeft één of meer uitgangen en looptijden voor Eco / Normaal / Extra modus. Koppel zones aan planningsslots op het tabblad Planning. Gebruik Bewerken om één zone per keer te wijzigen. Als u een zone uitschakelt, wordt deze overgeslagen in elk planningsslot dat deze bevat—handig om een zone tijdelijk over te slaan wanneer de grond nog nat is.",
+    "zones_intro_automation": "Roep de simple_irrigation.set_zone_enabled service van automaties of scripts aan met zone_id (de interne UUID van elke zone—de sleutels onder zones in Diagnostiek downloaden voor deze integratie) en enabled true of false. Geef config_entry_id door als u meer dan één Simple Irrigation installatie hebt.",
+    "zones_add_zone": "Zone toevoegen",
+    "zones_detail_disabled": "Uitgeschakeld",
+    "zones_detail_exclusive": "Exclusief",
+    "zones_detail_durations": "Eco {eco}m / Normaal {normal}m / Extra {extra}m",
+    "zones_detail_added_slots_one": "Toegevoegd aan 1 slot",
+    "zones_detail_added_slots_many": "Toegevoegd aan {n} slots",
+    "zones_detail_outputs_one": "1 uitgang",
+    "zones_detail_outputs_many": "{n} uitgangen",
+    "zones_edit": "Bewerken",
+    "zones_run_zone_now": "Zone nu uitvoeren",
+    "zones_err_busy": "Irrigatie wordt al uitgevoerd.",
+    "zones_err_zone_already_queued": "Deze zone is al opgenomen in de huidige run.",
+    "zones_err_unknown_zone": "Onbekende zone.",
+    "zones_err_zone_disabled": "Deze zone is uitgeschakeld.",
+    "zones_err_zone_no_outputs": "Voeg minstens één uitgang toe voordat u deze zone uitvoert.",
+    "zones_field_name_title": "Naam",
+    "zones_field_name_desc": "Label voor deze zone in de UI en planning.",
+    "zones_field_zone_name": "Zonenaam",
+    "zones_outputs_title": "Irrigatie-uitgangen",
+    "zones_outputs_desc": "Een of meer schakelaars, kleppen, helpers of groepen (dezelfde entity ID's als in Developer Tools). Typ of kies uit suggesties; voeg rijen toe voor meerdere uitgangen, of gebruik één groepsentiteit.",
+    "zones_output_first": "Zone-uitgang (aan/uit)",
+    "zones_output_n": "Uitgang {n}",
+    "zones_add_output": "Uitgang toevoegen",
+    "zones_runtime_title": "Runtime per modus (minuten)",
+    "zones_runtime_desc": "Hoe lang deze zone wordt uitgevoerd wanneer de installatie in Eco-, Normaal- of Extra-modus staat.",
+    "zones_duration_eco": "Eco",
+    "zones_duration_normal": "Normaal",
+    "zones_duration_extra": "Extra",
+    "zones_behavior_title": "Gedrag",
+    "zones_behavior_desc": "Schakel een zone tijdelijk uit of beperk deze om zonder anderen te werken.",
+    "zones_enabled": "Ingeschakeld",
+    "zones_exclusive": "Exclusief (nooit parallel met andere zones)",
+    "zones_dialog_new_title": "Nieuwe irrigatiezone",
+    "zones_dialog_edit_title": "Bewerk zone: {name}",
+    "zones_cancel": "Annuleren",
+    "zones_adding": "Toevoegen…",
+    "zones_add_zone_btn": "Zone toevoegen",
+    "zones_confirm_delete": "Deze zone verwijderen?",
+    "zones_delete_zone": "Zone verwijderen",
+    "zones_saving_changes": "Opslaan…",
+    "zones_save_changes": "Wijzigingen opslaan",
+    "schedule_card_title": "Planning",
+    "schedule_intro": "Slots zijn wekelijkse starttijden met een geordende zonenlijst. Gebruik Bewerken op een rij om zones, volgorde en opties te wijzigen. Koppel eerst zones op het tabblad Zones.",
+    "schedule_add_slot": "Slot toevoegen",
+    "schedule_zones_in_order_one": "1 zone in uitvoeringsvolgorde",
+    "schedule_zones_in_order_many": "{n} zones in uitvoeringsvolgorde",
+    "schedule_run_slot_now": "Dit slot nu uitvoeren",
+    "schedule_edit": "Bewerken",
+    "schedule_dialog_new_title": "Nieuw planningsslot",
+    "schedule_dialog_new_hint": "Maak een herhalend moment aan, gebruik vervolgens Bewerken op de rij om zones in te stellen en op te slaan.",
+    "schedule_name_optional_title": "Naam (optioneel)",
+    "schedule_name_optional_desc": "Een kort label om dit slot in het overzicht en elders te herkennen.",
+    "schedule_slot_name": "Slotnaam",
+    "schedule_weekdays_title": "Weekdagen",
+    "schedule_weekdays_desc": "Weekdagen waarop deze run start. Kies meerdere om met één slot op meerdere dagen te bewateren, of gebruik een voorkeur.",
+    "schedule_preset_daily": "Elke dag",
+    "schedule_preset_workdays": "Ma–Vr",
+    "schedule_preset_weekend": "Weekend",
+    "weekdays_summary_daily": "Dagelijks",
+    "weekdays_summary_workdays": "Ma–Vr",
+    "weekdays_summary_weekend": "Weekend",
+    "schedule_err_no_weekdays": "Kies minstens één weekdag.",
+    "schedule_split_slot": "Splitsen naar enkele dagen",
+    "schedule_confirm_split": "Dit slot in één slot per weekdag splitsen? Elk behoudt dezelfde tijd, zones en opties.",
+    "schedule_week_parity_title": "Weekcyclus",
+    "schedule_week_parity_desc": "Voer elke week uit, of alleen in oneven/even ISO-kalenderweken. Twee slots in afwisselende weken geven u een cyclus van elke twee weken.",
+    "week_parity_every": "Elke week",
+    "week_parity_odd": "Oneven kalenderweken",
+    "week_parity_even": "Even kalenderweken",
+    "schedule_local_time_title": "Lokale tijd",
+    "schedule_local_time_desc": "Starttijd in uw Home Assistant-tijdzone. Opgeslagen als 24-uurs (UU:MM); het overzicht gebruikt uw profieltijdformaat (12-uurs of 24-uurs).",
+    "schedule_time_hhmm": "Tijd (UU:MM)",
+    "guards_section_title": "Voorwaarden",
+    "guards_section_desc": "Voer alleen uit zolang alle voorwaarden gelden. Leeg laten om altijd uit te voeren.",
+    "guards_entity_label": "Entiteit",
+    "guards_entity_placeholder": "bijv. sensor.bodemvochtigheid of sensor.regen_vandaag",
+    "guards_operator_label": "Voorwaarde",
+    "guards_value_label": "Waarde",
+    "guards_add": "Voorwaarde toevoegen",
+    "guards_remove": "Verwijderen",
+    "guards_count": "{n} voorwaarden",
+    "guards_none": "Geen voorwaarden",
+    "guards_current_value": "momenteel: {v}",
+    "guards_equals_hint": "Exacte gelijkheid past zelden op een gemeten waarde—groter of kleiner is meestal beter.",
+    "guard_op_above": "is groter dan",
+    "guard_op_below": "is kleiner dan",
+    "guard_op_equals": "gelijk aan",
+    "guard_op_state_is": "status is",
+    "guard_op_is_true": "is aan",
+    "guard_op_is_false": "is uit",
+    "guard_label_numeric": "{entity} {op} {value}",
+    "guard_label_boolean": "{entity} {op}",
+    "settings_section_guards": "Voorwaarden",
+    "settings_guards_hint": "Dit geldt voor elke geplande run. Één slot kan hiervan afzien.",
+    "schedule_ignore_global_guards": "Negeer globale voorwaarden",
+    "schedule_ignore_global_guards_hint": "Voor slots die de globale voorwaarden niet mag beïnvloeden—bijv. een kas let niet op regen.",
+    "schedule_guards_global_off": "Globale voorwaarden uit",
+    "schedule_guards_inherited": "Geldt ook: {list}",
+    "schedule_err_guards_incomplete": "Elke voorwaarde moet een entiteit en waarde hebben.",
+    "errors_invalid_guard_entity": "Kies een geldige entiteit voor elke voorwaarde.",
+    "errors_invalid_guard_operator": "Onbekend voorwaardetype.",
+    "errors_missing_guard_value": "Deze voorwaarde heeft een waarde nodig.",
+    "errors_invalid_guard_value": "De voorwaardewaarde moet een getal zijn.",
+    "errors_too_many_guards": "Te veel voorwaarden.",
+    "errors_invalid_script": "Het pre-start script moet een scripententiteit zijn (script.…).",
+    "errors_invalid_script_timeout": "De timeout moet tussen 1 en 3600 seconden liggen.",
+    "errors_unknown_entity": "Die entiteit bestaat niet.",
+    "schedule_slot_enabled": "Slot ingeschakeld",
+    "schedule_adding": "Toevoegen…",
+    "schedule_add_slot_btn": "Slot toevoegen",
+    "schedule_err_busy": "Irrigatie wordt al uitgevoerd.",
+    "schedule_err_empty_slot": "Voeg minstens één zone aan dit slot toe.",
+    "schedule_err_no_runnable": "Geen ingeschakelde zones om in dit slot uit te voeren.",
+    "schedule_err_unknown_slot": "Onbekend slot.",
+    "schedule_edit_dialog_title": "Bewerk slot · {summary}",
+    "schedule_start_time_title": "Starttijd",
+    "schedule_run_order_title": "Uitvoeringsvolgorde",
+    "schedule_run_order_desc": "Zones worden in volgorde uitgevoerd. Faselabels tonen hoe runs groeperen: zones in dezelfde fase starten samen wanneer parallelle regels dit toestaan; exclusieve zones worden altijd alleen uitgevoerd. Uitgeschakelde zones worden bij runtime overgeslagen en worden niet in een fase weergegeven.",
+    "schedule_phase_n": "Fase {n}",
+    "schedule_up": "Omhoog",
+    "schedule_down": "Omlaag",
+    "schedule_remove": "Verwijderen",
+    "schedule_add_zone_title": "Zone toevoegen",
+    "schedule_choose_zone": "Kies een zone…",
+    "schedule_add_to_list": "Toevoegen aan lijst",
+    "schedule_all_zones_in_slot": "Alle zones bevinden zich al in dit slot.",
+    "schedule_create_zones_first": "Maak eerst zones aan op het tabblad Zones.",
+    "schedule_confirm_delete_slot": "Dit slot verwijderen?",
+    "schedule_delete_slot": "Slot verwijderen",
+    "schedule_saving": "Opslaan…",
+    "schedule_save_slot": "Slot opslaan",
+    "status_card_title": "Runtime-status",
+    "status_intro": "Overzicht van wat de controller doet. Vernieuw het paneel of wissel van tabblad om bij te werken.",
+    "status_state_label": "Status:",
+    "status_state_run_in_progress": "Run bezig",
+    "status_state_error": "Fout",
+    "status_state_idle": "Inactief / wachtend",
+    "status_manual_label": "Handmatige run:",
+    "status_manual_text": "Deze cyclus is gestart vanuit het paneel (\"Dit slot nu uitvoeren\") of een zoneservice, niet van de wekelijkse schedulertimer.",
+    "status_scheduled_label": "Geplande run:",
+    "status_scheduled_text": "Deze cyclus is geactiveerd door de planning.",
+    "status_idle_hint": "Wanneer een run actief is, toont deze pagina of deze handmatig of gepland was. manual_run in onbewerkte status is alleen waar bij een handmatige cyclus.",
+    "status_active_zones": "Actieve zones:",
+    "status_queued_zones": "Zones in wachtrij:",
+    "status_last_error": "Laatste fout:",
+    "status_error_clear_hint": "Het bericht wist wanneer een run succesvol eindigt, wanneer u irrigatie stopt via het tabblad Algemeen, of wanneer u hier Foutbericht wissen gebruikt. Het blijft zichtbaar na een mislukte run totdat een van deze dingen gebeurt. Een Home Assistant herstart na een onderbroken run kan een herstelbericht instellen.",
+    "status_show_raw": "Onbewerkte status tonen (debug)",
+    "status_hide_raw": "Onbewerkte status verbergen",
+    "tab_overview": "Overzicht",
+    "tab_settings": "Instellingen",
+    "overview_run_next_now": "Voer volgende slot nu uit",
+    "overview_pause_48h": "Pause 48 u",
+    "overview_next_runs": "Volgende runs",
+    "overview_mode_total": "Volgende run ≈ {n} min totaal",
+    "overview_countdown_soon": "in minder dan een minuut",
+    "overview_countdown_days": "in {d} d {h} u",
+    "overview_countdown_hours": "in {h} u {m} min",
+    "overview_countdown_minutes": "in {m} min",
+    "settings_section_general": "Algemeen",
+    "settings_section_pump": "Pomp / pre-start",
+    "settings_section_watering": "Watering",
+    "settings_section_automations": "Voor automaties",
+    "settings_name_hint": "Weergegeven in de paneelkop (boven de tabbladen) en op de installatiekiezer.",
+    "settings_pre_start_delay_hint": "Geeft de pomp tijd om druk op te bouwen voordat een zone opent.",
+    "settings_pre_start_script_timeout_hint": "Als het script tegen die tijd niet is voltooid, wordt het gestopt en begint de bewatering toch—een vast script kost nooit een run.",
+    "settings_max_parallel_hint": "Exclusieve zones worden altijd alleen uitgevoerd, ongeacht deze limiet.",
+    "settings_default_hint": "Het openen van de zijbalk-item springt rechtstreeks naar deze installatie.",
+    "settings_automations_summary": "Serviceoproepen & ID's",
+    "settings_automations_body": "Gebruik deze services van automaties: set_mode, set_zone_enabled, pause_until, clear_pause, run_zone, run_schedule_slot, stop_all. De config entry id hieronder identificeert deze installatie.",
+    "settings_diagnostics_summary": "Diagnostiek (onbewerkte run-status)",
+    "settings_danger_title": "Gevaarzone",
+    "settings_danger_desc": "Het verwijderen van een installatie verwijdert de zones en planning. Dit gebeurt via Instellingen → Apparaten & Services.",
+    "settings_danger_button": "Open integratie-instellingen",
+    "settings_unsaved": "Niet-opgeslagen wijzigingen",
+    "settings_all_saved": "Alle wijzigingen opgeslagen",
+    "zones_filter_all": "Alle",
+    "zones_filter_enabled": "Ingeschakeld",
+    "zones_filter_issues": "Problemen",
+    "zones_issue_output_unavailable": "Uitgang niet beschikbaar",
+    "zones_min_suffix": "min",
+    "zones_in_cycles_one": "in 1 cyclus",
+    "zones_in_cycles_many": "in {n} cycli",
+    "zones_help_summary": "Wat is een zone?",
+    "zones_empty": "Nog geen zones. Voeg uw eerste irrigatiezone toe om aan de slag te gaan.",
+    "zones_empty_filtered": "Geen zones komen overeen met dit filter.",
+    "cycle_card_title": "Planning",
+    "cycle_quick_add_title": "Snel toevoegen",
+    "cycle_new": "Nieuwe irrigatiecyclus",
+    "cycle_edit_title": "Bewerk cyclus",
+    "cycle_save": "Cyclus opslaan",
+    "cycle_create": "Maak cyclus aan",
+    "cycle_back": "Terug",
+    "cycle_next": "Volgende",
+    "cycle_kind_daily": "Dagelijks",
+    "cycle_kind_daily_desc": "Watert eenmaal per dag. Goed voor potten en vers zaad.",
+    "cycle_kind_twice_daily": "Twee keer per dag",
+    "cycle_kind_twice_daily_desc": "Twee runs per dag—ochtend en avond.",
+    "cycle_kind_every_2_days": "Elke 2 dagen",
+    "cycle_kind_every_2_days_desc": "Elke andere dag. Goed voor gevestigde bedden.",
+    "cycle_kind_every_3_days": "Elke 3 dagen",
+    "cycle_kind_every_3_days_desc": "Ongeveer twee keer per week met gelijkmatige tussenpozen.",
+    "cycle_kind_n_per_week": "Bepaal dagen per week",
+    "cycle_kind_n_per_week_desc": "Kies de exacte weekdagen waarop het zou moeten draaien.",
+    "cycle_kind_weekly": "Wekelijks",
+    "cycle_kind_weekly_desc": "Eenmaal per week op de dag van uw keuze.",
+    "cycle_kind_biweekly": "Elke 2 weken",
+    "cycle_kind_biweekly_desc": "Eenmaal per twee weken. Voor gazons en struiken.",
+    "cycle_kind_custom": "Aangepaste dagen…",
+    "cycle_kind_custom_desc": "Vrije keuze van weekdagen, elke week.",
+    "cycle_badge_exact": "exact",
+    "cycle_badge_approx": "ongeveer",
+    "cycle_badge_custom": "Aangepast",
+    "cycle_step_how_often": "Hoe vaak",
+    "cycle_step_when": "Wanneer",
+    "cycle_step_zones": "Zones",
+    "cycle_time_title": "Starttijd",
+    "cycle_time_preset_early": "Vroeg in de ochtend",
+    "cycle_time_preset_morning": "Ochtend",
+    "cycle_time_preset_evening": "Avond",
+    "cycle_time_preset_late": "Laat in de avond",
+    "cycle_anchor_title": "Op welke dag",
+    "cycle_anchor_desc": "De cadans is verankerd op deze weekdag.",
+    "cycle_preview_title": "Volgende 14 dagen",
+    "cycle_preview_gaps": "Runs met gaten van {gaps} dagen.",
+    "cycle_preview_first_run": "Begint op {when}.",
+    "cycle_creates_title": "Dit maakt:",
+    "cycle_select_all": "Alles selecteren",
+    "cycle_phase_alone": "fase {n} · alleen",
+    "cycle_slots_n": "{n} slots",
+    "cycle_meta_zones": "{z} zones · {p} fases · ~{m} min",
+    "cycle_paused_n": "Gepauzeerd · {n} slots",
+    "cycle_partly_enabled": "Gedeeltelijk ingeschakeld",
+    "cycle_expand": "Toon dagen",
+    "cycle_detach": "Ontkoppel naar afzonderlijke slots",
+    "cycle_detach_hint": "Het bewerken van de cyclus herschrijft de slots.",
+    "cycle_detach_confirm": "Deze cyclus in onafhankelijke afzonderlijke slots ontkoppelen?",
+    "cycle_delete": "Cyclus verwijderen",
+    "cycle_delete_confirm": "Deze cyclus en alle slots verwijderen?",
+    "cycle_cleanup": "Optimaliseer cycli",
+    "cycle_cleanup_desc": "Deze bestaande slots zien eruit als een herhalende cyclus. Ze samenvoegen in cyclusrijen? Niets werkt anders—alleen hoe ze zijn gegroepeerd verandert.",
+    "cycle_cleanup_confirm": "Samenvoegen",
+    "cycle_cleanup_merge_n": "voegt {n} slots samen",
+    "cycle_cleanup_none": "Geen slots om samen te voegen.",
+    "cycle_conflict_warning": "Dit overlapt met een ander run op een gedeelde dag.",
+    "cycle_conflict_shift": "Verschuif met +1 u",
+    "cycle_quick_daily_evening": "Dagelijks avond",
+    "cycle_quick_2_per_week": "2× per week",
+    "cycle_quick_custom": "Aangepaste dagen…",
+    "schedule_empty": "Nog geen planning. Voeg een cyclus toe om automatisch water te geven.",
+    "timetable_help_summary": "Hoe is deze tabel gebouwd?",
+    "timetable_totals_label": "Totaal / dag",
+    "timetable_day_total": "Totaal {n} min",
+    "timetable_day_empty": "Geen runs op deze dag.",
+    "overview_zones_queued": "{n} zones in wachtrij",
+    "overview_today": "Vandaag",
+    "overview_tomorrow": "Morgen",
+    "settings_manage_title": "Beheer installatie",
+    "settings_manage_desc": "Wijzig de naam, schakel uit of verwijder deze installatie uit de integratie-instellingen van Home Assistant.",
+    "settings_open_integration": "Open integratie-instellingen"
+  }
+}
