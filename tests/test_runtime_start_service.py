@@ -1,0 +1,189 @@
+"""Tests for per-zone custom start services carrying duration."""
+
+from __future__ import annotations
+
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
+from homeassistant.exceptions import HomeAssistantError
+
+from custom_components.simple_irrigation.models import RunState, Zone
+from custom_components.simple_irrigation.runtime import IrrigationRuntime
+
+
+def _runtime(calls: list[tuple[str, str, dict]], zone: Zone) -> IrrigationRuntime:
+    hass = MagicMock()
+
+    async def _call(domain, service, data=None, **_kwargs):
+        calls.append((domain, service, dict(data or {})))
+
+    hass.services.async_call = AsyncMock(side_effect=_call)
+    hass.bus.async_fire = MagicMock()
+
+    coordinator = MagicMock()
+    coordinator.installation = MagicMock(zones={zone.zone_id: zone})
+    coordinator.run_state = RunState()
+    coordinator.async_update_run_state = AsyncMock()
+
+    runtime = IrrigationRuntime(hass, coordinator)
+    runtime._async_wait_zone_duration = AsyncMock()
+    return runtime
+
+
+@pytest.mark.asyncio
+async def test_zone_uses_custom_start_service_with_minutes() -> None:
+    calls: list[tuple[str, str, dict]] = []
+    zone = Zone(
+        zone_id="z1",
+        name="Front",
+        switch_entity_ids=["switch.front"],
+        start_service="rainbird.start_irrigation",
+        duration_field="duration",
+        duration_unit="minutes",
+    )
+    runtime = _runtime(calls, zone)
+
+    await runtime._async_zone_run(zone, duration_min=15)
+
+    assert calls[0] == (
+        "rainbird",
+        "start_irrigation",
+        {"entity_id": "switch.front", "duration": 15},
+    )
+    # Safety off still runs after the configured duration.
+    assert calls[1] == ("switch", "turn_off", {"entity_id": "switch.front"})
+    assert "switch.front" in runtime._touched_entities
+
+
+@pytest.mark.asyncio
+async def test_zone_uses_custom_target_and_seconds_conversion() -> None:
+    calls: list[tuple[str, str, dict]] = []
+    zone = Zone(
+        zone_id="z1",
+        name="Front",
+        switch_entity_ids=["switch.front"],
+        start_service="opensprinkler.run",
+        duration_field="run_seconds",
+        duration_unit="seconds",
+        start_entity_id="binary_sensor.front_zone",
+    )
+    runtime = _runtime(calls, zone)
+
+    await runtime._async_zone_run(zone, duration_min=2)
+
+    assert calls[0] == (
+        "opensprinkler",
+        "run",
+        {"entity_id": "binary_sensor.front_zone", "run_seconds": 120},
+    )
+    assert calls[1] == ("switch", "turn_off", {"entity_id": "switch.front"})
+
+
+@pytest.mark.asyncio
+async def test_zone_uses_custom_start_service_for_each_output_when_no_target_is_set() -> None:
+    calls: list[tuple[str, str, dict]] = []
+    zone = Zone(
+        zone_id="z1",
+        name="Front",
+        switch_entity_ids=["switch.front", "switch.back"],
+        start_service="rainbird.start_irrigation",
+        duration_field="duration",
+        duration_unit="minutes",
+    )
+    runtime = _runtime(calls, zone)
+
+    await runtime._async_zone_run(zone, duration_min=7)
+
+    assert calls[0] == (
+        "rainbird",
+        "start_irrigation",
+        {"entity_id": "switch.front", "duration": 7},
+    )
+    assert calls[1] == (
+        "switch",
+        "turn_off",
+        {"entity_id": "switch.front"},
+    )
+    assert calls[2] == (
+        "rainbird",
+        "start_irrigation",
+        {"entity_id": "switch.back", "duration": 7},
+    )
+    assert calls[3] == (
+        "switch",
+        "turn_off",
+        {"entity_id": "switch.back"},
+    )
+
+
+@pytest.mark.asyncio
+async def test_zone_falls_back_to_default_start_without_custom_service() -> None:
+    calls: list[tuple[str, str, dict]] = []
+    zone = Zone(
+        zone_id="z1",
+        name="Front",
+        switch_entity_ids=["switch.front"],
+    )
+    runtime = _runtime(calls, zone)
+
+    await runtime._async_zone_run(zone, duration_min=5)
+
+    assert calls[0] == ("switch", "turn_on", {"entity_id": "switch.front"})
+    assert calls[1] == ("switch", "turn_off", {"entity_id": "switch.front"})
+
+
+@pytest.mark.asyncio
+async def test_turn_off_failure_does_not_prevent_next_zone_from_starting() -> None:
+    calls: list[tuple[str, str, dict]] = []
+    first_zone = Zone(
+        zone_id="z1",
+        name="Front",
+        switch_entity_ids=["switch.front"],
+        start_service="rainbird.start_irrigation",
+        duration_field="duration",
+        duration_unit="minutes",
+    )
+    second_zone = Zone(
+        zone_id="z2",
+        name="Back",
+        switch_entity_ids=["switch.back"],
+        start_service="rainbird.start_irrigation",
+        duration_field="duration",
+        duration_unit="minutes",
+    )
+
+    hass = MagicMock()
+
+    async def _call(domain, service, data=None, **_kwargs):
+        payload = dict(data or {})
+        calls.append((domain, service, payload))
+        if service == "turn_off" and payload.get("entity_id") == "switch.front":
+            raise HomeAssistantError("already off")
+
+    hass.services.async_call = AsyncMock(side_effect=_call)
+    hass.bus.async_fire = MagicMock()
+
+    coordinator = MagicMock()
+    coordinator.installation = MagicMock(
+        zones={first_zone.zone_id: first_zone, second_zone.zone_id: second_zone}
+    )
+    coordinator.run_state = RunState()
+    coordinator.async_update_run_state = AsyncMock()
+
+    runtime = IrrigationRuntime(hass, coordinator)
+    runtime._async_wait_zone_duration = AsyncMock()
+
+    await runtime._async_zone_run(first_zone, duration_min=15)
+    await runtime._async_zone_run(second_zone, duration_min=10)
+
+    assert calls[0] == (
+        "rainbird",
+        "start_irrigation",
+        {"entity_id": "switch.front", "duration": 15},
+    )
+    assert calls[1] == ("switch", "turn_off", {"entity_id": "switch.front"})
+    assert calls[2] == (
+        "rainbird",
+        "start_irrigation",
+        {"entity_id": "switch.back", "duration": 10},
+    )

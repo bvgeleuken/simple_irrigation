@@ -358,6 +358,10 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
                         vol.Optional("duration_normal_min"): vol.All(int, vol.Range(min=0, max=240)),
                         vol.Optional("duration_extra_min"): vol.All(int, vol.Range(min=0, max=240)),
                         vol.Optional("exclusive"): cv.boolean,
+                        vol.Optional("start_service"): vol.Any(cv.string, None),
+                        vol.Optional("duration_field"): vol.Any(cv.string, None),
+                        vol.Optional("duration_unit"): vol.Any(cv.string, None),
+                        vol.Optional("start_entity_id"): vol.Any(cv.string, None),
                     }
                 ),
             }
@@ -385,6 +389,10 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
                 "duration_normal_min": zone_data.get("duration_normal_min", 15),
                 "duration_extra_min": zone_data.get("duration_extra_min", 20),
                 "exclusive": zone_data.get("exclusive", False),
+                "start_service": zone_data.get("start_service", ""),
+                "duration_field": zone_data.get("duration_field", ""),
+                "duration_unit": zone_data.get("duration_unit", ""),
+                "start_entity_id": zone_data.get("start_entity_id", ""),
             }
             err = validate_zone_payload(hass, payload)
             if err:
@@ -400,6 +408,10 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
                 duration_normal_min=int(payload["duration_normal_min"]),
                 duration_extra_min=int(payload["duration_extra_min"]),
                 exclusive=bool(payload["exclusive"]),
+                start_service=str(payload["start_service"] or "").strip(),
+                duration_field=str(payload["duration_field"] or "").strip(),
+                duration_unit=str(payload["duration_unit"] or "").strip(),
+                start_entity_id=str(payload["start_entity_id"] or "").strip(),
             )
             await coord.async_update_installation(inst)
             return self.json({"success": True, "zone_id": zid})
@@ -438,6 +450,10 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
             ),
             "duration_extra_min": zone_data.get("duration_extra_min", zone.duration_extra_min),
             "exclusive": zone_data.get("exclusive", zone.exclusive),
+            "start_service": zone_data.get("start_service", zone.start_service),
+            "duration_field": zone_data.get("duration_field", zone.duration_field),
+            "duration_unit": zone_data.get("duration_unit", zone.duration_unit),
+            "start_entity_id": zone_data.get("start_entity_id", zone.start_entity_id),
         }
         err = validate_zone_payload(hass, merged)
         if err:
@@ -449,6 +465,10 @@ class SimpleIrrigationPanelZoneView(HomeAssistantView):
         zone.duration_normal_min = int(merged["duration_normal_min"])
         zone.duration_extra_min = int(merged["duration_extra_min"])
         zone.exclusive = bool(merged["exclusive"])
+        zone.start_service = str(merged["start_service"] or "").strip()
+        zone.duration_field = str(merged["duration_field"] or "").strip()
+        zone.duration_unit = str(merged["duration_unit"] or "").strip()
+        zone.start_entity_id = str(merged["start_entity_id"] or "").strip()
         await coord.async_update_installation(inst)
         return self.json({"success": True})
 

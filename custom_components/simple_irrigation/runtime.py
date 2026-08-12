@@ -458,9 +458,14 @@ class IrrigationRuntime:
                 "entity_ids": outputs,
             },
         )
-        await asyncio.gather(*(self._async_switch_turn_on(eid) for eid in outputs))
-        await self._async_wait_zone_duration(duration_min * 60)
-        await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
+        handled_by_service = await self._async_zone_run_with_duration_service(
+            zone,
+            duration_min,
+        )
+        if not handled_by_service:
+            await asyncio.gather(*(self._async_switch_turn_on(eid) for eid in outputs))
+            await self._async_wait_zone_duration(duration_min * 60)
+            await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
         now = dt_util.utcnow()
         rs = self.coordinator.run_state
         rs.last_run_per_zone[zone.zone_id] = now
@@ -473,6 +478,70 @@ class IrrigationRuntime:
                 "entity_ids": outputs,
             },
         )
+
+    async def _async_zone_run_with_duration_service(
+        self,
+        zone: Zone,
+        duration_min: int,
+    ) -> bool:
+        """Run a zone via an integration-specific service carrying duration.
+
+        Returns True when the custom path handled the complete zone runtime,
+        False when zone has no service configuration and should use the default
+        output turn_on/turn_off path.
+        """
+        service_ref = zone.start_service.strip()
+        duration_field = zone.duration_field.strip()
+        duration_unit = zone.duration_unit.strip()
+        if not service_ref or not duration_field or not duration_unit:
+            return False
+
+        domain, sep, service = service_ref.partition(".")
+        if not sep or not domain or not service:
+            _LOGGER.warning(
+                "Zone %s has invalid start service '%s'; using default output start",
+                zone.zone_id,
+                service_ref,
+            )
+            return False
+
+        outputs = list(zone.switch_entity_ids)
+        if not outputs:
+            return False
+
+        duration_value = duration_min if duration_unit == "minutes" else duration_min * 60
+        explicit_target = zone.start_entity_id.strip()
+
+        async def _start_target(target_entity_id: str) -> None:
+            service_data = {
+                "entity_id": target_entity_id,
+                duration_field: duration_value,
+            }
+            await self.hass.services.async_call(
+                domain,
+                service,
+                service_data,
+                blocking=True,
+            )
+
+        if explicit_target:
+            await _start_target(explicit_target)
+            for entity_id in outputs:
+                self._touched_entities.add(entity_id)
+            await self._async_wait_zone_duration(duration_min * 60)
+            await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
+            return True
+
+        # No explicit target: run each configured output one after another.
+        for entity_id in outputs:
+            await _start_target(entity_id)
+            self._touched_entities.add(entity_id)
+            await self._async_wait_zone_duration(duration_min * 60)
+            await self._async_switch_turn_off(entity_id)
+            if self._stop_event.is_set() or self._skip_phase_event.is_set():
+                break
+
+        return True
 
     async def async_run_zone(self, zone_id: str, duration_min: int | None = None) -> None:
         """Manual run for one zone (pre-start delay, current mode duration, then all outputs off)."""
@@ -653,23 +722,30 @@ class IrrigationRuntime:
 
     async def _async_switch_turn_off(self, entity_id: str) -> None:
         from .const import OUTPUT_DOMAIN_SERVICES
-        
+
         domain = entity_id.split(".")[0]
-        
-        if domain in OUTPUT_DOMAIN_SERVICES:
-            _service_on, service_off = OUTPUT_DOMAIN_SERVICES[domain]
-            await self.hass.services.async_call(
-                domain,
-                service_off,
-                {"entity_id": entity_id},
-                blocking=True,
-            )
-        else:
-            await self.hass.services.async_call(
-                domain,
-                "turn_off",
-                {"entity_id": entity_id},
-                blocking=True,
+
+        try:
+            if domain in OUTPUT_DOMAIN_SERVICES:
+                _service_on, service_off = OUTPUT_DOMAIN_SERVICES[domain]
+                await self.hass.services.async_call(
+                    domain,
+                    service_off,
+                    {"entity_id": entity_id},
+                    blocking=True,
+                )
+            else:
+                await self.hass.services.async_call(
+                    domain,
+                    "turn_off",
+                    {"entity_id": entity_id},
+                    blocking=True,
+                )
+        except HomeAssistantError as err:
+            _LOGGER.warning(
+                "Ignoring turn_off failure for %s so the irrigation run can continue: %s",
+                entity_id,
+                err,
             )
 
     async def _async_turn_off_all_tracked(self) -> None:

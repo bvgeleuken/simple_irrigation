@@ -18,7 +18,7 @@
 - **Everything in the UI** — Overview · Zones · Schedule · Timetable · Settings. No YAML for zones or schedules.
 - **Multiple gardens** — add several installations for different plots or seasonal plans.
 
-Outputs can be any mix of `switch`, `input_boolean`, `group` and `valve` entities. Optional **pre-start** outputs (pump / master valve) fire first. Full **English**, **German** and **Italian** translations. Responsive down to the Home Assistant companion app.
+Outputs can be any mix of `switch`, `input_boolean`, `group` and `valve` entities. Zones can also use a **duration-aware start service** for irrigation integrations such as Rain Bird, Rachio, Hydrawise, B-hyve / Orbit and OpenSprinkler. Optional **pre-start** outputs (pump / master valve) fire first. Full **English**, **German** and **Italian** translations. Responsive down to the Home Assistant companion app.
 
 **Requirements:** Home Assistant **2024.1** or newer.
 
@@ -29,7 +29,7 @@ Outputs can be any mix of `switch`, `input_boolean`, `group` and `valve` entitie
 | Tab | What it does |
 |-----|----------------|
 | **Overview** | Live run state with a countdown to the next run, the next few upcoming runs, the active watering mode, and quick actions: *Run next slot now*, *Skip today*, *Pause 48 h* (plus *Stop* / *Skip phase* while running). |
-| **Zones** | Named zones with one or more output entities, Eco / Normal / Extra runtimes, an **enabled** toggle and **exclusive** flag. Filter by **All / Enabled / Issues**, run a zone now, see how many cycles use it. |
+| **Zones** | Named zones with one or more output entities, Eco / Normal / Extra runtimes, an **enabled** toggle and **exclusive** flag. Advanced settings support integration-specific start services that receive the runtime. Filter by **All / Enabled / Issues**, run a zone now, see how many cycles use it. |
 | **Schedule** | Your watering **cycles** and single slots. A guided **New irrigation cycle** wizard (daily, every 2/3 days, x-per-week, weekly, every 2 weeks, custom). Every row expands to a **14-day run strip**; multi-slot cycles show their members and can be detached. Per-slot **conditions** gate a run on soil moisture, rain, tank level or any other entity. |
 | **Timetable** | Week-at-a-glance grid (zones × weekdays, morning / daytime / evening) with per-day totals, using the same phase and mode timing as a real run. On phones it becomes a per-day list. Click a run to jump straight to its editor. |
 | **Settings** | Installation name (shown in the panel header), optional **pre-start script**, pre-start outputs & delay, watering mode, max parallel zones, global **conditions**, default installation, service reference and raw diagnostics. |
@@ -100,6 +100,27 @@ You can add **multiple** config entries for separate gardens or seasonal plans (
 - **Runtimes:** three values per zone — Eco / Normal / Extra. The installation’s active **mode** picks which one is used.
 - **Exclusive:** the zone never runs in parallel with others (high-flow lines, shared supply, drip circuits).
 - **Issues filter:** zones whose output entity is missing or `unavailable` are flagged so you can spot broken wiring at a glance.
+
+#### Duration-aware start services
+
+Some irrigation integrations do not start a zone with a regular `turn_on`. Instead, their start action requires the watering duration in the same service call. Open a zone and expand **Advanced start settings** to configure this behavior.
+
+Built-in presets fill in the service, duration field and unit for:
+
+| Preset | Service | Duration field | Unit |
+|--------|---------|----------------|------|
+| **Rain Bird** | `rainbird.start_irrigation` | `duration` | minutes |
+| **Rachio** | `rachio.start_watering` | `duration` | minutes |
+| **Hydrawise** | `hydrawise.start_watering` | `duration` | minutes |
+| **B-hyve / Orbit** | `bhyve.start_watering` | `minutes` | minutes |
+| **OpenSprinkler** | `opensprinkler.run` | `run_seconds` | seconds |
+
+Choose **Custom** for another integration and enter its `domain.service`, duration field and whether that field expects minutes or seconds. The optional **start target entity** is useful when the start service targets a controller or sensor entity instead of the zone's output entity.
+
+- With a start target, the service is called once for that target. Without one, it is called for every configured zone output in sequence.
+- Simple Irrigation waits for the configured mode duration and then sends the normal off/close action to every zone output as a safety measure.
+- An off action that reports the output is already off is logged and does not prevent the next zone from starting.
+- Leave the advanced fields empty to retain the normal `turn_on` / wait / `turn_off` behavior.
 
 ### Cycles and slots
 

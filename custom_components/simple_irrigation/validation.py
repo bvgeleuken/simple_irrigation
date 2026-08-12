@@ -16,6 +16,8 @@ from .const import (
 )
 from .models import Guard
 
+DURATION_UNITS = {"minutes", "seconds"}
+
 # Re-export for tests / callers
 __all__ = [
     "OUTPUT_ENTITY_DOMAINS",
@@ -146,6 +148,27 @@ def validate_zone_payload(hass: Any, user_input: dict[str, Any]) -> str | None:
         err = validate_output_entity_id(hass, eid)
         if err:
             return err
+
+    start_service = str(user_input.get("start_service") or "").strip()
+    duration_field = str(user_input.get("duration_field") or "").strip()
+    duration_unit = str(user_input.get("duration_unit") or "").strip()
+    start_entity_id = str(user_input.get("start_entity_id") or "").strip()
+
+    if start_service or duration_field or duration_unit or start_entity_id:
+        if not (start_service and duration_field and duration_unit):
+            return "invalid_duration_service"
+        service_domain, dot, service_name = start_service.partition(".")
+        if not dot or not service_domain or not service_name:
+            return "invalid_duration_service"
+        if duration_unit not in DURATION_UNITS:
+            return "invalid_duration_service"
+
+        target_entity_id = start_entity_id or ids[0]
+        if "." not in target_entity_id:
+            return "invalid_target_entity"
+        if hass.states.get(target_entity_id) is None:
+            return "unknown_entity"
+
     return None
 
 
