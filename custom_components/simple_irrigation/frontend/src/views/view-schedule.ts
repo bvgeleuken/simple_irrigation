@@ -1,7 +1,6 @@
 import { LitElement, html, css, nothing, type PropertyValues, type TemplateResult } from "lit";
 import { state, query } from "lit/decorators.js";
 import { deleteCycle, runSlotNow, saveSlot, upsertCycle } from "../data/api";
-import { renderEntityDatalist } from "../entity-input";
 import {
   GUARD_ENTITY_DOMAINS,
   guardLabel,
@@ -291,14 +290,6 @@ export class ViewSchedule extends LitElement {
       pre_start_script: { ...s.pre_start_script },
       post_run_script: { ...s.post_run_script },
     };
-  }
-
-  private _guardEntityListId(): string {
-    return `si-guard-${this.entryId}`;
-  }
-
-  private _scriptEntityListId(): string {
-    return `si-script-${this.entryId}`;
   }
 
   /** The installation's script for one phase, inherited unless a slot overrides. */
@@ -1124,7 +1115,7 @@ export class ViewSchedule extends LitElement {
       <div class="field-block">
         <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
         <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
-        ${renderGuardList(this.hass, this._guardEntityListId(), draft.guards, (next) => {
+        ${renderGuardList(this.hass, GUARD_ENTITY_DOMAINS, draft.guards, (next) => {
           draft.guards = next;
           this.requestUpdate();
         })}
@@ -1168,7 +1159,7 @@ export class ViewSchedule extends LitElement {
       </div>
       ${renderScriptOverride(
         this.hass,
-        this._scriptEntityListId(),
+        SCRIPT_ENTITY_DOMAINS,
         "pre_start",
         draft.pre_start_script,
         this._globalScript("pre_start"),
@@ -1181,7 +1172,7 @@ export class ViewSchedule extends LitElement {
       )}
       ${renderScriptOverride(
         this.hass,
-        this._scriptEntityListId(),
+        SCRIPT_ENTITY_DOMAINS,
         "post_run",
         draft.post_run_script,
         this._globalScript("post_run"),
@@ -1328,8 +1319,6 @@ export class ViewSchedule extends LitElement {
     const cleanupCandidates = this._analyzeCleanup().length;
 
     return html`
-      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
-      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>

@@ -5,7 +5,7 @@ import {
   listSimpleIrrigationEntries,
   saveGlobal,
 } from "../data/api";
-import { renderEntityDatalist, renderNativeEntityField } from "../entity-input";
+import { renderNativeEntityField } from "../entity-input";
 import {
   GUARD_ENTITY_DOMAINS,
   guardsForSave,
@@ -149,18 +149,6 @@ export class ViewSettings extends LitElement {
     }
   }
 
-  private _entityListId(): string {
-    return `si-ent-s-${this.entryId}`;
-  }
-
-  private _guardEntityListId(): string {
-    return `si-guard-s-${this.entryId}`;
-  }
-
-  private _scriptEntityListId(): string {
-    return `si-script-s-${this.entryId}`;
-  }
-
   private async _save(): Promise<void> {
     if (guardsIncomplete(this._guards)) {
       this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
@@ -236,9 +224,6 @@ export class ViewSettings extends LitElement {
     const domains = this.outputEntityDomains ?? ["switch", "input_boolean", "group", "valve"];
 
     return html`
-      ${renderEntityDatalist(this.hass, this._entityListId(), domains)}
-      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
-      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), ["script"])}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:cog-outline"></ha-icon>
@@ -269,7 +254,7 @@ export class ViewSettings extends LitElement {
             <div class="field-row">
               ${renderNativeEntityField(
                 this.hass,
-                this._scriptEntityListId(),
+                ["script"],
                 t(this.hass, "config_panel.general_pre_start_script_field"),
                 this._preStartScript,
                 (v) => {
@@ -323,7 +308,7 @@ export class ViewSettings extends LitElement {
                     <div class="entity-picker-row">
                       ${renderNativeEntityField(
                         this.hass,
-                        this._entityListId(),
+                        domains,
                         i === 0
                           ? t(this.hass, "config_panel.general_pre_start_output_n")
                           : t(this.hass, "config_panel.general_pre_start_output_i", { n: i + 1 }),
@@ -398,7 +383,7 @@ export class ViewSettings extends LitElement {
             <div class="field-row">
               ${renderNativeEntityField(
                 this.hass,
-                this._scriptEntityListId(),
+                ["script"],
                 t(this.hass, "config_panel.general_post_run_script_field"),
                 this._postRunScript,
                 (v) => {
@@ -491,7 +476,7 @@ export class ViewSettings extends LitElement {
             <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
             ${renderGuardList(
               this.hass,
-              this._guardEntityListId(),
+              GUARD_ENTITY_DOMAINS,
               this._guards,
               (next) => {
                 this._guards = next;

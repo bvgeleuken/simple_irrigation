@@ -7,10 +7,8 @@ import type { HomeAssistant } from "./types";
  * A guard states a condition that must HOLD for a scheduled run to start.
  * Guards are AND-combined; the backend fails open on anything it cannot read.
  *
- * These are shared render functions rather than a custom element on purpose:
- * `<input list=…>` only resolves its `<datalist>` inside the same tree scope, so
- * a separate shadow root would silently break entity autocomplete — the same
- * reason `entity-input.ts` exists.
+ * These are shared render functions so every surface uses the same native
+ * Home Assistant entity picker and filter rules.
  */
 
 export type GuardOperator = "above" | "below" | "equals" | "state_is" | "is_true" | "is_false";
@@ -134,13 +132,15 @@ function renderValueField(
   if (!needsValue(guard.operator)) return nothing;
 
   if (isTextOp(guard.operator)) {
-    return html`<ha-input
+    return html`<ha-selector
       class="guard-value"
-      type="text"
+      .hass=${hass}
+      .selector=${{ state: { entity_id: guard.entity_id } }}
       .label=${t(hass, "config_panel.guards_value_label")}
       .value=${String(guard.value ?? "")}
-      @input=${(e: Event) => onValue((e.target as HTMLInputElement).value)}
-    ></ha-input>`;
+      .required=${true}
+      @value-changed=${(e: CustomEvent<{ value?: string }>) => onValue(e.detail.value ?? "")}
+    ></ha-selector>`;
   }
 
   return html`<ha-input
@@ -162,7 +162,7 @@ function renderValueField(
  */
 export function renderGuardList(
   hass: HomeAssistant,
-  listId: string,
+  domains: string[],
   guards: Guard[],
   onChange: (next: Guard[]) => void
 ): TemplateResult {
@@ -179,10 +179,16 @@ export function renderGuardList(
           <div class="guard-row">
             ${renderNativeEntityField(
               hass,
-              listId,
+              domains,
               t(hass, "config_panel.guards_entity_label"),
               g.entity_id,
-              (v) => replaceAt(i, { entity_id: v }),
+              (v) =>
+                replaceAt(i, {
+                  entity_id: v,
+                  // A state value belongs to the selected entity; do not keep
+                  // a potentially invalid option when the entity changes.
+                  value: v === g.entity_id ? g.value : isTextOp(g.operator) ? "" : g.value,
+                }),
               "config_panel.guards_entity_placeholder"
             )}
             <div class="native-entity-field guard-operator">

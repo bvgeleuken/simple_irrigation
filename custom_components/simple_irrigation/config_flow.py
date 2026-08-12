@@ -10,6 +10,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.helpers.selector import (
     EntitySelector,
+    EntitySelectorConfig,
     NumberSelector,
     NumberSelectorConfig,
     SelectSelector,
@@ -25,7 +26,10 @@ from .validation import validate_max_parallel, validate_pre_start_entities
 def _output_entity_selector(multiple: bool) -> EntitySelector:
     """Allow output entities from any supported domain."""
     return EntitySelector(
-        {"domain": ["switch", "input_boolean", "group", "valve"], "multiple": multiple}
+        EntitySelectorConfig(
+            filter={"domain": ["switch", "input_boolean", "group", "valve"]},
+            multiple=multiple,
+        )
     )
 
 

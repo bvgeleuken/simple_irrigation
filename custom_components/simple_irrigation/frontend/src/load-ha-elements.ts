@@ -7,6 +7,8 @@ export async function loadHaPanelElements(): Promise<void> {
     "ha-card",
     "ha-dialog",
     "ha-input",
+    "ha-entity-picker",
+    "ha-selector",
     "ha-icon",
     "ha-switch",
   ];
