@@ -103,24 +103,27 @@ You can add **multiple** config entries for separate gardens or seasonal plans (
 
 #### Duration-aware start services
 
-Some irrigation integrations do not start a zone with a regular `turn_on`. Instead, their start action requires the watering duration in the same service call. Open a zone and expand **Advanced start settings** to configure this behavior.
+Some irrigation integrations do not start a zone with a regular `turn_on`. Instead, their start action requires the watering duration in the same service call. Open a zone, scroll to **Advanced** and expand **Custom start service with duration**.
 
-Built-in presets fill in the service, duration field and unit for:
+![Edit zone — advanced start settings with preset, duration field and start target](https://raw.githubusercontent.com/florianbaethge/simple_irrigation/main/screenshots/zone_edit_advanced.png)
 
-| Preset | Service | Duration field | Unit |
-|--------|---------|----------------|------|
-| **Rain Bird** | `rainbird.start_irrigation` | `duration` | minutes |
-| **Rachio** | `rachio.start_watering` | `duration` | minutes |
-| **Hydrawise** | `hydrawise.start_watering` | `duration` | minutes |
-| **B-hyve / Orbit** | `bhyve.start_watering` | `minutes` | minutes |
-| **OpenSprinkler** | `opensprinkler.run` | `run_seconds` | seconds |
+Leave the whole section empty and nothing changes: the zone keeps the normal `turn_on` / wait / `turn_off` behavior. Built-in presets fill in the service, duration field and unit for:
 
-Choose **Custom** for another integration and enter its `domain.service`, duration field and whether that field expects minutes or seconds. The optional **start target entity** is useful when the start service targets a controller or sensor entity instead of the zone's output entity.
+| Preset | Service | Duration field | Unit | Start target |
+|--------|---------|----------------|------|--------------|
+| **Rain Bird** | `rainbird.start_irrigation` | `duration` | minutes | leave empty |
+| **Rachio** | `rachio.start_watering` | `duration` | minutes | leave empty |
+| **Hydrawise** | `hydrawise.start_watering` | `duration` | minutes | the zone's `binary_sensor` |
+| **B-hyve / Orbit** | `bhyve.start_watering` | `minutes` | minutes | leave empty |
+| **OpenSprinkler** | `opensprinkler.run` | `run_seconds` | seconds | leave empty |
 
-- With a start target, the service is called once for that target. Without one, it is called for every configured zone output in sequence.
-- Simple Irrigation waits for the configured mode duration and then sends the normal off/close action to every zone output as a safety measure.
-- A failed off action stops the run and is reported, so a potentially open valve cannot go unnoticed while another zone starts.
-- Leave the advanced fields empty to retain the normal `turn_on` / wait / `turn_off` behavior.
+Choose **Custom** for another integration and enter its `domain.service`, duration field and whether that field expects minutes or seconds.
+
+- **Stopping always runs via the zone outputs.** Simple Irrigation waits for the configured mode duration and then sends the normal off/close action to every output, as a safety net against a controller that doesn't stop by itself.
+- The optional **start target entity** only changes *what the start call addresses*, for integrations whose start service does not target the output. Hydrawise is the case this exists for: it starts via the zone's `binary_sensor`, while the water is carried by the `valve` entity. Put the `valve` in the zone outputs and the `binary_sensor` in the start target — closing the valve stops the run. **An output has to control the same valve as the start target**, otherwise *Stop* cannot end the run.
+- All outputs of a zone start together, exactly like the default path, and the zone takes its configured duration regardless of how many outputs it has.
+- A failed off action stops the run and is reported, so a potentially open valve cannot go unnoticed while another zone starts. The cleanup that follows still closes every other output.
+- **The start service has to return once the run has started**, which is what all the presets above do. A service that instead blocks for the whole watering time — a script entered under **Custom**, typically — is given 30 seconds and then dropped, so the zone keeps its own timing. Note that dropping it cancels the call, so put the waiting in Simple Irrigation's duration, not in the start service.
 
 ### Cycles and slots
 
