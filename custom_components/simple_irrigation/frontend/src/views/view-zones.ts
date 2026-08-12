@@ -1,5 +1,6 @@
 import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
+import { keyed } from "lit/directives/keyed.js";
 import { runZoneNow, saveZone } from "../data/api";
 import { renderEntityDatalist, renderNativeEntityField } from "../entity-input";
 import { defineCustomElementOnce, formatApiError } from "../helpers";
@@ -500,24 +501,30 @@ export class ViewZones extends LitElement {
           </div>
           ${this._renderPresetHint(z)}
           <div class="field-row">
-            <ha-input
-              .label=${t(this.hass, "config_panel.zones_start_service")}
-              .value=${z.start_service}
-              @input=${(e: Event) => {
-                z.start_service = (e.target as HTMLInputElement).value;
-                this.requestUpdate();
-              }}
-            ></ha-input>
+            ${keyed(
+              this._presetForZone(z),
+              html`<ha-input
+                .label=${t(this.hass, "config_panel.zones_start_service")}
+                .value=${z.start_service}
+                @input=${(e: Event) => {
+                  z.start_service = (e.target as HTMLInputElement).value;
+                  this.requestUpdate();
+                }}
+              ></ha-input>`
+            )}
           </div>
           <div class="duration-row">
-            <ha-input
-              .label=${t(this.hass, "config_panel.zones_duration_field")}
-              .value=${z.duration_field}
-              @input=${(e: Event) => {
-                z.duration_field = (e.target as HTMLInputElement).value;
-                this.requestUpdate();
-              }}
-            ></ha-input>
+            ${keyed(
+              this._presetForZone(z),
+              html`<ha-input
+                .label=${t(this.hass, "config_panel.zones_duration_field")}
+                .value=${z.duration_field}
+                @input=${(e: Event) => {
+                  z.duration_field = (e.target as HTMLInputElement).value;
+                  this.requestUpdate();
+                }}
+              ></ha-input>`
+            )}
             <select
               class="field-select"
               .value=${z.duration_unit || ""}
