@@ -1949,6 +1949,18 @@ class ViewOverview extends i {
       .hero-state.error {
         color: var(--error-color);
       }
+      .hero-sub {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: -6px 0 12px;
+        color: var(--secondary-text-color);
+        font-size: 0.9rem;
+      }
+      .hero-sub ha-icon {
+        --mdc-icon-size: 18px;
+        flex: none;
+      }
       .num {
         font-variant-numeric: tabular-nums;
         font-weight: 600;
@@ -2080,6 +2092,11 @@ class ViewOverview extends i {
         const zones = this._inst.zones;
         const z = zones?.[zoneId];
         return z ? String(z.name ?? zoneId) : zoneId;
+    }
+    /** Friendly name of any entity, falling back to its id. */
+    _entityName(entityId) {
+        const st = this.hass?.states?.[entityId];
+        return st ? String(st.attributes?.friendly_name ?? entityId) : entityId;
     }
     _zonesPhaseInput() {
         const zones = this._inst.zones;
@@ -2284,6 +2301,13 @@ class ViewOverview extends i {
                 ? t(this.hass, "config_panel.general_state_error_idle")
                 : t(this.hass, "config_panel.general_state_idle");
         const showSkip = runBusy && runState !== "stopping" && (runState === "preparing" || upcoming.length > 0);
+        // A blocking script is why "Preparing" can sit there for minutes — name it.
+        const activeScript = rs.active_script ? String(rs.active_script) : "";
+        const scriptLine = activeScript
+            ? t(this.hass, runState === "stopping"
+                ? "config_panel.general_state_post_run_script"
+                : "config_panel.general_state_pre_start_script", { name: this._entityName(activeScript) })
+            : "";
         return b `
       <ha-card>
         <div class="card-header">
@@ -2296,6 +2320,12 @@ class ViewOverview extends i {
         <div class="card-content">
           ${this._msg ? b `<div class="error">${this._msg}</div>` : A}
           <div class="hero-state ${badgeClass}">${stateWord}</div>
+          ${scriptLine
+            ? b `<div class="hero-sub">
+                <ha-icon icon="mdi:script-text-play-outline"></ha-icon>
+                <span>${scriptLine}</span>
+              </div>`
+            : A}
 
           ${!runBusy && this._planEnabled() && next
             ? b `
@@ -2352,7 +2382,11 @@ class ViewOverview extends i {
           <div class="action-row">
             ${runBusy
             ? b `
-                  <button type="button" class="btn-danger" ?disabled=${this._busy}
+                  <!-- Already stopping: the run is ending and its cleanup (post-run
+                       script) cannot be cut short, so the button would only hang. The
+                       hero line above says what it is waiting for. -->
+                  <button type="button" class="btn-danger"
+                    ?disabled=${this._busy || runState === "stopping"}
                     @click=${() => this._call(() => panelControl(this.hass, this.entryId, "stop"))}>
                     ${t(this.hass, "config_panel.general_stop_irrigation")}
                   </button>
@@ -2755,6 +2789,102 @@ function renderGuardList(hass, listId, guards, onChange) {
   `;
 }
 
+const SCRIPT_ENTITY_DOMAINS = ["script"];
+const MAX_SCRIPT_TIMEOUT_SEC = 3600;
+/** Nothing overridden — the installation's script applies. Copy before editing. */
+const EMPTY_SCRIPT_OVERRIDE = {
+    override: false,
+    entity_id: "",
+    timeout_sec: null,
+};
+/** Read one phase's override off a raw slot object from the API. */
+function normalizeScriptOverride(raw, phase) {
+    const o = raw ?? {};
+    const timeout = Number(o[`${phase}_script_timeout_sec`]);
+    return {
+        override: Boolean(o[`override_${phase}_script`] ?? false),
+        entity_id: String(o[`${phase}_script`] ?? "").trim(),
+        timeout_sec: Number.isFinite(timeout) && timeout > 0 ? Math.round(timeout) : null,
+    };
+}
+/** The three keys the slot API expects for one phase. */
+function scriptOverrideForSave(value, phase) {
+    return {
+        [`override_${phase}_script`]: value.override,
+        [`${phase}_script`]: value.override ? value.entity_id.trim() : "",
+        [`${phase}_script_timeout_sec`]: value.override ? value.timeout_sec : null,
+    };
+}
+/** True when either phase replaces the installation's script. */
+function hasScriptOverride(pre, post) {
+    return pre.override || post.override;
+}
+function renderScriptOverride(hass, listId, phase, value, 
+/** The installation's script and timeout, shown while not overriding. */
+globalScript, globalTimeoutSec, busy, onChange) {
+    const patch = (p) => onChange({ ...value, ...p });
+    return b `
+    <div class="field-block">
+      <span class="field-title">${t(hass, `config_panel.schedule_${phase}_script_title`)}</span>
+      <div class="switch-row">
+        <ha-switch
+          .disabled=${busy}
+          .checked=${value.override}
+          @change=${(e) => patch({
+        override: Boolean(e.target.checked),
+    })}
+        ></ha-switch>
+        <span class="switch-row-label"
+          >${t(hass, `config_panel.schedule_override_${phase}_script`)}</span
+        >
+      </div>
+      ${value.override
+        ? b `
+            <div class="field-row">
+              ${renderNativeEntityField(hass, listId, t(hass, "config_panel.schedule_script_field"), value.entity_id, (v) => patch({ entity_id: v }), "config_panel.entity_placeholder_script")}
+            </div>
+            <p class="hint">${t(hass, "config_panel.schedule_script_override_hint")}</p>
+            ${value.entity_id.trim()
+            ? b `
+                  <div class="field-row">
+                    <ha-input
+                      type="number"
+                      .label=${t(hass, "config_panel.schedule_script_timeout_field")}
+                      .value=${value.timeout_sec === null ? "" : String(value.timeout_sec)}
+                      min="1"
+                      max=${MAX_SCRIPT_TIMEOUT_SEC}
+                      @input=${(e) => {
+                const raw = e.target.value.trim();
+                if (raw === "") {
+                    patch({ timeout_sec: null });
+                    return;
+                }
+                const n = parseInt(raw, 10);
+                patch({
+                    timeout_sec: Number.isFinite(n)
+                        ? Math.max(1, Math.min(MAX_SCRIPT_TIMEOUT_SEC, n))
+                        : null,
+                });
+            }}
+                    ></ha-input>
+                  </div>
+                  <p class="hint">
+                    ${t(hass, "config_panel.schedule_script_timeout_hint", {
+                n: String(globalTimeoutSec),
+            })}
+                  </p>
+                `
+            : A}
+          `
+        : b `<p class="hint">
+            ${globalScript
+            ? t(hass, "config_panel.schedule_script_inherited", { script: globalScript })
+            : t(hass, "config_panel.schedule_script_inherited_none")}
+          </p>`}
+    </div>
+  `;
+}
+
 /** Shared stacked form layout: titles, helper text, full-width controls. */
 const formLayoutStyles = i$3 `
   .field-block {
@@ -3015,6 +3145,8 @@ class CycleWizard extends i {
         this._label = "";
         this._guards = [];
         this._ignoreGlobalGuards = false;
+        this._preStartScript = EMPTY_SCRIPT_OVERRIDE;
+        this._postRunScript = EMPTY_SCRIPT_OVERRIDE;
         this._cycleId = null;
         this._busy = false;
         this._seeded = false;
@@ -3161,6 +3293,8 @@ class CycleWizard extends i {
             this._label = "";
             this._guards = [];
             this._ignoreGlobalGuards = false;
+            this._preStartScript = { ...EMPTY_SCRIPT_OVERRIDE };
+            this._postRunScript = { ...EMPTY_SCRIPT_OVERRIDE };
             this._syncDefaultsForOption();
         }
         this._step = opts?.step ?? 1;
@@ -3192,6 +3326,9 @@ class CycleWizard extends i {
         this._enabled = Boolean(first.enabled ?? true);
         this._guards = normalizeGuards(first.guards);
         this._ignoreGlobalGuards = Boolean(first.ignore_global_guards ?? false);
+        // All members of a cycle share their scripts, so the first one speaks for all.
+        this._preStartScript = normalizeScriptOverride(first, "pre_start");
+        this._postRunScript = normalizeScriptOverride(first, "post_run");
     }
     _option() {
         return KIND_OPTIONS.find((o) => o.id === this._optionId) ?? KIND_OPTIONS[0];
@@ -3249,6 +3386,16 @@ class CycleWizard extends i {
     }
     _guardEntityListId() {
         return `si-guard-cycle-${this.entryId}`;
+    }
+    _scriptEntityListId() {
+        return `si-script-cycle-${this.entryId}`;
+    }
+    _globalScript(phase) {
+        return String(this.installation?.[`${phase}_script`] ?? "").trim();
+    }
+    _globalScriptTimeout(phase) {
+        const n = Number(this.installation?.[`${phase}_script_timeout_sec`] ?? 300);
+        return Number.isFinite(n) && n > 0 ? Math.round(n) : 300;
     }
     _zoneDuration(id) {
         const zones = this.installation?.zones;
@@ -3343,6 +3490,8 @@ class CycleWizard extends i {
                 enabled: this._enabled,
                 guards: guardsForSave(this._guards),
                 ignore_global_guards: this._ignoreGlobalGuards,
+                ...scriptOverrideForSave(this._preStartScript, "pre_start"),
+                ...scriptOverrideForSave(this._postRunScript, "post_run"),
             });
             if (!res.success) {
                 this._msg = formatApiError(res.error, this.hass);
@@ -3624,6 +3773,17 @@ class CycleWizard extends i {
         <p class="hint">${t(this.hass, "config_panel.schedule_ignore_global_guards_hint")}</p>
       </div>
 
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_scripts_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.schedule_scripts_section_desc")}</p>
+      </div>
+      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "pre_start", this._preStartScript, this._globalScript("pre_start"), this._globalScriptTimeout("pre_start"), this._busy, (next) => {
+            this._preStartScript = next;
+        })}
+      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "post_run", this._postRunScript, this._globalScript("post_run"), this._globalScriptTimeout("post_run"), this._busy, (next) => {
+            this._postRunScript = next;
+        })}
+
       <div class="summary-card">
         <strong>${t(this.hass, "config_panel.cycle_creates_title")}</strong>
         <ul style="margin:8px 0 0;padding-left:1.1rem">
@@ -3673,6 +3833,7 @@ class CycleWizard extends i {
             : "config_panel.cycle_new";
         return b `
       ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
+      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}
@@ -3752,6 +3913,12 @@ __decorate([
 __decorate([
     r()
 ], CycleWizard.prototype, "_ignoreGlobalGuards", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_preStartScript", void 0);
+__decorate([
+    r()
+], CycleWizard.prototype, "_postRunScript", void 0);
 __decorate([
     r()
 ], CycleWizard.prototype, "_cycleId", void 0);
@@ -3911,6 +4078,8 @@ class ViewSchedule extends i {
                 week_parity: o.week_parity === "odd" || o.week_parity === "even" ? o.week_parity : "every",
                 guards: normalizeGuards(o.guards),
                 ignore_global_guards: Boolean(o.ignore_global_guards ?? false),
+                pre_start_script: normalizeScriptOverride(o, "pre_start"),
+                post_run_script: normalizeScriptOverride(o, "post_run"),
                 cycle_id: rid,
                 cycle_kind: String(o.cycle_kind ?? "custom"),
                 cycle_meta: o.cycle_meta ?? null,
@@ -3961,10 +4130,31 @@ class ViewSchedule extends i {
             weekdays: [...s.weekdays],
             zone_ids_ordered: [...s.zone_ids_ordered],
             guards: s.guards.map((g) => ({ ...g })),
+            pre_start_script: { ...s.pre_start_script },
+            post_run_script: { ...s.post_run_script },
         };
     }
     _guardEntityListId() {
         return `si-guard-${this.entryId}`;
+    }
+    _scriptEntityListId() {
+        return `si-script-${this.entryId}`;
+    }
+    /** The installation's script for one phase, inherited unless a slot overrides. */
+    _globalScript(phase) {
+        return String(this.installation?.[`${phase}_script`] ?? "").trim();
+    }
+    _globalScriptTimeout(phase) {
+        const n = Number(this.installation?.[`${phase}_script_timeout_sec`] ?? 300);
+        return Number.isFinite(n) && n > 0 ? Math.round(n) : 300;
+    }
+    /** Read-only chip shown on a slot/cycle row that brings its own scripts. */
+    _renderScriptMeta(s) {
+        if (!hasScriptOverride(s.pre_start_script, s.post_run_script))
+            return A;
+        return b `<span class="meta"
+      ><ha-icon icon="mdi:script-text-outline"></ha-icon>${t(this.hass, "config_panel.schedule_scripts_own")}</span
+    >`;
     }
     /** Guards defined on the installation; inherited unless a slot opts out. */
     _globalGuards() {
@@ -4380,6 +4570,8 @@ class ViewSchedule extends i {
             week_parity: d.week_parity,
             guards: guardsForSave(d.guards),
             ignore_global_guards: d.ignore_global_guards,
+            ...scriptOverrideForSave(d.pre_start_script, "pre_start"),
+            ...scriptOverrideForSave(d.post_run_script, "post_run"),
         });
         if (ok)
             this._closeEditDialog();
@@ -4462,6 +4654,11 @@ class ViewSchedule extends i {
               ><ha-icon icon="mdi:shield-off-outline"></ha-icon>${t(this.hass, "config_panel.schedule_guards_global_off")}</span
             >`
             : A}
+        ${hasScriptOverride(m.pre_start_script, m.post_run_script)
+            ? b `<span class="muted"
+              ><ha-icon icon="mdi:script-text-outline"></ha-icon>${t(this.hass, "config_panel.schedule_scripts_own")}</span
+            >`
+            : A}
         <span class="muted"
           >${m.zone_ids_ordered.length === 1
             ? t(this.hass, "config_panel.schedule_zones_in_order_one")
@@ -4533,7 +4730,7 @@ class ViewSchedule extends i {
                 ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: zoneIds.length, p: phases, m: est })}</span
               >
               ${g.members[0]
-            ? this._renderGuardMeta(g.members[0].guards, g.members[0].ignore_global_guards)
+            ? b `${this._renderGuardMeta(g.members[0].guards, g.members[0].ignore_global_guards)}${this._renderScriptMeta(g.members[0])}`
             : A}
               ${next
             ? b `<span class="meta"
@@ -4632,6 +4829,7 @@ class ViewSchedule extends i {
                 ><ha-icon icon="mdi:vector-square"></ha-icon>${t(this.hass, "config_panel.cycle_meta_zones", { z: s.zone_ids_ordered.length, p: phases, m: est })}</span
               >
               ${this._renderGuardMeta(s.guards, s.ignore_global_guards)}
+              ${this._renderScriptMeta(s)}
               ${next
             ? b `<span class="meta"
                     ><ha-icon icon="mdi:skip-next-outline"></ha-icon>${weekdayShort(this.hass, mondayBasedWeekday(next))}
@@ -4730,6 +4928,27 @@ class ViewSchedule extends i {
       </div>
     `;
     }
+    /**
+     * Scripts sit on the slot, not the zone: zones run in parallel phases, so a
+     * per-zone script would have no single point in the pipeline to run at. Keep
+     * zones that need different preparation in different slots.
+     */
+    _renderScriptSection(draft) {
+        return b `
+      <div class="field-block">
+        <span class="field-title">${t(this.hass, "config_panel.schedule_scripts_section_title")}</span>
+        <p class="field-desc">${t(this.hass, "config_panel.schedule_scripts_section_desc")}</p>
+      </div>
+      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "pre_start", draft.pre_start_script, this._globalScript("pre_start"), this._globalScriptTimeout("pre_start"), this._busy, (next) => {
+            draft.pre_start_script = next;
+            this.requestUpdate();
+        })}
+      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "post_run", draft.post_run_script, this._globalScript("post_run"), this._globalScriptTimeout("post_run"), this._busy, (next) => {
+            draft.post_run_script = next;
+            this.requestUpdate();
+        })}
+    `;
+    }
     _renderEditDialog(draft) {
         const zones = this._zonesMap();
         const addZoneOpts = this._addZoneOptionsForDraft(draft);
@@ -4777,6 +4996,7 @@ class ViewSchedule extends i {
         </div>
       </div>
       ${this._renderGuardSection(draft)}
+      ${this._renderScriptSection(draft)}
       <div class="field-block">
         <div class="switch-row">
           <ha-switch
@@ -4859,6 +5079,7 @@ class ViewSchedule extends i {
         const cleanupCandidates = this._analyzeCleanup().length;
         return b `
       ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
+      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>
@@ -5029,6 +5250,8 @@ class ViewSettings extends i {
         this._preStartDelaySec = 10;
         this._preStartScript = "";
         this._preStartScriptTimeoutSec = 300;
+        this._postRunScript = "";
+        this._postRunScriptTimeoutSec = 300;
         this._guards = [];
         this._beforeUnload = (e) => {
             if (this._dirty) {
@@ -5104,6 +5327,11 @@ class ViewSettings extends i {
         this._preStartScriptTimeoutSec = Number.isFinite(st)
             ? Math.max(1, Math.min(3600, Math.round(st)))
             : 300;
+        this._postRunScript = String(inst.post_run_script ?? "");
+        const pt = Number(inst.post_run_script_timeout_sec ?? 300);
+        this._postRunScriptTimeoutSec = Number.isFinite(pt)
+            ? Math.max(1, Math.min(3600, Math.round(pt)))
+            : 300;
         this._guards = normalizeGuards(inst.guards);
         this._dirty = false;
     }
@@ -5145,6 +5373,8 @@ class ViewSettings extends i {
                 pre_start_delay_sec: this._preStartDelaySec,
                 pre_start_script: this._preStartScript.trim(),
                 pre_start_script_timeout_sec: this._preStartScriptTimeoutSec,
+                post_run_script: this._postRunScript.trim(),
+                post_run_script_timeout_sec: this._postRunScriptTimeoutSec,
                 mode: this._mode,
                 max_parallel_zones: this._maxParallel,
                 is_default: this._isDefault,
@@ -5339,6 +5569,46 @@ class ViewSettings extends i {
             </div>
             <p class="hint">${t(this.hass, "config_panel.settings_pre_start_delay_hint")}</p>
           </div>
+          <div class="field-block">
+            <span class="field-title">${t(this.hass, "config_panel.general_post_run_script_title")}</span>
+            <div class="field-row">
+              ${renderNativeEntityField(this.hass, this._scriptEntityListId(), t(this.hass, "config_panel.general_post_run_script_field"), this._postRunScript, (v) => {
+            this._postRunScript = v;
+            this._markDirty();
+            this.requestUpdate();
+        }, "config_panel.entity_placeholder_script")}
+            </div>
+            <details class="inline-help">
+              <summary>
+                <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+                ${t(this.hass, "config_panel.general_post_run_script_title")}
+              </summary>
+              <p>${t(this.hass, "config_panel.general_post_run_script_desc")}</p>
+            </details>
+          </div>
+          ${this._postRunScript.trim()
+            ? b `<div class="field-block">
+                <span class="field-title">
+                  ${t(this.hass, "config_panel.general_post_run_script_timeout_title")}
+                </span>
+                <div class="field-row">
+                  <ha-input
+                    type="number"
+                    .label=${t(this.hass, "config_panel.general_post_run_script_timeout_field")}
+                    .value=${String(this._postRunScriptTimeoutSec)}
+                    min="1"
+                    max="3600"
+                    @input=${(e) => {
+                this._postRunScriptTimeoutSec = Math.max(1, Math.min(3600, parseInt(e.target.value, 10) || 1));
+                this._markDirty();
+            }}
+                  ></ha-input>
+                </div>
+                <p class="hint">
+                  ${t(this.hass, "config_panel.settings_post_run_script_timeout_hint")}
+                </p>
+              </div>`
+            : A}
 
           <div class="section-title">${t(this.hass, "config_panel.settings_section_watering")}</div>
           <div class="field-block">
@@ -7062,7 +7332,7 @@ __decorate([
 ], ViewZones.prototype, "_expanded", void 0);
 defineCustomElementOnce("si-view-zones", ViewZones);
 
-const VERSION = "1.2.0";
+const VERSION = "1.3.0";
 const PANEL_PAGES = ["overview", "zones", "schedule", "timetable", "settings"];
 /** Legacy path aliases so existing links / deep links keep working. */
 const PAGE_ALIASES = {

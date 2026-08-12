@@ -90,6 +90,8 @@ export class ViewSettings extends LitElement {
   private _preStartDelaySec = 10;
   private _preStartScript = "";
   private _preStartScriptTimeoutSec = 300;
+  private _postRunScript = "";
+  private _postRunScriptTimeoutSec = 300;
   @state() private _guards: Guard[] = [];
 
   protected willUpdate(changed: Map<PropertyKey, unknown>): void {
@@ -114,6 +116,11 @@ export class ViewSettings extends LitElement {
     const st = Number(inst.pre_start_script_timeout_sec ?? 300);
     this._preStartScriptTimeoutSec = Number.isFinite(st)
       ? Math.max(1, Math.min(3600, Math.round(st)))
+      : 300;
+    this._postRunScript = String(inst.post_run_script ?? "");
+    const pt = Number(inst.post_run_script_timeout_sec ?? 300);
+    this._postRunScriptTimeoutSec = Number.isFinite(pt)
+      ? Math.max(1, Math.min(3600, Math.round(pt)))
       : 300;
     this._guards = normalizeGuards(inst.guards);
     this._dirty = false;
@@ -170,6 +177,8 @@ export class ViewSettings extends LitElement {
         pre_start_delay_sec: this._preStartDelaySec,
         pre_start_script: this._preStartScript.trim(),
         pre_start_script_timeout_sec: this._preStartScriptTimeoutSec,
+        post_run_script: this._postRunScript.trim(),
+        post_run_script_timeout_sec: this._postRunScriptTimeoutSec,
         mode: this._mode,
         max_parallel_zones: this._maxParallel,
         is_default: this._isDefault,
@@ -384,6 +393,56 @@ export class ViewSettings extends LitElement {
             </div>
             <p class="hint">${t(this.hass, "config_panel.settings_pre_start_delay_hint")}</p>
           </div>
+          <div class="field-block">
+            <span class="field-title">${t(this.hass, "config_panel.general_post_run_script_title")}</span>
+            <div class="field-row">
+              ${renderNativeEntityField(
+                this.hass,
+                this._scriptEntityListId(),
+                t(this.hass, "config_panel.general_post_run_script_field"),
+                this._postRunScript,
+                (v) => {
+                  this._postRunScript = v;
+                  this._markDirty();
+                  this.requestUpdate();
+                },
+                "config_panel.entity_placeholder_script"
+              )}
+            </div>
+            <details class="inline-help">
+              <summary>
+                <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+                ${t(this.hass, "config_panel.general_post_run_script_title")}
+              </summary>
+              <p>${t(this.hass, "config_panel.general_post_run_script_desc")}</p>
+            </details>
+          </div>
+          ${this._postRunScript.trim()
+            ? html`<div class="field-block">
+                <span class="field-title">
+                  ${t(this.hass, "config_panel.general_post_run_script_timeout_title")}
+                </span>
+                <div class="field-row">
+                  <ha-input
+                    type="number"
+                    .label=${t(this.hass, "config_panel.general_post_run_script_timeout_field")}
+                    .value=${String(this._postRunScriptTimeoutSec)}
+                    min="1"
+                    max="3600"
+                    @input=${(e: Event) => {
+                      this._postRunScriptTimeoutSec = Math.max(
+                        1,
+                        Math.min(3600, parseInt((e.target as HTMLInputElement).value, 10) || 1)
+                      );
+                      this._markDirty();
+                    }}
+                  ></ha-input>
+                </div>
+                <p class="hint">
+                  ${t(this.hass, "config_panel.settings_post_run_script_timeout_hint")}
+                </p>
+              </div>`
+            : nothing}
 
           <div class="section-title">${t(this.hass, "config_panel.settings_section_watering")}</div>
           <div class="field-block">

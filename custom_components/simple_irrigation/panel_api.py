@@ -22,7 +22,7 @@ from homeassistant.util import dt as dt_util
 from .const import (
     DOMAIN,
     GUARD_OPERATORS,
-    MAX_PRE_START_SCRIPT_TIMEOUT_SEC,
+    MAX_SCRIPT_TIMEOUT_SEC,
     MODES,
     OUTPUT_ENTITY_DOMAINS,
     PANEL_API_REGISTERED_KEY,
@@ -43,8 +43,8 @@ from .validation import (
     validate_max_parallel,
     validate_mode,
     validate_pre_start_entities,
-    validate_pre_start_script,
-    validate_pre_start_script_timeout,
+    validate_script_entity,
+    validate_script_timeout,
     validate_zone_payload,
 )
 
@@ -63,6 +63,70 @@ GUARD_SCHEMA = vol.Schema(
     }
 )
 GUARD_LIST_SCHEMA = [GUARD_SCHEMA]
+
+# A slot's script timeout may be null: "inherit the installation's".
+SLOT_SCRIPT_TIMEOUT_SCHEMA = vol.Any(
+    None, vol.All(cv.positive_int, vol.Range(min=1, max=MAX_SCRIPT_TIMEOUT_SEC))
+)
+
+
+def _copy_slot_script_overrides(src: ScheduleSlot, dst: ScheduleSlot) -> None:
+    """Carry script overrides over to a slot derived from ``src`` (split, cycle)."""
+    dst.override_pre_start_script = src.override_pre_start_script
+    dst.pre_start_script = src.pre_start_script
+    dst.pre_start_script_timeout_sec = src.pre_start_script_timeout_sec
+    dst.override_post_run_script = src.override_post_run_script
+    dst.post_run_script = src.post_run_script
+    dst.post_run_script_timeout_sec = src.post_run_script_timeout_sec
+
+
+def _apply_slot_script_overrides(
+    hass: HomeAssistant, slot: ScheduleSlot, data: dict[str, Any]
+) -> str | None:
+    """Copy the payload's script overrides onto a slot. Return an error key or None.
+
+    Validation happens before anything is assigned, so a rejected payload never
+    leaves a slot half-overridden.
+    """
+    pre = str(data.get("pre_start_script") or "").strip()
+    post = str(data.get("post_run_script") or "").strip()
+    pre_timeout = data.get("pre_start_script_timeout_sec")
+    post_timeout = data.get("post_run_script_timeout_sec")
+
+    if "pre_start_script" in data:
+        err = validate_script_entity(hass, pre)
+        if err:
+            return err
+    if "post_run_script" in data:
+        err = validate_script_entity(hass, post)
+        if err:
+            return err
+    if pre_timeout is not None:
+        err = validate_script_timeout(pre_timeout)
+        if err:
+            return err
+    if post_timeout is not None:
+        err = validate_script_timeout(post_timeout)
+        if err:
+            return err
+
+    if "override_pre_start_script" in data:
+        slot.override_pre_start_script = bool(data["override_pre_start_script"])
+    if "pre_start_script" in data:
+        slot.pre_start_script = pre
+    if "pre_start_script_timeout_sec" in data:
+        slot.pre_start_script_timeout_sec = (
+            int(pre_timeout) if pre_timeout is not None else None
+        )
+    if "override_post_run_script" in data:
+        slot.override_post_run_script = bool(data["override_post_run_script"])
+    if "post_run_script" in data:
+        slot.post_run_script = post
+    if "post_run_script_timeout_sec" in data:
+        slot.post_run_script_timeout_sec = (
+            int(post_timeout) if post_timeout is not None else None
+        )
+    return None
 
 
 def _get_coordinator(hass: HomeAssistant, entry_id: str | None):
@@ -253,7 +317,11 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
                 vol.Optional("pre_start_delay_sec"): vol.All(cv.positive_int, vol.Range(max=3600)),
                 vol.Optional("pre_start_script"): vol.Any(cv.string, None),
                 vol.Optional("pre_start_script_timeout_sec"): vol.All(
-                    cv.positive_int, vol.Range(max=MAX_PRE_START_SCRIPT_TIMEOUT_SEC)
+                    cv.positive_int, vol.Range(max=MAX_SCRIPT_TIMEOUT_SEC)
+                ),
+                vol.Optional("post_run_script"): vol.Any(cv.string, None),
+                vol.Optional("post_run_script_timeout_sec"): vol.All(
+                    cv.positive_int, vol.Range(max=MAX_SCRIPT_TIMEOUT_SEC)
                 ),
                 vol.Optional("enabled"): cv.boolean,
                 vol.Optional("is_default"): cv.boolean,
@@ -291,15 +359,26 @@ class SimpleIrrigationPanelGlobalView(HomeAssistantView):
             inst.pre_start_delay_sec = int(data["pre_start_delay_sec"])
         if "pre_start_script" in data:
             script = str(data["pre_start_script"] or "").strip()
-            err = validate_pre_start_script(hass, script)
+            err = validate_script_entity(hass, script)
             if err:
                 return self.json({"success": False, "error": err}, status_code=400)
             inst.pre_start_script = script
         if "pre_start_script_timeout_sec" in data:
-            err = validate_pre_start_script_timeout(data["pre_start_script_timeout_sec"])
+            err = validate_script_timeout(data["pre_start_script_timeout_sec"])
             if err:
                 return self.json({"success": False, "error": err}, status_code=400)
             inst.pre_start_script_timeout_sec = int(data["pre_start_script_timeout_sec"])
+        if "post_run_script" in data:
+            script = str(data["post_run_script"] or "").strip()
+            err = validate_script_entity(hass, script)
+            if err:
+                return self.json({"success": False, "error": err}, status_code=400)
+            inst.post_run_script = script
+        if "post_run_script_timeout_sec" in data:
+            err = validate_script_timeout(data["post_run_script_timeout_sec"])
+            if err:
+                return self.json({"success": False, "error": err}, status_code=400)
+            inst.post_run_script_timeout_sec = int(data["post_run_script_timeout_sec"])
         if "enabled" in data:
             inst.enabled = bool(data["enabled"])
         if "is_default" in data:
@@ -507,6 +586,12 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 vol.Optional("week_parity"): vol.In(WEEK_PARITIES),
                 vol.Optional("guards"): GUARD_LIST_SCHEMA,
                 vol.Optional("ignore_global_guards"): cv.boolean,
+                vol.Optional("override_pre_start_script"): cv.boolean,
+                vol.Optional("pre_start_script"): vol.Any(cv.string, None),
+                vol.Optional("pre_start_script_timeout_sec"): SLOT_SCRIPT_TIMEOUT_SCHEMA,
+                vol.Optional("override_post_run_script"): cv.boolean,
+                vol.Optional("post_run_script"): vol.Any(cv.string, None),
+                vol.Optional("post_run_script_timeout_sec"): SLOT_SCRIPT_TIMEOUT_SCHEMA,
                 vol.Optional("cycle_id"): vol.Any(cv.string, None),
                 vol.Optional("cycle_kind"): vol.In(CYCLE_KINDS),
                 vol.Optional("cycle_meta"): vol.Schema(
@@ -565,6 +650,9 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 guards=guards,
                 ignore_global_guards=bool(data.get("ignore_global_guards", False)),
             )
+            script_err = _apply_slot_script_overrides(hass, slot, data)
+            if script_err:
+                return self.json({"success": False, "error": script_err}, status_code=400)
             inst.schedule_slots.append(slot)
             await coord.async_update_installation(inst)
             return self.json({"success": True, "slot_id": slot.slot_id})
@@ -636,6 +724,15 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 )
                 for i, spec in enumerate(specs)
             ]
+            # Script overrides, like the guards above: the payload wins, otherwise
+            # the edited cycle keeps what it had. Applied before the members are
+            # spliced in, so a rejected script leaves the schedule untouched.
+            for member in new_members:
+                if existing:
+                    _copy_slot_script_overrides(existing[0], member)
+                script_err = _apply_slot_script_overrides(hass, member, data)
+                if script_err:
+                    return self.json({"success": False, "error": script_err}, status_code=400)
             # Rebuild the slot list, replacing the previous group's members (matched
             # by the incoming id) in place; append at the end when brand new.
             result: list[ScheduleSlot] = []
@@ -700,6 +797,8 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 )
                 for wd in slot.weekdays
             ]
+            for new_slot in new_slots:
+                _copy_slot_script_overrides(slot, new_slot)
             inst.schedule_slots[idx : idx + 1] = new_slots
             await coord.async_update_installation(inst)
             return self.json(
@@ -742,6 +841,9 @@ class SimpleIrrigationPanelSlotView(HomeAssistantView):
                 slot.guards = slot_guards
             if "ignore_global_guards" in data:
                 slot.ignore_global_guards = bool(data["ignore_global_guards"])
+            script_err = _apply_slot_script_overrides(hass, slot, data)
+            if script_err:
+                return self.json({"success": False, "error": script_err}, status_code=400)
             if "cycle_id" in data:
                 slot.cycle_id = str(data["cycle_id"]) if data["cycle_id"] else None
             if "cycle_kind" in data:

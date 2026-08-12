@@ -28,8 +28,9 @@ from .const import (
 )
 from .grouping import can_join_active_phase, compute_phases
 from .guards import guards_allow_run
-from .models import RunState, Zone
+from .models import RunState, ScheduleSlot, Zone
 from .scheduler import phases_for_slot
+from .scripts import ScriptCall, effective_post_run_script, effective_pre_start_script
 
 if TYPE_CHECKING:
     from .coordinator import SimpleIrrigationCoordinator
@@ -71,6 +72,8 @@ class IrrigationRuntime:
         self._after_phase_zone_order: list[str] = []
         self._mid_phase_extensions: list[str] = []
         self._phase_extend_event = asyncio.Event()
+        # Slots behind the current run; they may override the pipeline's scripts.
+        self._run_slots: list[ScheduleSlot] = []
 
     async def async_setup(self) -> None:
         """Reset state on startup."""
@@ -82,6 +85,7 @@ class IrrigationRuntime:
             rs.queued_zone_ids = []
             rs.current_slot_id = None
             rs.upcoming_phases = []
+            rs.active_script = None
             await self.coordinator.async_update_run_state(rs)
         await self._async_turn_off_all_tracked()
 
@@ -140,6 +144,7 @@ class IrrigationRuntime:
     ) -> None:
         inst = self.coordinator.installation
         rs = self.coordinator.run_state
+        self._run_slots = self._slots_for_ids(slot_ids)
 
         try:
             if scheduled:
@@ -209,6 +214,12 @@ class IrrigationRuntime:
             self._after_phase_zone_order.clear()
             self._mid_phase_extensions.clear()
             self._phase_queue.clear()
+            self._run_slots = []
+
+    def _slots_for_ids(self, slot_ids: list[str]) -> list[ScheduleSlot]:
+        """The run's slots, in the order they were merged into it."""
+        by_id = {s.slot_id: s for s in self.coordinator.installation.schedule_slots}
+        return [by_id[sid] for sid in slot_ids if sid in by_id]
 
     async def _async_finish_run(self, state: str, error: str | None) -> None:
         rs = self.coordinator.run_state
@@ -216,6 +227,7 @@ class IrrigationRuntime:
         await self.coordinator.async_update_run_state(rs)
 
         await self._async_turn_off_all_tracked()
+        await self._async_post_run()
 
         rs.run_state = state
         rs.active_zone_ids = []
@@ -223,6 +235,7 @@ class IrrigationRuntime:
         rs.current_slot_id = None
         rs.manual_run = False
         rs.upcoming_phases = []
+        rs.active_script = None
         if error:
             rs.last_error = error
         elif state == RUN_STATE_IDLE:
@@ -256,9 +269,10 @@ class IrrigationRuntime:
 
     async def _async_pre_start(self, delay_sec: int) -> None:
         inst = self.coordinator.installation
-        await self._async_run_pre_start_script(
-            inst.pre_start_script,
-            inst.pre_start_script_timeout_sec,
+        await self._async_run_script(
+            effective_pre_start_script(inst, self._run_slots),
+            "Pre-start",
+            abort_on_stop=True,
         )
         if self._stop_event.is_set():
             return
@@ -266,58 +280,94 @@ class IrrigationRuntime:
             await self._async_switch_turn_on(entity_id)
         await self._async_sleep_interruptible(float(delay_sec))
 
-    async def _async_run_pre_start_script(self, entity_id: str, timeout_sec: int) -> None:
-        """Run the pre-start script to completion, before anything is switched on.
+    async def _async_post_run(self) -> None:
+        """Run the post-run script once every output is off again.
+
+        Whatever the pre-start script prepared usually has to be undone: release
+        the mower, reopen the window. So this runs after *every* pipeline end —
+        finished, failed or stopped — and is deliberately **not** aborted by the
+        stop event, which is already set when the user pressed Stop All.
+        """
+        await self._async_run_script(
+            effective_post_run_script(self.coordinator.installation, self._run_slots),
+            "Post-run",
+            abort_on_stop=False,
+        )
+
+    async def _async_run_script(
+        self,
+        script: ScriptCall,
+        kind: str,
+        *,
+        abort_on_stop: bool,
+    ) -> None:
+        """Run one pipeline script to completion.
 
         Calling ``script.<object_id>`` rather than ``script.turn_on`` is what makes
         this block, so the script may wait for the world to be ready — a mower
         docking, a window closing — instead of only kicking something off.
 
         Fail-open, like the conditions in guards.py: a script that errors or
-        overruns its timeout logs a warning and watering proceeds. A stuck helper
+        overruns its timeout logs a warning and the run proceeds. A stuck helper
         must not cost a whole irrigation run.
         """
+        entity_id = script.entity_id
         if not entity_id:
             return
         domain, _, object_id = entity_id.partition(".")
         if domain != SCRIPT_DOMAIN or not object_id:
-            _LOGGER.warning("Pre-start script %s is not a script entity; skipping", entity_id)
+            _LOGGER.warning("%s script %s is not a script entity; skipping", kind, entity_id)
             return
 
-        timeout = max(1, int(timeout_sec))
-        _LOGGER.debug("Pre-start script %s: waiting up to %s s", entity_id, timeout)
+        timeout = max(1, int(script.timeout_sec))
+        _LOGGER.debug("%s script %s: waiting up to %s s", kind, entity_id, timeout)
+        await self._async_publish_active_script(entity_id)
         call = self.hass.async_create_task(
             self.hass.services.async_call(SCRIPT_DOMAIN, object_id, {}, blocking=True),
-            f"{DOMAIN} pre-start script {entity_id}",
+            f"{DOMAIN} {kind} script {entity_id}",
         )
-        stop = self.hass.async_create_task(self._stop_event.wait())
+        waiters: set[asyncio.Task] = {call}
+        stop: asyncio.Task | None = None
+        if abort_on_stop:
+            stop = self.hass.async_create_task(self._stop_event.wait())
+            waiters.add(stop)
         try:
             done, _pending = await asyncio.wait(
-                {call, stop},
+                waiters,
                 timeout=timeout,
                 return_when=asyncio.FIRST_COMPLETED,
             )
             if call in done:
                 call.result()  # surface script errors to the handler below
                 return
-            if stop in done:
-                _LOGGER.info("Pre-start script %s aborted: run was stopped", entity_id)
+            if stop is not None and stop in done:
+                _LOGGER.info("%s script %s aborted: run was stopped", kind, entity_id)
             else:
                 _LOGGER.warning(
-                    "Pre-start script %s did not finish within %s s; watering anyway",
+                    "%s script %s did not finish within %s s; continuing anyway",
+                    kind,
                     entity_id,
                     timeout,
                 )
             await self._async_script_turn_off(entity_id)
         except Exception as err:  # noqa: BLE001
-            _LOGGER.warning("Pre-start script %s failed (%s); watering anyway", entity_id, err)
+            _LOGGER.warning("%s script %s failed (%s); continuing anyway", kind, entity_id, err)
         finally:
-            for task in (call, stop):
+            for task in waiters:
                 if not task.done():
                     task.cancel()
+            await self._async_publish_active_script(None)
+
+    async def _async_publish_active_script(self, entity_id: str | None) -> None:
+        """Show in the panel which script the run is waiting for (None clears it)."""
+        rs = self.coordinator.run_state
+        if rs.active_script == entity_id:
+            return
+        rs.active_script = entity_id
+        await self.coordinator.async_update_run_state(rs)
 
     async def _async_script_turn_off(self, entity_id: str) -> None:
-        """Stop a pre-start script we gave up on; leaving it running is worse."""
+        """Stop a pipeline script we gave up on; leaving it running is worse."""
         with suppress(Exception):
             await self.hass.services.async_call(
                 SCRIPT_DOMAIN,
@@ -689,6 +739,7 @@ class IrrigationRuntime:
         rs.active_zone_ids = []
         rs.last_error = None
         rs.upcoming_phases = []
+        rs.active_script = None
         await self.coordinator.async_update_run_state(rs)
 
     async def async_skip_to_next_phase(self) -> bool:
@@ -725,27 +776,20 @@ class IrrigationRuntime:
 
         domain = entity_id.split(".")[0]
 
-        try:
-            if domain in OUTPUT_DOMAIN_SERVICES:
-                _service_on, service_off = OUTPUT_DOMAIN_SERVICES[domain]
-                await self.hass.services.async_call(
-                    domain,
-                    service_off,
-                    {"entity_id": entity_id},
-                    blocking=True,
-                )
-            else:
-                await self.hass.services.async_call(
-                    domain,
-                    "turn_off",
-                    {"entity_id": entity_id},
-                    blocking=True,
-                )
-        except HomeAssistantError as err:
-            _LOGGER.warning(
-                "Ignoring turn_off failure for %s so the irrigation run can continue: %s",
-                entity_id,
-                err,
+        if domain in OUTPUT_DOMAIN_SERVICES:
+            _service_on, service_off = OUTPUT_DOMAIN_SERVICES[domain]
+            await self.hass.services.async_call(
+                domain,
+                service_off,
+                {"entity_id": entity_id},
+                blocking=True,
+            )
+        else:
+            await self.hass.services.async_call(
+                domain,
+                "turn_off",
+                {"entity_id": entity_id},
+                blocking=True,
             )
 
     async def _async_turn_off_all_tracked(self) -> None:

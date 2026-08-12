@@ -133,7 +133,7 @@ async def test_zone_falls_back_to_default_start_without_custom_service() -> None
 
 
 @pytest.mark.asyncio
-async def test_turn_off_failure_does_not_prevent_next_zone_from_starting() -> None:
+async def test_turn_off_failure_stops_before_next_zone_starts() -> None:
     calls: list[tuple[str, str, dict]] = []
     first_zone = Zone(
         zone_id="z1",
@@ -143,15 +143,6 @@ async def test_turn_off_failure_does_not_prevent_next_zone_from_starting() -> No
         duration_field="duration",
         duration_unit="minutes",
     )
-    second_zone = Zone(
-        zone_id="z2",
-        name="Back",
-        switch_entity_ids=["switch.back"],
-        start_service="rainbird.start_irrigation",
-        duration_field="duration",
-        duration_unit="minutes",
-    )
-
     hass = MagicMock()
 
     async def _call(domain, service, data=None, **_kwargs):
@@ -164,17 +155,15 @@ async def test_turn_off_failure_does_not_prevent_next_zone_from_starting() -> No
     hass.bus.async_fire = MagicMock()
 
     coordinator = MagicMock()
-    coordinator.installation = MagicMock(
-        zones={first_zone.zone_id: first_zone, second_zone.zone_id: second_zone}
-    )
+    coordinator.installation = MagicMock(zones={first_zone.zone_id: first_zone})
     coordinator.run_state = RunState()
     coordinator.async_update_run_state = AsyncMock()
 
     runtime = IrrigationRuntime(hass, coordinator)
     runtime._async_wait_zone_duration = AsyncMock()
 
-    await runtime._async_zone_run(first_zone, duration_min=15)
-    await runtime._async_zone_run(second_zone, duration_min=10)
+    with pytest.raises(HomeAssistantError, match="already off"):
+        await runtime._async_zone_run(first_zone, duration_min=15)
 
     assert calls[0] == (
         "rainbird",
@@ -182,8 +171,4 @@ async def test_turn_off_failure_does_not_prevent_next_zone_from_starting() -> No
         {"entity_id": "switch.front", "duration": 15},
     )
     assert calls[1] == ("switch", "turn_off", {"entity_id": "switch.front"})
-    assert calls[2] == (
-        "rainbird",
-        "start_irrigation",
-        {"entity_id": "switch.back", "duration": 10},
-    )
+    assert len(calls) == 2

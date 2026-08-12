@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from .const import (
@@ -9,7 +10,7 @@ from .const import (
     GUARD_NUMERIC_OPERATORS,
     GUARD_OPERATORS,
     MAX_GUARDS,
-    MAX_PRE_START_SCRIPT_TIMEOUT_SEC,
+    MAX_SCRIPT_TIMEOUT_SEC,
     MODES,
     OUTPUT_ENTITY_DOMAINS,
     SCRIPT_DOMAIN,
@@ -17,6 +18,9 @@ from .const import (
 from .models import Guard
 
 DURATION_UNITS = {"minutes", "seconds"}
+SERVICE_REF_PATTERN = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
+SERVICE_FIELD_PATTERN = re.compile(r"^[a-z_][a-z0-9_]*$")
+RESERVED_SERVICE_FIELDS = {"entity_id"}
 
 # Re-export for tests / callers
 __all__ = [
@@ -28,8 +32,8 @@ __all__ = [
     "validate_output_entity_id",
     "validate_zone_payload",
     "validate_pre_start_entities",
-    "validate_pre_start_script",
-    "validate_pre_start_script_timeout",
+    "validate_script_entity",
+    "validate_script_timeout",
 ]
 
 
@@ -157,8 +161,12 @@ def validate_zone_payload(hass: Any, user_input: dict[str, Any]) -> str | None:
     if start_service or duration_field or duration_unit or start_entity_id:
         if not (start_service and duration_field and duration_unit):
             return "invalid_duration_service"
-        service_domain, dot, service_name = start_service.partition(".")
-        if not dot or not service_domain or not service_name:
+        if SERVICE_REF_PATTERN.fullmatch(start_service) is None:
+            return "invalid_duration_service"
+        if (
+            SERVICE_FIELD_PATTERN.fullmatch(duration_field) is None
+            or duration_field in RESERVED_SERVICE_FIELDS
+        ):
             return "invalid_duration_service"
         if duration_unit not in DURATION_UNITS:
             return "invalid_duration_service"
@@ -183,8 +191,8 @@ def validate_pre_start_entities(hass: Any, entity_ids: list[str] | None) -> str 
     return None
 
 
-def validate_pre_start_script(hass: Any, entity_id: str | None) -> str | None:
-    """Return error key or None; empty means "no pre-start script"."""
+def validate_script_entity(hass: Any, entity_id: str | None) -> str | None:
+    """Return error key or None; empty means "no script for this phase"."""
     if not entity_id:
         return None
     if domain_of(entity_id) != SCRIPT_DOMAIN:
@@ -194,13 +202,13 @@ def validate_pre_start_script(hass: Any, entity_id: str | None) -> str | None:
     return None
 
 
-def validate_pre_start_script_timeout(value: Any) -> str | None:
+def validate_script_timeout(value: Any) -> str | None:
     """Return error key or None."""
     try:
         n = int(value)
     except (TypeError, ValueError):
         return "invalid_script_timeout"
-    if n < 1 or n > MAX_PRE_START_SCRIPT_TIMEOUT_SEC:
+    if n < 1 or n > MAX_SCRIPT_TIMEOUT_SEC:
         return "invalid_script_timeout"
     return None
 

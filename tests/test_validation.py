@@ -238,6 +238,8 @@ def test_validate_zone_payload_rejects_incomplete_duration_service_config(partia
         ("invalid", "invalid_duration_service"),
         ("rainbird.", "invalid_duration_service"),
         (".start", "invalid_duration_service"),
+        ("rainbird.start.extra", "invalid_duration_service"),
+        ("RainBird.start", "invalid_duration_service"),
     ],
 )
 def test_validate_zone_payload_rejects_invalid_service_name(service_name: str, expected: str) -> None:
@@ -285,5 +287,22 @@ def test_validate_zone_payload_rejects_invalid_duration_unit() -> None:
         "start_service": "hydrawise.start_watering",
         "duration_field": "duration",
         "duration_unit": "hours",
+    }
+    assert validate_zone_payload(hass, payload) == "invalid_duration_service"
+
+
+@pytest.mark.parametrize("duration_field", ["entity_id", "run-seconds", "1duration"])
+def test_validate_zone_payload_rejects_invalid_duration_field(duration_field: str) -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        "start_service": "hydrawise.start_watering",
+        "duration_field": duration_field,
+        "duration_unit": "minutes",
     }
     assert validate_zone_payload(hass, payload) == "invalid_duration_service"

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from homeassistant.components.binary_sensor import BinarySensorDeviceClass, BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -46,6 +48,24 @@ class RunningBinarySensor(SimpleIrrigationEntity, BinarySensorEntity):
         """Running."""
         rs = self.coordinator.run_state.run_state
         return rs in (RUN_STATE_PREPARING, RUN_STATE_RUNNING, RUN_STATE_STOPPING)
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any]:
+        """What the run is doing right now: phase, zones, blocking script.
+
+        Also what keeps the panel live. It refetches on this entity's
+        ``state_changed`` events, and the state itself stays ``on`` from the
+        first pre-start second to the last post-run one — so without these
+        attributes nothing in between ever reaches the UI: not the phase change
+        from one set of zones to the next, and not the post-run script at the
+        very end.
+        """
+        rs = self.coordinator.run_state
+        return {
+            "run_state": rs.run_state,
+            "active_zone_ids": list(rs.active_zone_ids),
+            "active_script": rs.active_script,
+        }
 
 
 class PausedBinarySensor(SimpleIrrigationEntity, BinarySensorEntity):

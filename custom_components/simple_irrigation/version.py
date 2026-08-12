@@ -1,4 +1,4 @@
 """Version information for Simple Irrigation."""
 
 # Version is embedded here and synced by update_version.py script
-__version__ = "1.2.0"
+__version__ = "1.3.0"
