@@ -98,12 +98,14 @@ async def test_zone_starts_all_outputs_in_parallel_when_no_target_is_set() -> No
 
     await runtime._async_zone_run(zone, duration_min=7)
 
+    # Concurrent calls, so assert on the set rather than the order.
+    by_entity = lambda c: c[2]["entity_id"]  # noqa: E731
     starts, offs = calls[:2], calls[2:]
-    assert sorted(starts) == [
+    assert sorted(starts, key=by_entity) == [
         ("rainbird", "start_irrigation", {"entity_id": "switch.back", "duration": 7}),
         ("rainbird", "start_irrigation", {"entity_id": "switch.front", "duration": 7}),
     ]
-    assert sorted(offs) == [
+    assert sorted(offs, key=by_entity) == [
         ("switch", "turn_off", {"entity_id": "switch.back"}),
         ("switch", "turn_off", {"entity_id": "switch.front"}),
     ]
