@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from .const import (
@@ -15,6 +16,11 @@ from .const import (
     SCRIPT_DOMAIN,
 )
 from .models import Guard
+
+DURATION_UNITS = {"minutes", "seconds"}
+SERVICE_REF_PATTERN = re.compile(r"^[a-z0-9_]+\.[a-z0-9_]+$")
+SERVICE_FIELD_PATTERN = re.compile(r"^[a-z_][a-z0-9_]*$")
+RESERVED_SERVICE_FIELDS = {"entity_id"}
 
 # Re-export for tests / callers
 __all__ = [
@@ -146,6 +152,34 @@ def validate_zone_payload(hass: Any, user_input: dict[str, Any]) -> str | None:
         err = validate_output_entity_id(hass, eid)
         if err:
             return err
+
+    start_service = str(user_input.get("start_service") or "").strip()
+    duration_field = str(user_input.get("duration_field") or "").strip()
+    duration_unit = str(user_input.get("duration_unit") or "").strip()
+    start_entity_id = str(user_input.get("start_entity_id") or "").strip()
+
+    if start_service or duration_field or duration_unit or start_entity_id:
+        if not (start_service and duration_field and duration_unit):
+            return "invalid_duration_service"
+        if SERVICE_REF_PATTERN.fullmatch(start_service) is None:
+            return "invalid_duration_service"
+        service_domain, _, service_name = start_service.partition(".")
+        if not hass.services.has_service(service_domain, service_name):
+            return "unknown_service"
+        if (
+            SERVICE_FIELD_PATTERN.fullmatch(duration_field) is None
+            or duration_field in RESERVED_SERVICE_FIELDS
+        ):
+            return "invalid_duration_service"
+        if duration_unit not in DURATION_UNITS:
+            return "invalid_duration_service"
+
+        target_entity_id = start_entity_id or ids[0]
+        if "." not in target_entity_id:
+            return "invalid_target_entity"
+        if hass.states.get(target_entity_id) is None:
+            return "unknown_entity"
+
     return None
 
 

@@ -100,6 +100,11 @@ class Zone:
     duration_normal_min: int = 15
     duration_extra_min: int = 20
     exclusive: bool = False
+    # Optional advanced start path for integrations that need runtime in the start call.
+    start_service: str = ""
+    duration_field: str = ""
+    duration_unit: str = ""
+    start_entity_id: str = ""
 
     def duration_for_mode(self, mode: str) -> int:
         """Return duration in minutes for the given global mode."""
@@ -122,6 +127,10 @@ class Zone:
             "duration_normal_min": self.duration_normal_min,
             "duration_extra_min": self.duration_extra_min,
             "exclusive": self.exclusive,
+            "start_service": self.start_service,
+            "duration_field": self.duration_field,
+            "duration_unit": self.duration_unit,
+            "start_entity_id": self.start_entity_id,
         }
 
     @staticmethod
@@ -147,6 +156,10 @@ class Zone:
             duration_normal_min=int(data.get("duration_normal_min", 15)),
             duration_extra_min=int(data.get("duration_extra_min", 20)),
             exclusive=bool(data.get("exclusive", False)),
+            start_service=str(data.get("start_service") or "").strip(),
+            duration_field=str(data.get("duration_field") or "").strip(),
+            duration_unit=str(data.get("duration_unit") or "").strip(),
+            start_entity_id=str(data.get("start_entity_id") or "").strip(),
         )
 
 

@@ -11,6 +11,7 @@ from custom_components.simple_irrigation.validation import (
     parse_guard_list,
     parse_zone_switch_entities,
     validate_output_entity_id,
+    validate_zone_payload,
 )
 
 
@@ -166,3 +167,170 @@ def test_parse_guard_list_too_many() -> None:
     guards, err = parse_guard_list(hass, payload)
     assert err == "too_many_guards"
     assert guards == []
+
+
+def _hass_with_known_entities(
+    entity_ids: set[str],
+    services: set[str] | None = None,
+) -> MagicMock:
+    hass = MagicMock()
+
+    def _get(entity_id: str):
+        return MagicMock() if entity_id in entity_ids else None
+
+    known_services = {
+        "hydrawise.start_watering",
+        "rainbird.start_irrigation",
+        "opensprinkler.run",
+    } if services is None else services
+
+    hass.states.get.side_effect = _get
+    hass.services.has_service.side_effect = (
+        lambda domain, service: f"{domain}.{service}" in known_services
+    )
+    return hass
+
+
+def test_validate_zone_payload_accepts_default_behavior_without_advanced_fields() -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+    }
+    assert validate_zone_payload(hass, payload) is None
+
+
+def test_validate_zone_payload_accepts_complete_duration_service_config() -> None:
+    hass = _hass_with_known_entities({"switch.zone_1", "binary_sensor.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        "start_service": "hydrawise.start_watering",
+        "duration_field": "duration",
+        "duration_unit": "minutes",
+        "start_entity_id": "binary_sensor.zone_1",
+    }
+    assert validate_zone_payload(hass, payload) is None
+
+
+@pytest.mark.parametrize(
+    "partial",
+    [
+        {"start_service": "rainbird.start_irrigation"},
+        {"duration_field": "duration"},
+        {"duration_unit": "minutes"},
+        {"start_service": "rainbird.start_irrigation", "duration_field": "duration"},
+    ],
+)
+def test_validate_zone_payload_rejects_incomplete_duration_service_config(partial: dict) -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        **partial,
+    }
+    assert validate_zone_payload(hass, payload) == "invalid_duration_service"
+
+
+@pytest.mark.parametrize(
+    ("service_name", "expected"),
+    [
+        ("invalid", "invalid_duration_service"),
+        ("rainbird.", "invalid_duration_service"),
+        (".start", "invalid_duration_service"),
+        ("rainbird.start.extra", "invalid_duration_service"),
+        ("RainBird.start", "invalid_duration_service"),
+    ],
+)
+def test_validate_zone_payload_rejects_invalid_service_name(service_name: str, expected: str) -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        "start_service": service_name,
+        "duration_field": "duration",
+        "duration_unit": "minutes",
+    }
+    assert validate_zone_payload(hass, payload) == expected
+
+
+def test_validate_zone_payload_rejects_service_that_is_not_registered() -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"}, services=set())
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        "start_service": "bhyve.start_watering",
+        "duration_field": "minutes",
+        "duration_unit": "minutes",
+    }
+    assert validate_zone_payload(hass, payload) == "unknown_service"
+
+
+def test_validate_zone_payload_rejects_unknown_start_target_entity() -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        "start_service": "hydrawise.start_watering",
+        "duration_field": "duration",
+        "duration_unit": "minutes",
+        "start_entity_id": "binary_sensor.missing",
+    }
+    assert validate_zone_payload(hass, payload) == "unknown_entity"
+
+
+def test_validate_zone_payload_rejects_invalid_duration_unit() -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        "start_service": "hydrawise.start_watering",
+        "duration_field": "duration",
+        "duration_unit": "hours",
+    }
+    assert validate_zone_payload(hass, payload) == "invalid_duration_service"
+
+
+@pytest.mark.parametrize("duration_field", ["entity_id", "run-seconds", "1duration"])
+def test_validate_zone_payload_rejects_invalid_duration_field(duration_field: str) -> None:
+    hass = _hass_with_known_entities({"switch.zone_1"})
+    payload = {
+        "name": "Front lawn",
+        "switch_entity_ids": ["switch.zone_1"],
+        "duration_eco_min": 10,
+        "duration_normal_min": 15,
+        "duration_extra_min": 20,
+        "exclusive": False,
+        "start_service": "hydrawise.start_watering",
+        "duration_field": duration_field,
+        "duration_unit": "minutes",
+    }
+    assert validate_zone_payload(hass, payload) == "invalid_duration_service"

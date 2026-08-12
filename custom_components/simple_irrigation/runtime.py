@@ -37,6 +37,11 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+# How long a duration-aware start service may take to acknowledge the run before
+# the zone stops waiting on it. Generous — the call only has to reach the
+# controller, not carry out the watering.
+START_SERVICE_TIMEOUT_SEC = 30
+
 
 class ZoneManualRunError(HomeAssistantError):
     """Manual zone run cannot start; ``code`` is used by the panel HTTP API."""
@@ -508,9 +513,14 @@ class IrrigationRuntime:
                 "entity_ids": outputs,
             },
         )
-        await asyncio.gather(*(self._async_switch_turn_on(eid) for eid in outputs))
-        await self._async_wait_zone_duration(duration_min * 60)
-        await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
+        handled_by_service = await self._async_zone_run_with_duration_service(
+            zone,
+            duration_min,
+        )
+        if not handled_by_service:
+            await asyncio.gather(*(self._async_switch_turn_on(eid) for eid in outputs))
+            await self._async_wait_zone_duration(duration_min * 60)
+            await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
         now = dt_util.utcnow()
         rs = self.coordinator.run_state
         rs.last_run_per_zone[zone.zone_id] = now
@@ -523,6 +533,90 @@ class IrrigationRuntime:
                 "entity_ids": outputs,
             },
         )
+
+    async def _async_zone_run_with_duration_service(
+        self,
+        zone: Zone,
+        duration_min: int,
+    ) -> bool:
+        """Run a zone via an integration-specific service carrying duration.
+
+        Returns True when the custom path handled the complete zone runtime,
+        False when zone has no service configuration and should use the default
+        output turn_on/turn_off path.
+        """
+        service_ref = zone.start_service.strip()
+        duration_field = zone.duration_field.strip()
+        duration_unit = zone.duration_unit.strip()
+        if not service_ref or not duration_field or not duration_unit:
+            return False
+
+        domain, sep, service = service_ref.partition(".")
+        if not sep or not domain or not service:
+            _LOGGER.warning(
+                "Zone %s has invalid start service '%s'; using default output start",
+                zone.zone_id,
+                service_ref,
+            )
+            return False
+
+        outputs = list(zone.switch_entity_ids)
+        if not outputs:
+            return False
+
+        if duration_unit == "minutes":
+            duration_value = duration_min
+        elif duration_unit == "seconds":
+            duration_value = duration_min * 60
+        else:
+            _LOGGER.warning(
+                "Zone %s has unknown duration unit '%s'; using default output start",
+                zone.zone_id,
+                duration_unit,
+            )
+            return False
+
+        async def _start_target(target_entity_id: str) -> None:
+            service_data = {
+                "entity_id": target_entity_id,
+                duration_field: duration_value,
+            }
+            # blocking=True so a ServiceNotFound or a rejected call still fails the
+            # run. A start service is expected to return once the controller has
+            # accepted the job — but a script entered as a custom start service may
+            # block for the whole watering time, which would park the zone inside
+            # this call: the duration wait would never start and stop_all() would
+            # hang on it. Bound the wait and carry on instead.
+            try:
+                async with asyncio.timeout(START_SERVICE_TIMEOUT_SEC):
+                    await self.hass.services.async_call(
+                        domain,
+                        service,
+                        service_data,
+                        blocking=True,
+                    )
+            except TimeoutError:
+                _LOGGER.warning(
+                    "Zone %s: start service %s did not return within %s s; "
+                    "continuing with the configured duration. A start service must "
+                    "return once the run has started, not run for its duration",
+                    zone.zone_id,
+                    service_ref,
+                    START_SERVICE_TIMEOUT_SEC,
+                )
+
+        # The start service either addresses the outputs directly, or a separate
+        # entity of the same zone (Hydrawise starts via its `binary_sensor`).
+        # Either way the outputs are what actually carries the water, so they are
+        # tracked and closed again — see _async_turn_off_all_tracked().
+        explicit_target = zone.start_entity_id.strip()
+        targets = [explicit_target] if explicit_target else outputs
+
+        await asyncio.gather(*(_start_target(eid) for eid in targets))
+        self._touched_entities.update(outputs)
+        await self._async_wait_zone_duration(duration_min * 60)
+        await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
+        return True
 
     async def async_run_zone(self, zone_id: str, duration_min: int | None = None) -> None:
         """Manual run for one zone (pre-start delay, current mode duration, then all outputs off)."""
@@ -704,9 +798,9 @@ class IrrigationRuntime:
 
     async def _async_switch_turn_off(self, entity_id: str) -> None:
         from .const import OUTPUT_DOMAIN_SERVICES
-        
+
         domain = entity_id.split(".")[0]
-        
+
         if domain in OUTPUT_DOMAIN_SERVICES:
             _service_on, service_off = OUTPUT_DOMAIN_SERVICES[domain]
             await self.hass.services.async_call(
@@ -724,10 +818,27 @@ class IrrigationRuntime:
             )
 
     async def _async_turn_off_all_tracked(self) -> None:
+        """Close everything this run touched. Never raises.
+
+        This is the cleanup path — it runs from _async_finish_run() and from
+        async_stop_all(). A raise here would skip the remaining outputs and leave
+        run_state stuck on "stopping", which is_busy() reports as busy, so the
+        integration would refuse every further run until Home Assistant restarts.
+        Failures are collected into last_error instead.
+        """
         inst = self.coordinator.installation
-        for entity_id in self._touched_entities:
-            await self._async_switch_turn_off(entity_id)
-        for entity_id in inst.pre_start_switches:
-            if entity_id not in self._touched_entities:
+        pending = list(self._touched_entities) + [
+            eid for eid in inst.pre_start_switches if eid not in self._touched_entities
+        ]
+        failed: list[str] = []
+        for entity_id in pending:
+            try:
                 await self._async_switch_turn_off(entity_id)
+            except Exception:  # noqa: BLE001 - one bad output must not strand the rest
+                _LOGGER.exception("Could not turn off %s during cleanup", entity_id)
+                failed.append(entity_id)
         self._touched_entities.clear()
+        if failed:
+            self.coordinator.run_state.last_error = (
+                f"Could not turn off: {', '.join(failed)}"
+            )

@@ -11,6 +11,53 @@ import type { HomeAssistant } from "../types";
 
 const defaultDomains = ["switch", "input_boolean", "group", "valve"];
 
+/** Entity domains the start target may live in — the start service does not
+ *  always address the output itself (Hydrawise starts via its `binary_sensor`). */
+const startTargetDomains = ["switch", "valve", "binary_sensor", "input_boolean", "number"];
+
+const zoneStartPresets: Record<
+  string,
+  {
+    start_service: string;
+    duration_field: string;
+    duration_unit: "minutes" | "seconds";
+    /** Which entity belongs where — the start target is the only thing that
+     *  differs between the presets, so spell it out per preset. */
+    hintKey: string;
+  }
+> = {
+  rainbird: {
+    start_service: "rainbird.start_irrigation",
+    duration_field: "duration",
+    duration_unit: "minutes",
+    hintKey: "config_panel.zones_start_hint_output_is_target",
+  },
+  rachio: {
+    start_service: "rachio.start_watering",
+    duration_field: "duration",
+    duration_unit: "minutes",
+    hintKey: "config_panel.zones_start_hint_output_is_target",
+  },
+  hydrawise: {
+    start_service: "hydrawise.start_watering",
+    duration_field: "duration",
+    duration_unit: "minutes",
+    hintKey: "config_panel.zones_start_hint_hydrawise",
+  },
+  bhyve: {
+    start_service: "bhyve.start_watering",
+    duration_field: "minutes",
+    duration_unit: "minutes",
+    hintKey: "config_panel.zones_start_hint_output_is_target",
+  },
+  opensprinkler: {
+    start_service: "opensprinkler.run",
+    duration_field: "run_seconds",
+    duration_unit: "seconds",
+    hintKey: "config_panel.zones_start_hint_output_is_target",
+  },
+};
+
 type ZoneFilter = "all" | "enabled" | "issues";
 
 interface ZoneRow {
@@ -22,6 +69,10 @@ interface ZoneRow {
   duration_normal_min: number;
   duration_extra_min: number;
   exclusive: boolean;
+  start_service: string;
+  duration_field: string;
+  duration_unit: string;
+  start_entity_id: string;
 }
 
 export class ViewZones extends LitElement {
@@ -88,6 +139,10 @@ export class ViewZones extends LitElement {
       duration_normal_min: 15,
       duration_extra_min: 20,
       exclusive: false,
+      start_service: "",
+      duration_field: "",
+      duration_unit: "",
+      start_entity_id: "",
     };
   }
 
@@ -113,6 +168,10 @@ export class ViewZones extends LitElement {
         duration_normal_min: Number(o.duration_normal_min ?? 15),
         duration_extra_min: Number(o.duration_extra_min ?? 20),
         exclusive: Boolean(o.exclusive ?? false),
+        start_service: String(o.start_service ?? ""),
+        duration_field: String(o.duration_field ?? ""),
+        duration_unit: String(o.duration_unit ?? ""),
+        start_entity_id: String(o.start_entity_id ?? ""),
       };
     });
   }
@@ -147,6 +206,37 @@ export class ViewZones extends LitElement {
 
   private _entityListId(): string {
     return `si-ent-z-${this.entryId}`;
+  }
+
+  private _startTargetListId(): string {
+    return `si-ent-start-z-${this.entryId}`;
+  }
+
+  /** Which entity goes into "outputs" and which into "start target" — that pairing
+   *  is the one thing users get wrong, because stopping always runs via the outputs. */
+  private _renderPresetHint(z: ZoneRow): TemplateResult | typeof nothing {
+    const cfg = zoneStartPresets[this._presetForZone(z)];
+    if (!cfg) return nothing;
+    return html`<p class="hint">
+      <ha-icon class="inline-help-icon" icon="mdi:information-outline"></ha-icon>
+      ${t(this.hass, cfg.hintKey)}
+    </p>`;
+  }
+
+  private _presetForZone(z: ZoneRow): string {
+    if (!z.start_service && !z.duration_field && !z.duration_unit && !z.start_entity_id) {
+      return "none";
+    }
+    for (const [preset, cfg] of Object.entries(zoneStartPresets)) {
+      if (
+        z.start_service.trim() === cfg.start_service &&
+        z.duration_field.trim() === cfg.duration_field &&
+        z.duration_unit.trim() === cfg.duration_unit
+      ) {
+        return preset;
+      }
+    }
+    return "custom";
   }
 
   private _toggleExpand(id: string): void {
@@ -212,6 +302,10 @@ export class ViewZones extends LitElement {
           duration_normal_min: zone.duration_normal_min,
           duration_extra_min: zone.duration_extra_min,
           exclusive: zone.exclusive,
+          start_service: zone.start_service.trim(),
+          duration_field: zone.duration_field.trim(),
+          duration_unit: zone.duration_unit.trim(),
+          start_entity_id: zone.start_entity_id.trim(),
         };
       }
       const res = await saveZone(this.hass, this.entryId, body);
@@ -357,6 +451,100 @@ export class ViewZones extends LitElement {
           </div>
         </div>
         <p class="hint">${t(this.hass, "config_panel.zones_behavior_desc")}</p>
+      </div>
+
+      <div class="section-title">${t(this.hass, "config_panel.zones_advanced_title")}</div>
+      <div class="field-block">
+        <details class="inline-help" ?open=${Boolean(
+          z.start_service || z.duration_field || z.duration_unit || z.start_entity_id
+        )}>
+          <summary>
+            <ha-icon class="inline-help-icon" icon="mdi:tune"></ha-icon>
+            ${t(this.hass, "config_panel.zones_advanced_summary")}
+          </summary>
+          <p>${t(this.hass, "config_panel.zones_advanced_desc")}</p>
+          <div class="field-row">
+            <label class="native-entity-label" for="si-preset-${z.zone_id || "new"}">
+              ${t(this.hass, "config_panel.zones_start_preset")}
+            </label>
+            <select
+              id="si-preset-${z.zone_id || "new"}"
+              class="field-select"
+              .value=${this._presetForZone(z)}
+              @change=${(e: Event) => {
+                const preset = (e.target as HTMLSelectElement).value;
+                if (preset === "none") {
+                  z.start_service = "";
+                  z.duration_field = "";
+                  z.duration_unit = "";
+                  z.start_entity_id = "";
+                } else if (preset !== "custom") {
+                  const cfg = zoneStartPresets[preset];
+                  if (cfg) {
+                    z.start_service = cfg.start_service;
+                    z.duration_field = cfg.duration_field;
+                    z.duration_unit = cfg.duration_unit;
+                  }
+                }
+                this.requestUpdate();
+              }}
+            >
+              <option value="none">${t(this.hass, "config_panel.zones_start_preset_none")}</option>
+              <option value="custom">${t(this.hass, "config_panel.zones_start_preset_custom")}</option>
+              <option value="rainbird">Rain Bird</option>
+              <option value="rachio">Rachio</option>
+              <option value="hydrawise">Hydrawise</option>
+              <option value="bhyve">B-hyve / Orbit</option>
+              <option value="opensprinkler">OpenSprinkler</option>
+            </select>
+          </div>
+          ${this._renderPresetHint(z)}
+          <div class="field-row">
+            <ha-input
+              .label=${t(this.hass, "config_panel.zones_start_service")}
+              .value=${z.start_service}
+              @input=${(e: Event) => {
+                z.start_service = (e.target as HTMLInputElement).value;
+                this.requestUpdate();
+              }}
+            ></ha-input>
+          </div>
+          <div class="duration-row">
+            <ha-input
+              .label=${t(this.hass, "config_panel.zones_duration_field")}
+              .value=${z.duration_field}
+              @input=${(e: Event) => {
+                z.duration_field = (e.target as HTMLInputElement).value;
+                this.requestUpdate();
+              }}
+            ></ha-input>
+            <select
+              class="field-select"
+              .value=${z.duration_unit || ""}
+              @change=${(e: Event) => {
+                z.duration_unit = (e.target as HTMLSelectElement).value;
+                this.requestUpdate();
+              }}
+            >
+              <option value="">${t(this.hass, "config_panel.zones_duration_unit_empty")}</option>
+              <option value="minutes">${t(this.hass, "config_panel.zones_duration_unit_minutes")}</option>
+              <option value="seconds">${t(this.hass, "config_panel.zones_duration_unit_seconds")}</option>
+            </select>
+          </div>
+          <div class="field-row">
+            ${renderNativeEntityField(
+              this.hass,
+              this._startTargetListId(),
+              t(this.hass, "config_panel.zones_start_target_entity"),
+              z.start_entity_id,
+              (v) => {
+                z.start_entity_id = v;
+                this.requestUpdate();
+              }
+            )}
+          </div>
+          <p class="hint">${t(this.hass, "config_panel.zones_advanced_target_desc")}</p>
+        </details>
       </div>
     `;
   }
@@ -512,6 +700,7 @@ export class ViewZones extends LitElement {
 
     return html`
       ${renderEntityDatalist(this.hass, this._entityListId(), this.outputEntityDomains ?? defaultDomains)}
+      ${renderEntityDatalist(this.hass, this._startTargetListId(), startTargetDomains)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:vector-square"></ha-icon>
