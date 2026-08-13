@@ -1,10 +1,10 @@
 {
-  "title": "Irrigazione semplice",
+  "title": "Simple Irrigation",
   "config": {
     "step": {
       "user": {
-        "title": "Irrigazione semplice",
-        "description": "Crea l’installazione, poi apri Irrigazione semplice nella barra laterale per configurare le zone e la pianificazione.",
+        "title": "Simple Irrigation",
+        "description": "Crea l’installazione, poi apri Simple Irrigation nella barra laterale per configurare le zone e la pianificazione.",
         "data": {
           "name": "Nome installazione",
           "pre_start_switches": "Uscite di pre-avvio (on/off)",
@@ -214,9 +214,9 @@
     }
   },
   "config_panel": {
-    "sidebar_title": "Irrigazione semplice",
+    "sidebar_title": "Simple Irrigation",
     "loading": "Caricamento…",
-    "main_title": "Irrigazione semplice",
+    "main_title": "Simple Irrigation",
     "tab_general": "Generale",
     "tab_zones": "Zone",
     "tab_schedule": "Pianificazione",
@@ -246,7 +246,7 @@
     "timetable_week_current_hint": "questa settimana · CW {n}",
     "timetable_parity_badge_odd": "settimane dispari",
     "timetable_parity_badge_even": "settimane pari",
-    "entry_picker_title": "Irrigazione semplice",
+    "entry_picker_title": "Simple Irrigation",
     "entry_picker_lead": "Scegli un’installazione per modificare zone, pianificazione settimanale e opzioni di esecuzione. Ogni voce è un piano di irrigazione indipendente.",
     "entry_picker_loading": "Caricamento installazioni…",
     "entry_badge_ha": "Integrazione disabilitata",
@@ -254,8 +254,8 @@
     "entry_badge_active": "Attiva",
     "entry_badge_default": "Predefinita",
     "entry_card_desc": "Configura zone, fasce orarie, ordine di esecuzione e uscite di pre-avvio per questo controller.",
-    "entry_picker_empty": "Nessuna installazione ancora. Aggiungi l’integrazione in Impostazioni → Dispositivi e servizi → Aggiungi integrazione, poi cerca Irrigazione semplice.",
-    "entry_picker_howto": "Aggiungi un altro piano (es. primavera / estate / un altro giardino): usa Impostazioni → Dispositivi e servizi → Aggiungi integrazione → Irrigazione semplice. Ogni piano appare nell’elenco sopra.",
+    "entry_picker_empty": "Nessuna installazione ancora. Aggiungi l’integrazione in Impostazioni → Dispositivi e servizi → Aggiungi integrazione, poi cerca Simple Irrigation.",
+    "entry_picker_howto": "Aggiungi un altro piano (es. primavera / estate / un altro giardino): usa Impostazioni → Dispositivi e servizi → Aggiungi integrazione → Simple Irrigation. Ogni piano appare nell’elenco sopra.",
     "errors_request_failed": "Richiesta non riuscita",
     "errors_not_running_skip": "Nessun processo è in esecuzione al momento.",
     "entity_placeholder_example": "Cerca per nome o ID entità",
@@ -320,7 +320,7 @@
     "general_max_parallel_field": "Zone massime in parallelo",
     "general_default_section": "Irrigazione predefinita",
     "general_default_toggle_label": "Apri questa installazione per impostazione predefinita",
-    "general_default_toggle_desc": "Quando abilitato, fare clic su Irrigazione semplice nella barra laterale apre direttamente questa installazione invece della schermata di selezione.",
+    "general_default_toggle_desc": "Quando abilitato, fare clic su Simple Irrigation nella barra laterale apre direttamente questa installazione invece della schermata di selezione.",
     "general_default_confirm_title": "Cambia irrigazione predefinita",
     "general_default_confirm_body": "Impostare \"{name}\" come predefinita rimuoverà l’impostazione predefinita da \"{other}\". Continuare?",
     "general_default_confirm_ok": "Imposta come predefinita",
@@ -329,7 +329,7 @@
     "general_save": "Salva",
     "zones_card_title": "Zone",
     "zones_intro": "Ogni zona ha una o più uscite e tempi di esecuzione per le modalità Eco / Normale / Extra. Associa le zone alle fasce nella scheda Pianificazione. Usa Modifica per cambiare una zona alla volta. Se disabiliti una zona, viene saltata in ogni fascia che la include: utile per saltare temporaneamente una zona quando il terreno è ancora umido.",
-    "zones_intro_automation": "Da automazioni o script, chiama il servizio simple_irrigation.set_zone_enabled con zone_id (UUID interno di ogni zona—le chiavi sotto zones nei download diagnostici di questa integrazione) e enabled true o false. Passa config_entry_id quando hai più di un’installazione di Irrigazione semplice.",
+    "zones_intro_automation": "Da automazioni o script, chiama il servizio simple_irrigation.set_zone_enabled con zone_id (UUID interno di ogni zona—le chiavi sotto zones nei download diagnostici di questa integrazione) e enabled true o false. Passa config_entry_id quando hai più di un’installazione di Simple Irrigation.",
     "zones_add_zone": "Aggiungi zona",
     "zones_detail_disabled": "Disabilitata",
     "zones_detail_exclusive": "Esclusiva",
