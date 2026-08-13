@@ -31,7 +31,7 @@ async def async_setup_entry(
 
 
 class ActiveZonesSensor(SimpleIrrigationEntity, SensorEntity):
-    """Comma-separated active zone ids."""
+    """Comma-separated active zone names."""
 
     _attr_translation_key = "active_zones"
     _attr_icon = "mdi:sprinkler-variant"
@@ -45,7 +45,10 @@ class ActiveZonesSensor(SimpleIrrigationEntity, SensorEntity):
     def native_value(self) -> str | None:
         """Active zones."""
         ids = self.coordinator.run_state.active_zone_ids
-        return ", ".join(ids) if ids else None
+        if not ids:
+            return None
+        zones = self.coordinator.installation.zones
+        return ", ".join(zones[zid].name if zid in zones else zid for zid in ids)
 
 
 class NextRunSensor(SimpleIrrigationEntity, SensorEntity):
