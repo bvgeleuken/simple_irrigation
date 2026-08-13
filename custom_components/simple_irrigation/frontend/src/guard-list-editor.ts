@@ -8,7 +8,7 @@ import type { HomeAssistant } from "./types";
  * Guards are AND-combined; the backend fails open on anything it cannot read.
  *
  * These are shared render functions so every surface uses the same native
- * Home Assistant entity picker and filter rules.
+ * Home Assistant entity picker and the same domain suggestions.
  */
 
 export type GuardOperator = "above" | "below" | "equals" | "state_is" | "is_true" | "is_false";
@@ -33,7 +33,10 @@ export const GUARD_NUMERIC_OPERATORS: GuardOperator[] = ["above", "below", "equa
 /** Operators comparing the state as text. */
 export const GUARD_TEXT_OPERATORS: GuardOperator[] = ["state_is"];
 
-/** Datalist suggestions only — the backend accepts any domain. */
+/**
+ * Ranked suggestions only, never a filter: `parse_guard_list` is deliberately
+ * domain-agnostic, so the picker for these fields runs with `allowCustom`.
+ */
 export const GUARD_ENTITY_DOMAINS = [
   "sensor",
   "binary_sensor",
@@ -132,13 +135,17 @@ function renderValueField(
   if (!needsValue(guard.operator)) return nothing;
 
   if (isTextOp(guard.operator)) {
+    // The offered states come from the selected entity, so without one there is
+    // nothing to choose from — say so instead of showing an empty dropdown.
+    const noEntity = guard.entity_id.trim() === "";
     return html`<ha-selector
       class="guard-value"
       .hass=${hass}
       .selector=${{ state: { entity_id: guard.entity_id } }}
       .label=${t(hass, "config_panel.guards_value_label")}
       .value=${String(guard.value ?? "")}
-      .required=${true}
+      .disabled=${noEntity}
+      .helper=${noEntity ? t(hass, "config_panel.guards_value_needs_entity") : undefined}
       @value-changed=${(e: CustomEvent<{ value?: string }>) => onValue(e.detail.value ?? "")}
     ></ha-selector>`;
   }
@@ -189,10 +196,13 @@ export function renderGuardList(
                   // a potentially invalid option when the entity changes.
                   value: v === g.entity_id ? g.value : isTextOp(g.operator) ? "" : g.value,
                 }),
-              "config_panel.guards_entity_placeholder"
+              {
+                placeholderKey: "config_panel.guards_entity_placeholder",
+                allowCustom: true,
+              }
             )}
-            <div class="native-entity-field guard-operator">
-              <label class="native-entity-label"
+            <div class="stacked-field guard-operator">
+              <label class="stacked-field-label"
                 >${t(hass, "config_panel.guards_operator_label")}</label
               >
               <select

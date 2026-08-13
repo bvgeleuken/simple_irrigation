@@ -12,8 +12,10 @@ import type { HomeAssistant } from "../types";
 
 const defaultDomains = ["switch", "input_boolean", "group", "valve"];
 
-/** Entity domains the start target may live in — the start service does not
- *  always address the output itself (Hydrawise starts via its `binary_sensor`). */
+/** Entity domains the start target usually lives in — the start service does not
+ *  always address the output itself (Hydrawise starts via its `binary_sensor`).
+ *  Suggestions only: the backend puts no domain rule on `start_entity_id`, so the
+ *  picker for that field runs with `allowCustom`. */
 const startTargetDomains = ["switch", "valve", "binary_sensor", "input_boolean", "number"];
 
 const zoneStartPresets: Record<
@@ -457,7 +459,7 @@ export class ViewZones extends LitElement {
           </summary>
           <p>${t(this.hass, "config_panel.zones_advanced_desc")}</p>
           <div class="field-row">
-            <label class="native-entity-label" for="si-preset-${z.zone_id || "new"}">
+            <label class="stacked-field-label" for="si-preset-${z.zone_id || "new"}">
               ${t(this.hass, "config_panel.zones_start_preset")}
             </label>
             <select
@@ -539,7 +541,8 @@ export class ViewZones extends LitElement {
               (v) => {
                 z.start_entity_id = v;
                 this.requestUpdate();
-              }
+              },
+              { allowCustom: true }
             )}
           </div>
           <p class="hint">${t(this.hass, "config_panel.zones_advanced_target_desc")}</p>

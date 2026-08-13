@@ -103,7 +103,7 @@ export function renderScriptOverride(
                 t(hass, "config_panel.schedule_script_field"),
                 value.entity_id,
                 (v) => patch({ entity_id: v }),
-                "config_panel.entity_placeholder_script"
+                { placeholderKey: "config_panel.entity_placeholder_script" }
               )}
             </div>
             <p class="hint">${t(hass, "config_panel.schedule_script_override_hint")}</p>

@@ -262,7 +262,7 @@ export class ViewSettings extends LitElement {
                   this._markDirty();
                   this.requestUpdate();
                 },
-                "config_panel.entity_placeholder_script"
+                { placeholderKey: "config_panel.entity_placeholder_script" }
               )}
             </div>
             <details class="inline-help">
@@ -391,7 +391,7 @@ export class ViewSettings extends LitElement {
                   this._markDirty();
                   this.requestUpdate();
                 },
-                "config_panel.entity_placeholder_script"
+                { placeholderKey: "config_panel.entity_placeholder_script" }
               )}
             </div>
             <details class="inline-help">

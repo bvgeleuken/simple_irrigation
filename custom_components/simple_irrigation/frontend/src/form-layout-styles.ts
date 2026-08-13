@@ -85,7 +85,14 @@ export const formLayoutStyles = css`
     flex: 1 0 100%;
     margin: 0;
   }
-  .native-entity-label {
+  /* A plain label stacked above its own control (operator select, preset select) —
+     the entity picker brings its own label, these do not. */
+  .stacked-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stacked-field-label {
     font-size: 0.75rem;
     color: var(--secondary-text-color);
   }

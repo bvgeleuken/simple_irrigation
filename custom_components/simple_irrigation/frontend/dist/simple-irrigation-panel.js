@@ -155,7 +155,18 @@ const navigate = (_node, path, replace = false) => {
     fireEvent(window, "location-changed", { replace });
 };
 
-/** Wait until core HA custom elements used by the panel are defined. */
+/** How long to wait for a core element before rendering anyway. */
+const ELEMENT_TIMEOUT_MS = 2000;
+/**
+ * Wait until core HA custom elements used by the panel are defined.
+ *
+ * `customElements.whenDefined()` never rejects — it simply stays pending when an
+ * element is not registered, and a `.catch()` would not help. The panel blocks
+ * its first render on this, so an unresolved tag would leave a blank panel
+ * rather than one unstyled field. `ha-entity-picker` and `ha-selector` are the
+ * risky ones: they come from lazily loaded frontend chunks, so cap the wait and
+ * render regardless once it elapses.
+ */
 async function loadHaPanelElements() {
     const tags = [
         "ha-menu-button",
@@ -169,7 +180,11 @@ async function loadHaPanelElements() {
         "ha-icon",
         "ha-switch",
     ];
-    await Promise.all(tags.map((t) => customElements.whenDefined(t).catch(() => undefined)));
+    const ready = (tag) => Promise.race([
+        customElements.whenDefined(tag),
+        new Promise((resolve) => setTimeout(resolve, ELEMENT_TIMEOUT_MS)),
+    ]).catch(() => undefined);
+    await Promise.all(tags.map(ready));
 }
 
 const BASE = "simple-irrigation";
@@ -2568,9 +2583,7 @@ defineCustomElementOnce("si-view-overview", ViewOverview);
  * to the Home Assistant frontend. The value emitted by the picker is always the
  * selected entity_id.
  */
-function renderNativeEntityField(hass, domains, label, value, onValue,
-/** Override when the default output example (valves, switches) would mislead. */
-placeholderKey = "config_panel.entity_placeholder_example") {
+function renderNativeEntityField(hass, domains, label, value, onValue, { placeholderKey = "config_panel.entity_placeholder_example", allowCustom = false, } = {}) {
     return b `
     <ha-entity-picker
       .hass=${hass}
@@ -2578,6 +2591,7 @@ placeholderKey = "config_panel.entity_placeholder_example") {
       .value=${value || undefined}
       .includeDomains=${domains}
       .placeholder=${t(hass, placeholderKey)}
+      .allowCustomEntity=${allowCustom}
       .required=${false}
       @value-changed=${(e) => onValue(e.detail.value ?? "")}
     ></ha-entity-picker>
@@ -2596,7 +2610,10 @@ const GUARD_OPERATORS = [
 const GUARD_NUMERIC_OPERATORS = ["above", "below", "equals"];
 /** Operators comparing the state as text. */
 const GUARD_TEXT_OPERATORS = ["state_is"];
-/** Datalist suggestions only — the backend accepts any domain. */
+/**
+ * Ranked suggestions only, never a filter: `parse_guard_list` is deliberately
+ * domain-agnostic, so the picker for these fields runs with `allowCustom`.
+ */
 const GUARD_ENTITY_DOMAINS = [
     "sensor",
     "binary_sensor",
@@ -2688,13 +2705,17 @@ function renderValueField(hass, guard, onValue) {
     if (!needsValue(guard.operator))
         return A;
     if (isTextOp(guard.operator)) {
+        // The offered states come from the selected entity, so without one there is
+        // nothing to choose from — say so instead of showing an empty dropdown.
+        const noEntity = guard.entity_id.trim() === "";
         return b `<ha-selector
       class="guard-value"
       .hass=${hass}
       .selector=${{ state: { entity_id: guard.entity_id } }}
       .label=${t(hass, "config_panel.guards_value_label")}
       .value=${String(guard.value ?? "")}
-      .required=${true}
+      .disabled=${noEntity}
+      .helper=${noEntity ? t(hass, "config_panel.guards_value_needs_entity") : undefined}
       @value-changed=${(e) => onValue(e.detail.value ?? "")}
     ></ha-selector>`;
     }
@@ -2730,9 +2751,12 @@ function renderGuardList(hass, domains, guards, onChange) {
             // A state value belongs to the selected entity; do not keep
             // a potentially invalid option when the entity changes.
             value: v === g.entity_id ? g.value : isTextOp(g.operator) ? "" : g.value,
-        }), "config_panel.guards_entity_placeholder")}
-            <div class="native-entity-field guard-operator">
-              <label class="native-entity-label"
+        }), {
+            placeholderKey: "config_panel.guards_entity_placeholder",
+            allowCustom: true,
+        })}
+            <div class="stacked-field guard-operator">
+              <label class="stacked-field-label"
                 >${t(hass, "config_panel.guards_operator_label")}</label
               >
               <select
@@ -2812,7 +2836,7 @@ function scriptOverrideForSave(value, phase) {
 function hasScriptOverride(pre, post) {
     return pre.override || post.override;
 }
-function renderScriptOverride(hass, domains, phase, value,
+function renderScriptOverride(hass, domains, phase, value, 
 /** The installation's script and timeout, shown while not overriding. */
 globalScript, globalTimeoutSec, busy, onChange) {
     const patch = (p) => onChange({ ...value, ...p });
@@ -2834,7 +2858,7 @@ globalScript, globalTimeoutSec, busy, onChange) {
       ${value.override
         ? b `
             <div class="field-row">
-              ${renderNativeEntityField(hass, domains, t(hass, "config_panel.schedule_script_field"), value.entity_id, (v) => patch({ entity_id: v }), "config_panel.entity_placeholder_script")}
+              ${renderNativeEntityField(hass, domains, t(hass, "config_panel.schedule_script_field"), value.entity_id, (v) => patch({ entity_id: v }), { placeholderKey: "config_panel.entity_placeholder_script" })}
             </div>
             <p class="hint">${t(hass, "config_panel.schedule_script_override_hint")}</p>
             ${value.entity_id.trim()
@@ -2963,7 +2987,14 @@ const formLayoutStyles = i$5 `
     flex: 1 0 100%;
     margin: 0;
   }
-  .native-entity-label {
+  /* A plain label stacked above its own control (operator select, preset select) —
+     the entity picker brings its own label, these do not. */
+  .stacked-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .stacked-field-label {
     font-size: 0.75rem;
     color: var(--secondary-text-color);
   }
@@ -5419,7 +5450,7 @@ class ViewSettings extends i$2 {
             this._preStartScript = v;
             this._markDirty();
             this.requestUpdate();
-        }, "config_panel.entity_placeholder_script")}
+        }, { placeholderKey: "config_panel.entity_placeholder_script" })}
             </div>
             <details class="inline-help">
               <summary>
@@ -5528,7 +5559,7 @@ class ViewSettings extends i$2 {
             this._postRunScript = v;
             this._markDirty();
             this.requestUpdate();
-        }, "config_panel.entity_placeholder_script")}
+        }, { placeholderKey: "config_panel.entity_placeholder_script" })}
             </div>
             <details class="inline-help">
               <summary>
@@ -6533,8 +6564,10 @@ const e=t=>(...e)=>({_$litDirective$:t,values:e});let i$1 = class i{constructor(
  */const i=e(class extends i$1{constructor(){super(...arguments),this.key=A;}render(r,t){return this.key=r,t}update(r,[t,e]){return t!==this.key&&(p(r),this.key=t),e}});
 
 const defaultDomains = ["switch", "input_boolean", "group", "valve"];
-/** Entity domains the start target may live in — the start service does not
- *  always address the output itself (Hydrawise starts via its `binary_sensor`). */
+/** Entity domains the start target usually lives in — the start service does not
+ *  always address the output itself (Hydrawise starts via its `binary_sensor`).
+ *  Suggestions only: the backend puts no domain rule on `start_entity_id`, so the
+ *  picker for that field runs with `allowCustom`. */
 const startTargetDomains = ["switch", "valve", "binary_sensor", "input_boolean", "number"];
 const zoneStartPresets = {
     rainbird: {
@@ -6924,7 +6957,7 @@ class ViewZones extends i$2 {
           </summary>
           <p>${t(this.hass, "config_panel.zones_advanced_desc")}</p>
           <div class="field-row">
-            <label class="native-entity-label" for="si-preset-${z.zone_id || "new"}">
+            <label class="stacked-field-label" for="si-preset-${z.zone_id || "new"}">
               ${t(this.hass, "config_panel.zones_start_preset")}
             </label>
             <select
@@ -6996,7 +7029,7 @@ class ViewZones extends i$2 {
             ${renderNativeEntityField(this.hass, startTargetDomains, t(this.hass, "config_panel.zones_start_target_entity"), z.start_entity_id, (v) => {
             z.start_entity_id = v;
             this.requestUpdate();
-        })}
+        }, { allowCustom: true })}
           </div>
           <p class="hint">${t(this.hass, "config_panel.zones_advanced_target_desc")}</p>
         </details>
@@ -7315,7 +7348,7 @@ __decorate([
 ], ViewZones.prototype, "_expanded", void 0);
 defineCustomElementOnce("si-view-zones", ViewZones);
 
-const VERSION = "1.4.1";
+const VERSION = "1.4.0";
 const PANEL_PAGES = ["overview", "zones", "schedule", "timetable", "settings"];
 /** Legacy path aliases so existing links / deep links keep working. */
 const PAGE_ALIASES = {
