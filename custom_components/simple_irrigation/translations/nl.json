@@ -1,10 +1,10 @@
 {
-  "title": "Eenvoudige Irrigatie",
+  "title": "Simple Irrigation",
   "config": {
     "step": {
       "user": {
-        "title": "Eenvoudige Irrigatie",
-        "description": "Maak de installatie aan en open Eenvoudige Irrigatie in de zijbalk om zones en planning te configureren.",
+        "title": "Simple Irrigation",
+        "description": "Maak de installatie aan en open Simple Irrigation in de zijbalk om zones en planning te configureren.",
         "data": {
           "name": "Installatienaam",
           "pre_start_switches": "Pre-start uitgangen (aan/uit)",
@@ -214,9 +214,9 @@
     }
   },
   "config_panel": {
-    "sidebar_title": "Eenvoudige Irrigatie",
+    "sidebar_title": "Simple Irrigation",
     "loading": "Laden…",
-    "main_title": "Eenvoudige Irrigatie",
+    "main_title": "Simple Irrigation",
     "tab_general": "Algemeen",
     "tab_zones": "Zones",
     "tab_schedule": "Planning",
@@ -246,7 +246,7 @@
     "timetable_week_current_hint": "deze week · CW {n}",
     "timetable_parity_badge_odd": "oneven wken",
     "timetable_parity_badge_even": "even wken",
-    "entry_picker_title": "Eenvoudige Irrigatie",
+    "entry_picker_title": "Simple Irrigation",
     "entry_picker_lead": "Kies een installatie om zones, wekelijkse planning en runtime-opties te bewerken. Elk item is een onafhankelijk irrigatieplan.",
     "entry_picker_loading": "Installaties laden…",
     "entry_badge_ha": "Integratie uitgeschakeld",
@@ -254,8 +254,8 @@
     "entry_badge_active": "Actief",
     "entry_badge_default": "Standaard",
     "entry_card_desc": "Configureer zones, planningsslots, uitvoervolgorde en pre-start uitgangen voor deze controller.",
-    "entry_picker_empty": "Nog geen installaties. Voeg de integratie toe onder Instellingen → Apparaten & services → Integratie toevoegen en zoek naar Eenvoudige Irrigatie.",
-    "entry_picker_howto": "Voeg nog een plan toe (bijv. lente / zomer / andere tuin): gebruik Instellingen → Apparaten & services → Integratie toevoegen → Eenvoudige Irrigatie. Elk plan verschijnt in de lijst hierboven.",
+    "entry_picker_empty": "Nog geen installaties. Voeg de integratie toe onder Instellingen → Apparaten & services → Integratie toevoegen en zoek naar Simple Irrigation.",
+    "entry_picker_howto": "Voeg nog een plan toe (bijv. lente / zomer / andere tuin): gebruik Instellingen → Apparaten & services → Integratie toevoegen → Simple Irrigation. Elk plan verschijnt in de lijst hierboven.",
     "errors_request_failed": "Aanvraag mislukt",
     "errors_not_running_skip": "Er wordt momenteel niets uitgevoerd.",
     "entity_placeholder_example": "Zoek op naam of entity ID",
@@ -320,7 +320,7 @@
     "general_max_parallel_field": "Max parallelle zones",
     "general_default_section": "Standaard irrigatie",
     "general_default_toggle_label": "Open deze installatie standaard",
-    "general_default_toggle_desc": "Als ingeschakeld, opent u met een klik op Eenvoudige Irrigatie in de zijbalk deze installatie rechtstreeks in plaats van het selectiescherm weer te geven.",
+    "general_default_toggle_desc": "Als ingeschakeld, opent u met een klik op Simple Irrigation in de zijbalk deze installatie rechtstreeks in plaats van het selectiescherm weer te geven.",
     "general_default_confirm_title": "Wijzig standaard irrigatie",
     "general_default_confirm_body": "Het instellen van \"{name}\" als standaard verwijdert de standaardinstelling van \"{other}\". Doorgaan?",
     "general_default_confirm_ok": "Instellen als standaard",
