@@ -1,7 +1,6 @@
 import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
 import { upsertCycle } from "./data/api";
-import { renderEntityDatalist } from "./entity-input";
 import {
   GUARD_ENTITY_DOMAINS,
   guardsForSave,
@@ -333,14 +332,6 @@ export class CycleWizard extends LitElement {
     const zones = this.installation?.zones as Record<string, Record<string, unknown>> | undefined;
     const z = zones?.[id];
     return z ? String(z.name ?? id) : id;
-  }
-
-  private _guardEntityListId(): string {
-    return `si-guard-cycle-${this.entryId}`;
-  }
-
-  private _scriptEntityListId(): string {
-    return `si-script-cycle-${this.entryId}`;
   }
 
   private _globalScript(phase: "pre_start" | "post_run"): string {
@@ -720,7 +711,7 @@ export class CycleWizard extends LitElement {
       <div class="field-block">
         <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
         <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
-        ${renderGuardList(this.hass, this._guardEntityListId(), this._guards, (next) => {
+        ${renderGuardList(this.hass, GUARD_ENTITY_DOMAINS, this._guards, (next) => {
           this._guards = next;
           this.requestUpdate();
         })}
@@ -747,7 +738,7 @@ export class CycleWizard extends LitElement {
       </div>
       ${renderScriptOverride(
         this.hass,
-        this._scriptEntityListId(),
+        SCRIPT_ENTITY_DOMAINS,
         "pre_start",
         this._preStartScript,
         this._globalScript("pre_start"),
@@ -759,7 +750,7 @@ export class CycleWizard extends LitElement {
       )}
       ${renderScriptOverride(
         this.hass,
-        this._scriptEntityListId(),
+        SCRIPT_ENTITY_DOMAINS,
         "post_run",
         this._postRunScript,
         this._globalScript("post_run"),
@@ -831,8 +822,6 @@ export class CycleWizard extends LitElement {
       ? "config_panel.cycle_edit_title"
       : "config_panel.cycle_new";
     return html`
-      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
-      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}

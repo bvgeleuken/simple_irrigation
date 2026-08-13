@@ -2,7 +2,7 @@ import { LitElement, html, css, nothing, type TemplateResult } from "lit";
 import { state } from "lit/decorators.js";
 import { keyed } from "lit/directives/keyed.js";
 import { runZoneNow, saveZone } from "../data/api";
-import { renderEntityDatalist, renderNativeEntityField } from "../entity-input";
+import { renderNativeEntityField } from "../entity-input";
 import { defineCustomElementOnce, formatApiError } from "../helpers";
 import { t } from "../i18n";
 import { formLayoutStyles } from "../form-layout-styles";
@@ -12,8 +12,10 @@ import type { HomeAssistant } from "../types";
 
 const defaultDomains = ["switch", "input_boolean", "group", "valve"];
 
-/** Entity domains the start target may live in — the start service does not
- *  always address the output itself (Hydrawise starts via its `binary_sensor`). */
+/** Entity domains the start target usually lives in — the start service does not
+ *  always address the output itself (Hydrawise starts via its `binary_sensor`).
+ *  Suggestions only: the backend puts no domain rule on `start_entity_id`, so the
+ *  picker for that field runs with `allowCustom`. */
 const startTargetDomains = ["switch", "valve", "binary_sensor", "input_boolean", "number"];
 
 const zoneStartPresets: Record<
@@ -205,14 +207,6 @@ export class ViewZones extends LitElement {
     return Boolean(z.name.trim() && z.switch_entity_ids.some((id) => id.trim()));
   }
 
-  private _entityListId(): string {
-    return `si-ent-z-${this.entryId}`;
-  }
-
-  private _startTargetListId(): string {
-    return `si-ent-start-z-${this.entryId}`;
-  }
-
   /** Which entity goes into "outputs" and which into "start target" — that pairing
    *  is the one thing users get wrong, because stopping always runs via the outputs. */
   private _renderPresetHint(z: ZoneRow): TemplateResult | typeof nothing {
@@ -366,7 +360,7 @@ export class ViewZones extends LitElement {
                 <div class="entity-picker-row">
                   ${renderNativeEntityField(
                     this.hass,
-                    this._entityListId(),
+                    this.outputEntityDomains ?? defaultDomains,
                     i === 0
                       ? t(this.hass, "config_panel.zones_output_first")
                       : t(this.hass, "config_panel.zones_output_n", { n: i + 1 }),
@@ -465,7 +459,7 @@ export class ViewZones extends LitElement {
           </summary>
           <p>${t(this.hass, "config_panel.zones_advanced_desc")}</p>
           <div class="field-row">
-            <label class="native-entity-label" for="si-preset-${z.zone_id || "new"}">
+            <label class="stacked-field-label" for="si-preset-${z.zone_id || "new"}">
               ${t(this.hass, "config_panel.zones_start_preset")}
             </label>
             <select
@@ -541,13 +535,14 @@ export class ViewZones extends LitElement {
           <div class="field-row">
             ${renderNativeEntityField(
               this.hass,
-              this._startTargetListId(),
+              startTargetDomains,
               t(this.hass, "config_panel.zones_start_target_entity"),
               z.start_entity_id,
               (v) => {
                 z.start_entity_id = v;
                 this.requestUpdate();
-              }
+              },
+              { allowCustom: true }
             )}
           </div>
           <p class="hint">${t(this.hass, "config_panel.zones_advanced_target_desc")}</p>
@@ -706,8 +701,6 @@ export class ViewZones extends LitElement {
     const edit = this._editDraft;
 
     return html`
-      ${renderEntityDatalist(this.hass, this._entityListId(), this.outputEntityDomains ?? defaultDomains)}
-      ${renderEntityDatalist(this.hass, this._startTargetListId(), startTargetDomains)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:vector-square"></ha-icon>

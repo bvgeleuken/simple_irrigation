@@ -40,7 +40,7 @@ export const formLayoutStyles = css`
     gap: 8px;
     width: 100%;
   }
-  .entity-picker-row .native-entity-field {
+  .entity-picker-row ha-entity-picker {
     flex: 1;
     min-width: 0;
   }
@@ -59,7 +59,7 @@ export const formLayoutStyles = css`
     gap: 8px;
     width: 100%;
   }
-  .guard-row .native-entity-field {
+  .guard-row ha-entity-picker {
     flex: 1 1 220px;
     min-width: 0;
   }
@@ -72,6 +72,10 @@ export const formLayoutStyles = css`
   .guard-row ha-input.guard-value {
     flex: 0 0 140px;
   }
+  .guard-row ha-selector.guard-value {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
   .guard-row button.row-remove {
     flex: 0 0 auto;
     margin-left: auto;
@@ -81,30 +85,20 @@ export const formLayoutStyles = css`
     flex: 1 0 100%;
     margin: 0;
   }
-  .native-entity-field {
+  /* A plain label stacked above its own control (operator select, preset select) —
+     the entity picker brings its own label, these do not. */
+  .stacked-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-  .native-entity-label {
+  .stacked-field-label {
     font-size: 0.75rem;
     color: var(--secondary-text-color);
   }
-  .entity-id-input {
+  ha-entity-picker {
+    display: block;
     width: 100%;
-    box-sizing: border-box;
-    padding: 12px 16px;
-    border-radius: 4px;
-    border: 1px solid var(--divider-color);
-    background: var(--card-background-color);
-    color: var(--primary-text-color);
-    font-size: 1rem;
-    font-family: inherit;
-    min-height: 48px;
-  }
-  .entity-id-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
   }
   button.row-remove {
     flex-shrink: 0;

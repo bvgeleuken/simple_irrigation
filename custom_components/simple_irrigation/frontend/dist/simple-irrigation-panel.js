@@ -155,7 +155,18 @@ const navigate = (_node, path, replace = false) => {
     fireEvent(window, "location-changed", { replace });
 };
 
-/** Wait until core HA custom elements used by the panel are defined. */
+/** How long to wait for a core element before rendering anyway. */
+const ELEMENT_TIMEOUT_MS = 2000;
+/**
+ * Wait until core HA custom elements used by the panel are defined.
+ *
+ * `customElements.whenDefined()` never rejects — it simply stays pending when an
+ * element is not registered, and a `.catch()` would not help. The panel blocks
+ * its first render on this, so an unresolved tag would leave a blank panel
+ * rather than one unstyled field. `ha-entity-picker` and `ha-selector` are the
+ * risky ones: they come from lazily loaded frontend chunks, so cap the wait and
+ * render regardless once it elapses.
+ */
 async function loadHaPanelElements() {
     const tags = [
         "ha-menu-button",
@@ -164,10 +175,16 @@ async function loadHaPanelElements() {
         "ha-card",
         "ha-dialog",
         "ha-input",
+        "ha-entity-picker",
+        "ha-selector",
         "ha-icon",
         "ha-switch",
     ];
-    await Promise.all(tags.map((t) => customElements.whenDefined(t).catch(() => undefined)));
+    const ready = (tag) => Promise.race([
+        customElements.whenDefined(tag),
+        new Promise((resolve) => setTimeout(resolve, ELEMENT_TIMEOUT_MS)),
+    ]).catch(() => undefined);
+    await Promise.all(tags.map(ready));
 }
 
 const BASE = "simple-irrigation";
@@ -2559,42 +2576,25 @@ __decorate([
 ], ViewOverview.prototype, "_msg", void 0);
 defineCustomElementOnce("si-view-overview", ViewOverview);
 
-/** Entity IDs for allowed output domains (same rule set as the backend). */
-function entityIdsForDomains(hass, domains) {
-    return Object.keys(hass.states)
-        .filter((eid) => domains.includes(eid.split(".", 1)[0]))
-        .sort((a, b) => a.localeCompare(b));
-}
-/** One shared `<datalist>` per form (by stable `listId`). */
-function renderEntityDatalist(hass, listId, domains) {
-    const ids = entityIdsForDomains(hass, domains);
-    return b `
-    <datalist id=${listId}>
-      ${ids.map((id) => b `<option value=${id}></option>`)}
-    </datalist>
-  `;
-}
 /**
- * Browser autocomplete for entity_id — works inside panel_custom scoped registries where
- * `ha-entity-picker` is not registered.
+ * Render Home Assistant's standard searchable entity picker.
+ *
+ * Entity names, icons, supporting information, and search are deliberately left
+ * to the Home Assistant frontend. The value emitted by the picker is always the
+ * selected entity_id.
  */
-function renderNativeEntityField(hass, listId, label, value, onValue, 
-/** Override when the default output example (valves, switches) would mislead. */
-placeholderKey = "config_panel.entity_placeholder_example") {
+function renderNativeEntityField(hass, domains, label, value, onValue, { placeholderKey = "config_panel.entity_placeholder_example", allowCustom = false, } = {}) {
     return b `
-    <div class="native-entity-field">
-      <label class="native-entity-label">${label}</label>
-      <input
-        type="text"
-        class="entity-id-input"
-        list=${listId}
-        .value=${value}
-        placeholder=${t(hass, placeholderKey)}
-        spellcheck="false"
-        autocomplete="off"
-        @input=${(e) => onValue(e.target.value)}
-      />
-    </div>
+    <ha-entity-picker
+      .hass=${hass}
+      .label=${label}
+      .value=${value || undefined}
+      .includeDomains=${domains}
+      .placeholder=${t(hass, placeholderKey)}
+      .allowCustomEntity=${allowCustom}
+      .required=${false}
+      @value-changed=${(e) => onValue(e.detail.value ?? "")}
+    ></ha-entity-picker>
   `;
 }
 
@@ -2610,7 +2610,10 @@ const GUARD_OPERATORS = [
 const GUARD_NUMERIC_OPERATORS = ["above", "below", "equals"];
 /** Operators comparing the state as text. */
 const GUARD_TEXT_OPERATORS = ["state_is"];
-/** Datalist suggestions only — the backend accepts any domain. */
+/**
+ * Ranked suggestions only, never a filter: `parse_guard_list` is deliberately
+ * domain-agnostic, so the picker for these fields runs with `allowCustom`.
+ */
 const GUARD_ENTITY_DOMAINS = [
     "sensor",
     "binary_sensor",
@@ -2702,13 +2705,19 @@ function renderValueField(hass, guard, onValue) {
     if (!needsValue(guard.operator))
         return A;
     if (isTextOp(guard.operator)) {
-        return b `<ha-input
+        // The offered states come from the selected entity, so without one there is
+        // nothing to choose from — say so instead of showing an empty dropdown.
+        const noEntity = guard.entity_id.trim() === "";
+        return b `<ha-selector
       class="guard-value"
-      type="text"
+      .hass=${hass}
+      .selector=${{ state: { entity_id: guard.entity_id } }}
       .label=${t(hass, "config_panel.guards_value_label")}
       .value=${String(guard.value ?? "")}
-      @input=${(e) => onValue(e.target.value)}
-    ></ha-input>`;
+      .disabled=${noEntity}
+      .helper=${noEntity ? t(hass, "config_panel.guards_value_needs_entity") : undefined}
+      @value-changed=${(e) => onValue(e.detail.value ?? "")}
+    ></ha-selector>`;
     }
     return b `<ha-input
     class="guard-value"
@@ -2726,7 +2735,7 @@ function renderValueField(hass, guard, onValue) {
  * Repeatable guard editor. Mirrors the pre-start entity list pattern.
  * `onChange` always receives a fresh array so callers can mark dirty uniformly.
  */
-function renderGuardList(hass, listId, guards, onChange) {
+function renderGuardList(hass, domains, guards, onChange) {
     const replaceAt = (i, patch) => {
         const next = guards.map((g, idx) => (idx === i ? { ...g, ...patch } : g));
         onChange(next);
@@ -2737,9 +2746,17 @@ function renderGuardList(hass, listId, guards, onChange) {
         const reading = currentState(hass, g.entity_id);
         return b `
           <div class="guard-row">
-            ${renderNativeEntityField(hass, listId, t(hass, "config_panel.guards_entity_label"), g.entity_id, (v) => replaceAt(i, { entity_id: v }), "config_panel.guards_entity_placeholder")}
-            <div class="native-entity-field guard-operator">
-              <label class="native-entity-label"
+            ${renderNativeEntityField(hass, domains, t(hass, "config_panel.guards_entity_label"), g.entity_id, (v) => replaceAt(i, {
+            entity_id: v,
+            // A state value belongs to the selected entity; do not keep
+            // a potentially invalid option when the entity changes.
+            value: v === g.entity_id ? g.value : isTextOp(g.operator) ? "" : g.value,
+        }), {
+            placeholderKey: "config_panel.guards_entity_placeholder",
+            allowCustom: true,
+        })}
+            <div class="stacked-field guard-operator">
+              <label class="stacked-field-label"
                 >${t(hass, "config_panel.guards_operator_label")}</label
               >
               <select
@@ -2819,7 +2836,7 @@ function scriptOverrideForSave(value, phase) {
 function hasScriptOverride(pre, post) {
     return pre.override || post.override;
 }
-function renderScriptOverride(hass, listId, phase, value, 
+function renderScriptOverride(hass, domains, phase, value, 
 /** The installation's script and timeout, shown while not overriding. */
 globalScript, globalTimeoutSec, busy, onChange) {
     const patch = (p) => onChange({ ...value, ...p });
@@ -2841,7 +2858,7 @@ globalScript, globalTimeoutSec, busy, onChange) {
       ${value.override
         ? b `
             <div class="field-row">
-              ${renderNativeEntityField(hass, listId, t(hass, "config_panel.schedule_script_field"), value.entity_id, (v) => patch({ entity_id: v }), "config_panel.entity_placeholder_script")}
+              ${renderNativeEntityField(hass, domains, t(hass, "config_panel.schedule_script_field"), value.entity_id, (v) => patch({ entity_id: v }), { placeholderKey: "config_panel.entity_placeholder_script" })}
             </div>
             <p class="hint">${t(hass, "config_panel.schedule_script_override_hint")}</p>
             ${value.entity_id.trim()
@@ -2925,7 +2942,7 @@ const formLayoutStyles = i$5 `
     gap: 8px;
     width: 100%;
   }
-  .entity-picker-row .native-entity-field {
+  .entity-picker-row ha-entity-picker {
     flex: 1;
     min-width: 0;
   }
@@ -2944,7 +2961,7 @@ const formLayoutStyles = i$5 `
     gap: 8px;
     width: 100%;
   }
-  .guard-row .native-entity-field {
+  .guard-row ha-entity-picker {
     flex: 1 1 220px;
     min-width: 0;
   }
@@ -2957,6 +2974,10 @@ const formLayoutStyles = i$5 `
   .guard-row ha-input.guard-value {
     flex: 0 0 140px;
   }
+  .guard-row ha-selector.guard-value {
+    flex: 1 1 180px;
+    min-width: 0;
+  }
   .guard-row button.row-remove {
     flex: 0 0 auto;
     margin-left: auto;
@@ -2966,30 +2987,20 @@ const formLayoutStyles = i$5 `
     flex: 1 0 100%;
     margin: 0;
   }
-  .native-entity-field {
+  /* A plain label stacked above its own control (operator select, preset select) —
+     the entity picker brings its own label, these do not. */
+  .stacked-field {
     display: flex;
     flex-direction: column;
     gap: 6px;
   }
-  .native-entity-label {
+  .stacked-field-label {
     font-size: 0.75rem;
     color: var(--secondary-text-color);
   }
-  .entity-id-input {
+  ha-entity-picker {
+    display: block;
     width: 100%;
-    box-sizing: border-box;
-    padding: 12px 16px;
-    border-radius: 4px;
-    border: 1px solid var(--divider-color);
-    background: var(--card-background-color);
-    color: var(--primary-text-color);
-    font-size: 1rem;
-    font-family: inherit;
-    min-height: 48px;
-  }
-  .entity-id-input:focus {
-    outline: none;
-    border-color: var(--primary-color);
   }
   button.row-remove {
     flex-shrink: 0;
@@ -3384,12 +3395,6 @@ class CycleWizard extends i$2 {
         const z = zones?.[id];
         return z ? String(z.name ?? id) : id;
     }
-    _guardEntityListId() {
-        return `si-guard-cycle-${this.entryId}`;
-    }
-    _scriptEntityListId() {
-        return `si-script-cycle-${this.entryId}`;
-    }
     _globalScript(phase) {
         return String(this.installation?.[`${phase}_script`] ?? "").trim();
     }
@@ -3754,7 +3759,7 @@ class CycleWizard extends i$2 {
       <div class="field-block">
         <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
         <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
-        ${renderGuardList(this.hass, this._guardEntityListId(), this._guards, (next) => {
+        ${renderGuardList(this.hass, GUARD_ENTITY_DOMAINS, this._guards, (next) => {
             this._guards = next;
             this.requestUpdate();
         })}
@@ -3777,10 +3782,10 @@ class CycleWizard extends i$2 {
         <span class="field-title">${t(this.hass, "config_panel.schedule_scripts_section_title")}</span>
         <p class="field-desc">${t(this.hass, "config_panel.schedule_scripts_section_desc")}</p>
       </div>
-      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "pre_start", this._preStartScript, this._globalScript("pre_start"), this._globalScriptTimeout("pre_start"), this._busy, (next) => {
+      ${renderScriptOverride(this.hass, SCRIPT_ENTITY_DOMAINS, "pre_start", this._preStartScript, this._globalScript("pre_start"), this._globalScriptTimeout("pre_start"), this._busy, (next) => {
             this._preStartScript = next;
         })}
-      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "post_run", this._postRunScript, this._globalScript("post_run"), this._globalScriptTimeout("post_run"), this._busy, (next) => {
+      ${renderScriptOverride(this.hass, SCRIPT_ENTITY_DOMAINS, "post_run", this._postRunScript, this._globalScript("post_run"), this._globalScriptTimeout("post_run"), this._busy, (next) => {
             this._postRunScript = next;
         })}
 
@@ -3832,8 +3837,6 @@ class CycleWizard extends i$2 {
             ? "config_panel.cycle_edit_title"
             : "config_panel.cycle_new";
         return b `
-      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
-      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-dialog
         .open=${this.open}
         header-title=${t(this.hass, titleKey)}
@@ -4133,12 +4136,6 @@ class ViewSchedule extends i$2 {
             pre_start_script: { ...s.pre_start_script },
             post_run_script: { ...s.post_run_script },
         };
-    }
-    _guardEntityListId() {
-        return `si-guard-${this.entryId}`;
-    }
-    _scriptEntityListId() {
-        return `si-script-${this.entryId}`;
     }
     /** The installation's script for one phase, inherited unless a slot overrides. */
     _globalScript(phase) {
@@ -4900,7 +4897,7 @@ class ViewSchedule extends i$2 {
       <div class="field-block">
         <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
         <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
-        ${renderGuardList(this.hass, this._guardEntityListId(), draft.guards, (next) => {
+        ${renderGuardList(this.hass, GUARD_ENTITY_DOMAINS, draft.guards, (next) => {
             draft.guards = next;
             this.requestUpdate();
         })}
@@ -4939,11 +4936,11 @@ class ViewSchedule extends i$2 {
         <span class="field-title">${t(this.hass, "config_panel.schedule_scripts_section_title")}</span>
         <p class="field-desc">${t(this.hass, "config_panel.schedule_scripts_section_desc")}</p>
       </div>
-      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "pre_start", draft.pre_start_script, this._globalScript("pre_start"), this._globalScriptTimeout("pre_start"), this._busy, (next) => {
+      ${renderScriptOverride(this.hass, SCRIPT_ENTITY_DOMAINS, "pre_start", draft.pre_start_script, this._globalScript("pre_start"), this._globalScriptTimeout("pre_start"), this._busy, (next) => {
             draft.pre_start_script = next;
             this.requestUpdate();
         })}
-      ${renderScriptOverride(this.hass, this._scriptEntityListId(), "post_run", draft.post_run_script, this._globalScript("post_run"), this._globalScriptTimeout("post_run"), this._busy, (next) => {
+      ${renderScriptOverride(this.hass, SCRIPT_ENTITY_DOMAINS, "post_run", draft.post_run_script, this._globalScript("post_run"), this._globalScriptTimeout("post_run"), this._busy, (next) => {
             draft.post_run_script = next;
             this.requestUpdate();
         })}
@@ -5078,8 +5075,6 @@ class ViewSchedule extends i$2 {
         const hasAny = groups.length > 0 || custom.length > 0;
         const cleanupCandidates = this._analyzeCleanup().length;
         return b `
-      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
-      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), SCRIPT_ENTITY_DOMAINS)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:format-list-bulleted-type"></ha-icon>
@@ -5348,15 +5343,6 @@ class ViewSettings extends i$2 {
             this._dirty = true;
         }
     }
-    _entityListId() {
-        return `si-ent-s-${this.entryId}`;
-    }
-    _guardEntityListId() {
-        return `si-guard-s-${this.entryId}`;
-    }
-    _scriptEntityListId() {
-        return `si-script-s-${this.entryId}`;
-    }
     async _save() {
         if (guardsIncomplete(this._guards)) {
             this._msg = t(this.hass, "config_panel.schedule_err_guards_incomplete");
@@ -5432,9 +5418,6 @@ class ViewSettings extends i$2 {
     render() {
         const domains = this.outputEntityDomains ?? ["switch", "input_boolean", "group", "valve"];
         return b `
-      ${renderEntityDatalist(this.hass, this._entityListId(), domains)}
-      ${renderEntityDatalist(this.hass, this._guardEntityListId(), GUARD_ENTITY_DOMAINS)}
-      ${renderEntityDatalist(this.hass, this._scriptEntityListId(), ["script"])}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:cog-outline"></ha-icon>
@@ -5463,11 +5446,11 @@ class ViewSettings extends i$2 {
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_pre_start_script_title")}</span>
             <div class="field-row">
-              ${renderNativeEntityField(this.hass, this._scriptEntityListId(), t(this.hass, "config_panel.general_pre_start_script_field"), this._preStartScript, (v) => {
+              ${renderNativeEntityField(this.hass, ["script"], t(this.hass, "config_panel.general_pre_start_script_field"), this._preStartScript, (v) => {
             this._preStartScript = v;
             this._markDirty();
             this.requestUpdate();
-        }, "config_panel.entity_placeholder_script")}
+        }, { placeholderKey: "config_panel.entity_placeholder_script" })}
             </div>
             <details class="inline-help">
               <summary>
@@ -5506,7 +5489,7 @@ class ViewSettings extends i$2 {
               <div class="entity-picker-rows">
                 ${this._preStart.map((eid, i) => b `
                     <div class="entity-picker-row">
-                      ${renderNativeEntityField(this.hass, this._entityListId(), i === 0
+                      ${renderNativeEntityField(this.hass, domains, i === 0
             ? t(this.hass, "config_panel.general_pre_start_output_n")
             : t(this.hass, "config_panel.general_pre_start_output_i", { n: i + 1 }), eid, (v) => {
             const next = [...this._preStart];
@@ -5572,11 +5555,11 @@ class ViewSettings extends i$2 {
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.general_post_run_script_title")}</span>
             <div class="field-row">
-              ${renderNativeEntityField(this.hass, this._scriptEntityListId(), t(this.hass, "config_panel.general_post_run_script_field"), this._postRunScript, (v) => {
+              ${renderNativeEntityField(this.hass, ["script"], t(this.hass, "config_panel.general_post_run_script_field"), this._postRunScript, (v) => {
             this._postRunScript = v;
             this._markDirty();
             this.requestUpdate();
-        }, "config_panel.entity_placeholder_script")}
+        }, { placeholderKey: "config_panel.entity_placeholder_script" })}
             </div>
             <details class="inline-help">
               <summary>
@@ -5649,7 +5632,7 @@ class ViewSettings extends i$2 {
           <div class="field-block">
             <span class="field-title">${t(this.hass, "config_panel.guards_section_title")}</span>
             <p class="field-desc">${t(this.hass, "config_panel.guards_section_desc")}</p>
-            ${renderGuardList(this.hass, this._guardEntityListId(), this._guards, (next) => {
+            ${renderGuardList(this.hass, GUARD_ENTITY_DOMAINS, this._guards, (next) => {
             this._guards = next;
             this._markDirty();
         })}
@@ -6581,8 +6564,10 @@ const e=t=>(...e)=>({_$litDirective$:t,values:e});let i$1 = class i{constructor(
  */const i=e(class extends i$1{constructor(){super(...arguments),this.key=A;}render(r,t){return this.key=r,t}update(r,[t,e]){return t!==this.key&&(p(r),this.key=t),e}});
 
 const defaultDomains = ["switch", "input_boolean", "group", "valve"];
-/** Entity domains the start target may live in — the start service does not
- *  always address the output itself (Hydrawise starts via its `binary_sensor`). */
+/** Entity domains the start target usually lives in — the start service does not
+ *  always address the output itself (Hydrawise starts via its `binary_sensor`).
+ *  Suggestions only: the backend puts no domain rule on `start_entity_id`, so the
+ *  picker for that field runs with `allowCustom`. */
 const startTargetDomains = ["switch", "valve", "binary_sensor", "input_boolean", "number"];
 const zoneStartPresets = {
     rainbird: {
@@ -6735,12 +6720,6 @@ class ViewZones extends i$2 {
     _canSaveZone(z) {
         return Boolean(z.name.trim() && z.switch_entity_ids.some((id) => id.trim()));
     }
-    _entityListId() {
-        return `si-ent-z-${this.entryId}`;
-    }
-    _startTargetListId() {
-        return `si-ent-start-z-${this.entryId}`;
-    }
     /** Which entity goes into "outputs" and which into "start target" — that pairing
      *  is the one thing users get wrong, because stopping always runs via the outputs. */
     _renderPresetHint(z) {
@@ -6885,7 +6864,7 @@ class ViewZones extends i$2 {
           <div class="entity-picker-rows">
             ${z.switch_entity_ids.map((eid, i) => b `
                 <div class="entity-picker-row">
-                  ${renderNativeEntityField(this.hass, this._entityListId(), i === 0
+                  ${renderNativeEntityField(this.hass, this.outputEntityDomains ?? defaultDomains, i === 0
             ? t(this.hass, "config_panel.zones_output_first")
             : t(this.hass, "config_panel.zones_output_n", { n: i + 1 }), eid, (v) => {
             const next = [...z.switch_entity_ids];
@@ -6978,7 +6957,7 @@ class ViewZones extends i$2 {
           </summary>
           <p>${t(this.hass, "config_panel.zones_advanced_desc")}</p>
           <div class="field-row">
-            <label class="native-entity-label" for="si-preset-${z.zone_id || "new"}">
+            <label class="stacked-field-label" for="si-preset-${z.zone_id || "new"}">
               ${t(this.hass, "config_panel.zones_start_preset")}
             </label>
             <select
@@ -7047,10 +7026,10 @@ class ViewZones extends i$2 {
             </select>
           </div>
           <div class="field-row">
-            ${renderNativeEntityField(this.hass, this._startTargetListId(), t(this.hass, "config_panel.zones_start_target_entity"), z.start_entity_id, (v) => {
+            ${renderNativeEntityField(this.hass, startTargetDomains, t(this.hass, "config_panel.zones_start_target_entity"), z.start_entity_id, (v) => {
             z.start_entity_id = v;
             this.requestUpdate();
-        })}
+        }, { allowCustom: true })}
           </div>
           <p class="hint">${t(this.hass, "config_panel.zones_advanced_target_desc")}</p>
         </details>
@@ -7194,8 +7173,6 @@ class ViewZones extends i$2 {
         const slotsPerZone = slotInclusionCountPerZone(this.installation ?? {});
         const edit = this._editDraft;
         return b `
-      ${renderEntityDatalist(this.hass, this._entityListId(), this.outputEntityDomains ?? defaultDomains)}
-      ${renderEntityDatalist(this.hass, this._startTargetListId(), startTargetDomains)}
       <ha-card>
         <div class="card-header">
           <ha-icon icon="mdi:vector-square"></ha-icon>

@@ -11,9 +11,8 @@ import type { HomeAssistant } from "./types";
  * the installation's script. That is the drip-irrigation case — leave the mower
  * out while the lawn slot sends it home.
  *
- * Shared render functions rather than a custom element, for the same reason as
- * `guard-list-editor.ts`: `<input list=…>` only finds its `<datalist>` inside
- * the same tree scope.
+ * Shared render functions keep the native Home Assistant entity picker
+ * consistent between the schedule editor and cycle wizard.
  */
 
 export type ScriptPhase = "pre_start" | "post_run";
@@ -68,7 +67,7 @@ export function hasScriptOverride(pre: ScriptOverride, post: ScriptOverride): bo
 
 export function renderScriptOverride(
   hass: HomeAssistant,
-  listId: string,
+  domains: string[],
   phase: ScriptPhase,
   value: ScriptOverride,
   /** The installation's script and timeout, shown while not overriding. */
@@ -100,11 +99,11 @@ export function renderScriptOverride(
             <div class="field-row">
               ${renderNativeEntityField(
                 hass,
-                listId,
+                domains,
                 t(hass, "config_panel.schedule_script_field"),
                 value.entity_id,
                 (v) => patch({ entity_id: v }),
-                "config_panel.entity_placeholder_script"
+                { placeholderKey: "config_panel.entity_placeholder_script" }
               )}
             </div>
             <p class="hint">${t(hass, "config_panel.schedule_script_override_hint")}</p>
