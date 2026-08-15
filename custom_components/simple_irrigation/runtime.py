@@ -480,13 +480,18 @@ class IrrigationRuntime:
         return False
 
     async def _wait_stop_or_skip(self) -> None:
-        await asyncio.wait(
-            [
-                asyncio.create_task(self._stop_event.wait()),
-                asyncio.create_task(self._skip_phase_event.wait()),
-            ],
-            return_when=asyncio.FIRST_COMPLETED,
-        )
+        # asyncio.wait() leaves the loser running, and cancelling the caller does
+        # not reach these either -- both would be left pending once per second of
+        # every zone run. Clean them up on the way out.
+        waiters = [
+            asyncio.create_task(self._stop_event.wait()),
+            asyncio.create_task(self._skip_phase_event.wait()),
+        ]
+        try:
+            await asyncio.wait(waiters, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            for waiter in waiters:
+                waiter.cancel()
 
     async def _async_wait_zone_duration(self, timeout_sec: float, zone_id: str = "") -> None:
         """Block until duration elapses, stop_all, or skip phase.

@@ -85,6 +85,8 @@ async def test_cancelled_wait_clears_zone_end() -> None:
     task.cancel()
     with pytest.raises(asyncio.CancelledError):
         await task
+    # Let the inner stop/skip waiters process their cancellation.
+    await asyncio.sleep(0)
 
     assert rs.zone_ends_at == {}
 
