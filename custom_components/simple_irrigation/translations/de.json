@@ -48,11 +48,17 @@
       "pause_until": {
         "name": "Pause bis"
       },
+      "current_run_ends_at": {
+        "name": "Bewässerung bis"
+      },
       "zone_next_run": {
         "name": "{zone_name} nächster Lauf"
       },
       "zone_last_run": {
         "name": "{zone_name} letzter Lauf"
+      },
+      "zone_ends_at": {
+        "name": "{zone_name} Bewässerung bis"
       }
     },
     "binary_sensor": {
@@ -271,6 +277,8 @@
     "general_state_idle": "Leerlauf",
     "general_preparing_hint": "Vorlauf-Ausgänge und Verzögerung, bevor die Zonen starten.",
     "general_active_zones": "Aktive Zonen",
+    "general_remaining": "Restzeit",
+    "general_remaining_finishing": "wird beendet",
     "general_next_zones": "Nächste Zonen",
     "general_last_error": "Letzter Fehler",
     "general_scheduled_pause_hint": "Geplante Pausen steuern Sie unten bei „Plan“. Sie beenden keinen bereits laufenden Lauf — dafür „Stoppen“ verwenden.",

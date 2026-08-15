@@ -1878,6 +1878,7 @@ class ViewOverview extends i$2 {
     constructor() {
         super(...arguments);
         this._busy = false;
+        this._tickMs = 0;
     }
     static { this.properties = {
         hass: { attribute: false },
@@ -2081,12 +2082,28 @@ class ViewOverview extends i$2 {
     ]; }
     connectedCallback() {
         super.connectedCallback();
-        this._tick = window.setInterval(() => this.requestUpdate(), 30000);
+        this._syncTick();
     }
     disconnectedCallback() {
         super.disconnectedCallback();
+        this._clearTick();
+    }
+    updated() {
+        this._syncTick();
+    }
+    /** Second-resolution while a zone is watering, lazy otherwise. */
+    _syncTick() {
+        const wanted = this._runBusy() ? 1000 : 30000;
+        if (this._tick !== undefined && this._tickMs === wanted)
+            return;
+        this._clearTick();
+        this._tickMs = wanted;
+        this._tick = window.setInterval(() => this.requestUpdate(), wanted);
+    }
+    _clearTick() {
         if (this._tick !== undefined)
             window.clearInterval(this._tick);
+        this._tick = undefined;
     }
     get _inst() {
         return this.installation ?? {};
@@ -2249,6 +2266,28 @@ class ViewOverview extends i$2 {
             return t(this.hass, "config_panel.overview_countdown_minutes", { m });
         return t(this.hass, "config_panel.overview_countdown_soon");
     }
+    /** Planned end of a watering zone, as pushed by the runtime. */
+    _zoneEndsAt(zoneId) {
+        const rs = (this.runState ?? {});
+        const ends = rs.zone_ends_at;
+        const raw = ends?.[zoneId];
+        if (!raw)
+            return null;
+        const ms = new Date(raw).getTime();
+        return Number.isFinite(ms) ? ms : null;
+    }
+    /** `m:ss` while watering — a running zone is minutes, not days, away from done. */
+    _fmtRemaining(endsAtMs) {
+        const diff = endsAtMs - Date.now();
+        if (diff <= 0)
+            return t(this.hass, "config_panel.general_remaining_finishing");
+        const totalSec = Math.round(diff / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+        return `${h > 0 ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
+    }
     _fmtTime(d) {
         return formatTimeLocalForDisplay(this.hass, `${d.getHours()}:${String(d.getMinutes()).padStart(2, "0")}`);
     }
@@ -2299,6 +2338,13 @@ class ViewOverview extends i$2 {
         const runState = String(rs.run_state ?? "idle");
         const runBusy = this._runBusy();
         const activeIds = Array.isArray(rs.active_zone_ids) ? rs.active_zone_ids : [];
+        // Only while actually watering: "preparing" and "stopping" have no deadline to
+        // count down to, and a leftover entry must never render a phantom countdown.
+        const remainingRows = runState === "running"
+            ? activeIds
+                .map((id) => ({ name: this._zoneName(id), endsAt: this._zoneEndsAt(id) }))
+                .filter((r) => r.endsAt !== null)
+            : [];
         const lastErr = rs.last_error ? String(rs.last_error) : "";
         const upcoming = Array.isArray(rs.upcoming_phases) ? rs.upcoming_phases : [];
         const nextZones = upcoming
@@ -2376,6 +2422,14 @@ class ViewOverview extends i$2 {
                         <ha-icon icon="mdi:water"></ha-icon>
                         <span><strong>${t(this.hass, "config_panel.general_active_zones")}</strong>
                           ${activeIds.map((id) => this._zoneName(id)).join(", ")}</span>
+                      </li>`
+                : A}
+                  ${remainingRows.length
+                ? b `<li class="pill">
+                        <ha-icon icon="mdi:timer-sand"></ha-icon>
+                        <span><strong>${t(this.hass, "config_panel.general_remaining")}</strong>
+                          ${remainingRows.map((r, i) => b `${i > 0 ? ", " : ""}${r.name}
+                                <span class="num">${this._fmtRemaining(r.endsAt)}</span>`)}</span>
                       </li>`
                 : A}
                   ${nextZones

@@ -83,6 +83,9 @@ class IrrigationRuntime:
     async def async_setup(self) -> None:
         """Reset state on startup."""
         rs = self.coordinator.run_state
+        # Unconditional: a leftover end time is meaningless in a fresh process, and
+        # a run that was already in ERROR skips the branch below.
+        rs.zone_ends_at = {}
         if rs.run_state not in (RUN_STATE_IDLE, RUN_STATE_ERROR):
             rs.run_state = RUN_STATE_ERROR
             rs.last_error = "Interrupted by Home Assistant restart"
@@ -241,6 +244,7 @@ class IrrigationRuntime:
         rs.manual_run = False
         rs.upcoming_phases = []
         rs.active_script = None
+        rs.zone_ends_at = {}
         if error:
             rs.last_error = error
         elif state == RUN_STATE_IDLE:
@@ -484,23 +488,44 @@ class IrrigationRuntime:
             return_when=asyncio.FIRST_COMPLETED,
         )
 
-    async def _async_wait_zone_duration(self, timeout_sec: float) -> None:
-        """Block until duration elapses, stop_all, or skip phase."""
+    async def _async_wait_zone_duration(self, timeout_sec: float, zone_id: str = "") -> None:
+        """Block until duration elapses, stop_all, or skip phase.
+
+        Both zone run paths funnel through here, so this is where the planned end
+        of the zone is published — the countdown a dashboard shows is exactly the
+        deadline this loop is waiting on, not an estimate computed elsewhere.
+        """
         loop = asyncio.get_running_loop()
         deadline = loop.time() + timeout_sec
-        while True:
-            if self._stop_event.is_set():
-                return
-            if self._skip_phase_event.is_set():
-                return
-            remaining = deadline - loop.time()
-            if remaining <= 0:
-                return
-            chunk = min(remaining, 1.0)
-            try:
-                await asyncio.wait_for(self._wait_stop_or_skip(), timeout=chunk)
-            except TimeoutError:
-                pass
+        if zone_id:
+            await self._async_publish_zone_end(zone_id, timeout_sec)
+        try:
+            while True:
+                if self._stop_event.is_set():
+                    return
+                if self._skip_phase_event.is_set():
+                    return
+                remaining = deadline - loop.time()
+                if remaining <= 0:
+                    return
+                chunk = min(remaining, 1.0)
+                try:
+                    await asyncio.wait_for(self._wait_stop_or_skip(), timeout=chunk)
+                except TimeoutError:
+                    pass
+        finally:
+            # Drop the end time without awaiting: stop_all() cancels this task, and
+            # an await in the finally of a cancelled task raises straight away. The
+            # cleared dict is pushed out by the caller's run state update, by
+            # _sync_active() in the phase loop, or by async_stop_all().
+            if zone_id:
+                self.coordinator.run_state.zone_ends_at.pop(zone_id, None)
+
+    async def _async_publish_zone_end(self, zone_id: str, timeout_sec: float) -> None:
+        """Record when this zone is planned to finish and notify listeners."""
+        rs = self.coordinator.run_state
+        rs.zone_ends_at[zone_id] = dt_util.utcnow() + timedelta(seconds=timeout_sec)
+        await self.coordinator.async_update_run_state(rs)
 
     async def _async_zone_run(self, zone: Zone, duration_min: int) -> None:
         outputs = list(zone.switch_entity_ids)
@@ -519,7 +544,7 @@ class IrrigationRuntime:
         )
         if not handled_by_service:
             await asyncio.gather(*(self._async_switch_turn_on(eid) for eid in outputs))
-            await self._async_wait_zone_duration(duration_min * 60)
+            await self._async_wait_zone_duration(duration_min * 60, zone.zone_id)
             await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
         now = dt_util.utcnow()
         rs = self.coordinator.run_state
@@ -614,7 +639,7 @@ class IrrigationRuntime:
 
         await asyncio.gather(*(_start_target(eid) for eid in targets))
         self._touched_entities.update(outputs)
-        await self._async_wait_zone_duration(duration_min * 60)
+        await self._async_wait_zone_duration(duration_min * 60, zone.zone_id)
         await asyncio.gather(*(self._async_switch_turn_off(eid) for eid in outputs))
         return True
 
@@ -765,6 +790,7 @@ class IrrigationRuntime:
         rs.last_error = None
         rs.upcoming_phases = []
         rs.active_script = None
+        rs.zone_ends_at = {}
         await self.coordinator.async_update_run_state(rs)
 
     async def async_skip_to_next_phase(self) -> bool:

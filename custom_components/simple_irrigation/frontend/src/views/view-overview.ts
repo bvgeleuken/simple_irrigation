@@ -236,15 +236,34 @@ export class ViewOverview extends LitElement {
   @state() private _busy = false;
   @state() private _msg?: string;
   private _tick?: number;
+  private _tickMs = 0;
 
   connectedCallback(): void {
     super.connectedCallback();
-    this._tick = window.setInterval(() => this.requestUpdate(), 30000);
+    this._syncTick();
   }
 
   disconnectedCallback(): void {
     super.disconnectedCallback();
+    this._clearTick();
+  }
+
+  updated(): void {
+    this._syncTick();
+  }
+
+  /** Second-resolution while a zone is watering, lazy otherwise. */
+  private _syncTick(): void {
+    const wanted = this._runBusy() ? 1000 : 30000;
+    if (this._tick !== undefined && this._tickMs === wanted) return;
+    this._clearTick();
+    this._tickMs = wanted;
+    this._tick = window.setInterval(() => this.requestUpdate(), wanted);
+  }
+
+  private _clearTick(): void {
     if (this._tick !== undefined) window.clearInterval(this._tick);
+    this._tick = undefined;
   }
 
   private get _inst(): Record<string, unknown> {
@@ -407,6 +426,28 @@ export class ViewOverview extends LitElement {
     return t(this.hass, "config_panel.overview_countdown_soon");
   }
 
+  /** Planned end of a watering zone, as pushed by the runtime. */
+  private _zoneEndsAt(zoneId: string): number | null {
+    const rs = (this.runState ?? {}) as Record<string, unknown>;
+    const ends = rs.zone_ends_at as Record<string, string> | undefined;
+    const raw = ends?.[zoneId];
+    if (!raw) return null;
+    const ms = new Date(raw).getTime();
+    return Number.isFinite(ms) ? ms : null;
+  }
+
+  /** `m:ss` while watering — a running zone is minutes, not days, away from done. */
+  private _fmtRemaining(endsAtMs: number): string {
+    const diff = endsAtMs - Date.now();
+    if (diff <= 0) return t(this.hass, "config_panel.general_remaining_finishing");
+    const totalSec = Math.round(diff / 1000);
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    const mm = h > 0 ? String(m).padStart(2, "0") : String(m);
+    return `${h > 0 ? `${h}:` : ""}${mm}:${String(s).padStart(2, "0")}`;
+  }
+
   private _fmtTime(d: Date): string {
     return formatTimeLocalForDisplay(
       this.hass,
@@ -461,6 +502,14 @@ export class ViewOverview extends LitElement {
     const runState = String(rs.run_state ?? "idle");
     const runBusy = this._runBusy();
     const activeIds = Array.isArray(rs.active_zone_ids) ? (rs.active_zone_ids as string[]) : [];
+    // Only while actually watering: "preparing" and "stopping" have no deadline to
+    // count down to, and a leftover entry must never render a phantom countdown.
+    const remainingRows =
+      runState === "running"
+        ? activeIds
+            .map((id) => ({ name: this._zoneName(id), endsAt: this._zoneEndsAt(id) }))
+            .filter((r): r is { name: string; endsAt: number } => r.endsAt !== null)
+        : [];
     const lastErr = rs.last_error ? String(rs.last_error) : "";
     const upcoming = Array.isArray(rs.upcoming_phases) ? (rs.upcoming_phases as string[][]) : [];
     const nextZones = upcoming
@@ -553,6 +602,17 @@ export class ViewOverview extends LitElement {
                         <ha-icon icon="mdi:water"></ha-icon>
                         <span><strong>${t(this.hass, "config_panel.general_active_zones")}</strong>
                           ${activeIds.map((id) => this._zoneName(id)).join(", ")}</span>
+                      </li>`
+                    : nothing}
+                  ${remainingRows.length
+                    ? html`<li class="pill">
+                        <ha-icon icon="mdi:timer-sand"></ha-icon>
+                        <span><strong>${t(this.hass, "config_panel.general_remaining")}</strong>
+                          ${remainingRows.map(
+                            (r, i) =>
+                              html`${i > 0 ? ", " : ""}${r.name}
+                                <span class="num">${this._fmtRemaining(r.endsAt)}</span>`
+                          )}</span>
                       </li>`
                     : nothing}
                   ${nextZones
