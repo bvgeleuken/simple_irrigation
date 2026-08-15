@@ -398,6 +398,10 @@ class RunState:
     # Pipeline script the run is currently blocked on, so the panel can say what
     # it is waiting for instead of just "preparing" for five silent minutes.
     active_script: str | None = None
+    # Planned end of the currently running zones, so panel and sensors can show a
+    # countdown without polling. Written by to_dict() for the panel payload but
+    # deliberately never read back in from_dict() — see there.
+    zone_ends_at: dict[str, datetime] = field(default_factory=dict)
 
     def to_dict(self) -> dict[str, Any]:
         """Serialize to JSON-compatible dict."""
@@ -425,6 +429,9 @@ class RunState:
             "manual_run": self.manual_run,
             "upcoming_phases": [list(g) for g in self.upcoming_phases],
             "active_script": self.active_script,
+            "zone_ends_at": {
+                k: v.isoformat() for k, v in self.zone_ends_at.items()
+            },
         }
 
     @staticmethod
@@ -464,4 +471,7 @@ class RunState:
             manual_run=bool(data.get("manual_run", False)),
             upcoming_phases=upcoming_phases,
             active_script=data.get("active_script") or None,
+            # zone_ends_at is intentionally NOT restored. It only means something
+            # while this process is watering; after a restart no zone is running
+            # any more and a recovered end time would render a phantom countdown.
         )

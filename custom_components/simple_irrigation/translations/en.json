@@ -48,11 +48,17 @@
       "pause_until": {
         "name": "Pause until"
       },
+      "current_run_ends_at": {
+        "name": "Watering until"
+      },
       "zone_next_run": {
         "name": "{zone_name} next run"
       },
       "zone_last_run": {
         "name": "{zone_name} last run"
+      },
+      "zone_ends_at": {
+        "name": "{zone_name} watering until"
       }
     },
     "binary_sensor": {
@@ -271,6 +277,8 @@
     "general_state_idle": "Idle",
     "general_preparing_hint": "Pre-start outputs and delay before zones begin.",
     "general_active_zones": "Active zones",
+    "general_remaining": "Remaining",
+    "general_remaining_finishing": "finishing",
     "general_next_zones": "Next zones",
     "general_last_error": "Last error",
     "general_scheduled_pause_hint": "Scheduled pauses use Plan control below. They do not stop a run already in progress — use Stop here.",

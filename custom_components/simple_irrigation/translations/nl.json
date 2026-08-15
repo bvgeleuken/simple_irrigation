@@ -48,11 +48,17 @@
       "pause_until": {
         "name": "Pause tot"
       },
+      "current_run_ends_at": {
+        "name": "Bewatering tot"
+      },
       "zone_next_run": {
         "name": "{zone_name} volgende keer"
       },
       "zone_last_run": {
         "name": "{zone_name} vorige keer"
+      },
+      "zone_ends_at": {
+        "name": "{zone_name} bewatering tot"
       }
     },
     "binary_sensor": {
@@ -271,6 +277,8 @@
     "general_state_idle": "Inactief",
     "general_preparing_hint": "Pre-start uitgangen en vertraging voordat zones beginnen.",
     "general_active_zones": "Actieve zones",
+    "general_remaining": "Resterend",
+    "general_remaining_finishing": "afronden",
     "general_next_zones": "Volgende zones",
     "general_last_error": "Laatste fout",
     "general_scheduled_pause_hint": "Geplande pauzes gebruiken Planbesturing hieronder. Ze stoppen een al gaande run niet—gebruik Stoppen hier.",

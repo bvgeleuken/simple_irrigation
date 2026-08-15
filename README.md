@@ -253,6 +253,27 @@ data:
 
 Every schedule slot and per-slot toggle is also exposed as a **switch** entity, so you can enable/disable individual runs from dashboards and automations. Use **Developer tools → Actions** to explore fields with translated descriptions.
 
+### Remaining run time
+
+While a zone is watering, the integration publishes when it is planned to finish:
+
+| Entity | Value |
+|--------|-------|
+| `sensor.<installation>_watering_until` | End of the zones running right now — the last one to finish |
+| `sensor.<zone>_watering_until` | End of that individual zone, useful when zones run in parallel |
+
+Both are timestamps, not a minute counter: the state changes twice per zone run instead of every second, which keeps the recorder small, and the dashboard still renders a live countdown from it. Outside a running cycle both are `unknown`.
+
+```yaml
+type: entities
+entities:
+  - entity: sensor.simple_irrigation_watering_until
+    name: Watering until
+    format: relative   # "in 12 minutes", ticking
+```
+
+The panel’s **Overview** tab shows the same information as a `m:ss` countdown per active zone.
+
 ---
 
 ## Logs and debugging

@@ -48,11 +48,17 @@
       "pause_until": {
         "name": "Pausa fino a"
       },
+      "current_run_ends_at": {
+        "name": "Irrigazione fino a"
+      },
       "zone_next_run": {
         "name": "Prossima esecuzione di {zone_name}"
       },
       "zone_last_run": {
         "name": "Ultima esecuzione di {zone_name}"
+      },
+      "zone_ends_at": {
+        "name": "Irrigazione di {zone_name} fino a"
       }
     },
     "binary_sensor": {
@@ -271,6 +277,8 @@
     "general_state_idle": "Inattivo",
     "general_preparing_hint": "Uscite di pre-avvio e ritardo prima che inizino le zone.",
     "general_active_zones": "Zone attive",
+    "general_remaining": "Tempo rimanente",
+    "general_remaining_finishing": "in chiusura",
     "general_next_zones": "Prossime zone",
     "general_last_error": "Ultimo errore",
     "general_scheduled_pause_hint": "Le pause programmate usano il controllo Piano qui sotto. Non interrompono un’esecuzione già in corso — usa Arresta qui.",
