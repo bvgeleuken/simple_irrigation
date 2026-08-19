@@ -395,9 +395,18 @@ class RunState:
     current_slot_id: str | None = None
     manual_run: bool = False
     upcoming_phases: list[list[str]] = field(default_factory=list)
+    # 1-based position of the phase watering right now; 0 while none is. With
+    # ``upcoming_phases`` this gives an exact "phase 2 of 5" — the count cannot
+    # be derived from the queue alone, which only ever holds what is still to come.
+    phase_index: int = 0
     # Pipeline script the run is currently blocked on, so the panel can say what
     # it is waiting for instead of just "preparing" for five silent minutes.
     active_script: str | None = None
+    # When that script was started and how long it may take, so a card can draw a
+    # progress bar instead of an indefinite "preparing". Volatile like
+    # ``zone_ends_at``: serialized for the UI, never restored from the store.
+    active_script_started_at: datetime | None = None
+    active_script_timeout_sec: int | None = None
     # Planned end of the currently running zones, so panel and sensors can show a
     # countdown without polling. Written by to_dict() for the panel payload but
     # deliberately never read back in from_dict() — see there.
@@ -428,7 +437,14 @@ class RunState:
             "current_slot_id": self.current_slot_id,
             "manual_run": self.manual_run,
             "upcoming_phases": [list(g) for g in self.upcoming_phases],
+            "phase_index": self.phase_index,
             "active_script": self.active_script,
+            "active_script_started_at": (
+                self.active_script_started_at.isoformat()
+                if self.active_script_started_at
+                else None
+            ),
+            "active_script_timeout_sec": self.active_script_timeout_sec,
             "zone_ends_at": {
                 k: v.isoformat() for k, v in self.zone_ends_at.items()
             },

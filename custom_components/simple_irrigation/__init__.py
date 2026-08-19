@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 from homeassistant.helpers import config_validation as cv
 
 from .const import (
+    CARD_API_REGISTERED_KEY,
+    CARD_REGISTERED_KEY,
     DOMAIN,
     HASS_CONFIG_KEY,
     MODE_NORMAL,
@@ -93,6 +95,23 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         from .panel_api import async_register_panel_api
 
         await async_register_panel_api(hass)
+
+    if not hass.data.get(CARD_API_REGISTERED_KEY):
+        from .card_api import async_register_card_api
+
+        await async_register_card_api(hass)
+
+    if not hass.data.get(CARD_REGISTERED_KEY):
+        # Claim before the first await: entries of this domain set up
+        # concurrently, and a second pass would re-register the static route.
+        hass.data[CARD_REGISTERED_KEY] = True
+        try:
+            from .card import async_register_card
+
+            await async_register_card(hass)
+        except Exception:
+            hass.data.pop(CARD_REGISTERED_KEY, None)
+            raise
 
     if not hass.data.get(PANEL_REGISTERED_KEY):
         # Claim the flag before the first await: entries of this domain are

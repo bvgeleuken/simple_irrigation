@@ -26,6 +26,16 @@ PANEL_API_REGISTERED_KEY: Final = "_simple_irrigation_panel_api_registered"
 # (unlike PANEL_REGISTERED_KEY, which is cleared on unload).
 PANEL_STATIC_REGISTERED_KEY: Final = "_simple_irrigation_panel_static_registered"
 
+# --- Lovelace card -------------------------------------------------------
+CARD_FOLDER: Final = "frontend"
+CARD_FILENAME: Final = "dist/simple-irrigation-card.js"
+CARD_URL: Final = "/simple_irrigation/simple-irrigation-card.js"
+CARD_REGISTERED_KEY: Final = "_simple_irrigation_card_registered"
+CARD_API_REGISTERED_KEY: Final = "_simple_irrigation_card_api_registered"
+
+# How many resolved future firings the card's schedule view may request.
+CARD_MAX_NEXT_RUNS: Final = 12
+
 # Domains that support irrigation output control.
 # Most use turn_on/turn_off; valve domain uses open_valve/close_valve.
 OUTPUT_ENTITY_DOMAINS: Final = frozenset({"switch", "input_boolean", "group", "valve"})
