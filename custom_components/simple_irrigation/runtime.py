@@ -93,7 +93,10 @@ class IrrigationRuntime:
             rs.queued_zone_ids = []
             rs.current_slot_id = None
             rs.upcoming_phases = []
+            rs.phase_index = 0
             rs.active_script = None
+            rs.active_script_started_at = None
+            rs.active_script_timeout_sec = None
             await self.coordinator.async_update_run_state(rs)
         await self._async_turn_off_all_tracked()
 
@@ -165,6 +168,7 @@ class IrrigationRuntime:
             rs.current_run_started_at = dt_util.utcnow()
             # active_zone_ids empty until first phase; upcoming = phases not yet started.
             rs.upcoming_phases = [list(g) for g in self._phase_queue]
+            rs.phase_index = 0
             await self.coordinator.async_update_run_state(rs)
 
             self.hass.bus.async_fire(
@@ -204,6 +208,7 @@ class IrrigationRuntime:
                 phase = self._phase_queue.pop(0)
                 rs = self.coordinator.run_state
                 rs.upcoming_phases = [list(g) for g in self._phase_queue]
+                rs.phase_index += 1
                 await self.coordinator.async_update_run_state(rs)
                 await self._async_run_phase_expandable(phase, inst.mode)
 
@@ -243,7 +248,10 @@ class IrrigationRuntime:
         rs.current_slot_id = None
         rs.manual_run = False
         rs.upcoming_phases = []
+        rs.phase_index = 0
         rs.active_script = None
+        rs.active_script_started_at = None
+        rs.active_script_timeout_sec = None
         rs.zone_ends_at = {}
         if error:
             rs.last_error = error
@@ -330,7 +338,7 @@ class IrrigationRuntime:
 
         timeout = max(1, int(script.timeout_sec))
         _LOGGER.debug("%s script %s: waiting up to %s s", kind, entity_id, timeout)
-        await self._async_publish_active_script(entity_id)
+        await self._async_publish_active_script(entity_id, timeout)
         call = self.hass.async_create_task(
             self.hass.services.async_call(SCRIPT_DOMAIN, object_id, {}, blocking=True),
             f"{DOMAIN} {kind} script {entity_id}",
@@ -367,12 +375,20 @@ class IrrigationRuntime:
                     task.cancel()
             await self._async_publish_active_script(None)
 
-    async def _async_publish_active_script(self, entity_id: str | None) -> None:
-        """Show in the panel which script the run is waiting for (None clears it)."""
+    async def _async_publish_active_script(
+        self, entity_id: str | None, timeout_sec: int | None = None
+    ) -> None:
+        """Show in the panel which script the run is waiting for (None clears it).
+
+        ``timeout_sec`` plus the start stamp let the card draw a real progress bar
+        rather than an open-ended "preparing".
+        """
         rs = self.coordinator.run_state
         if rs.active_script == entity_id:
             return
         rs.active_script = entity_id
+        rs.active_script_started_at = dt_util.utcnow() if entity_id else None
+        rs.active_script_timeout_sec = timeout_sec if entity_id else None
         await self.coordinator.async_update_run_state(rs)
 
     async def _async_script_turn_off(self, entity_id: str) -> None:
@@ -794,7 +810,10 @@ class IrrigationRuntime:
         rs.active_zone_ids = []
         rs.last_error = None
         rs.upcoming_phases = []
+        rs.phase_index = 0
         rs.active_script = None
+        rs.active_script_started_at = None
+        rs.active_script_timeout_sec = None
         rs.zone_ends_at = {}
         await self.coordinator.async_update_run_state(rs)
 

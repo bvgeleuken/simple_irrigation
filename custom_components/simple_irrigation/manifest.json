@@ -1,6 +1,9 @@
 {
   "domain": "simple_irrigation",
   "name": "Simple Irrigation",
+  "after_dependencies": [
+    "lovelace"
+  ],
   "codeowners": [
     "@florianbaethge"
   ],
@@ -14,5 +17,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/florianbaethge/simple_irrigation/issues",
   "requirements": [],
-  "version": "1.7.0"
+  "version": "1.8.0"
 }
